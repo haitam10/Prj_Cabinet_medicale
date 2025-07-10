@@ -79,6 +79,24 @@ class RendezvousController extends Controller
                 ->withErrors(['datetime' => 'La date et l\'heure du rendez-vous ne peuvent pas être dans le passé.'])
                 ->withInput();
         }
+        
+        // Validation : vérifier les conflits d'horaires pour le médecin
+        $conflictCheck = $this->checkDoctorScheduleConflict(
+            $validated['medecin_id'], 
+            $appointmentDateTime
+        );
+        
+        if ($conflictCheck['hasConflict']) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'error' => $conflictCheck['message']
+                ], 422);
+            }
+            
+            return redirect()->back()
+                ->withErrors(['schedule' => $conflictCheck['message']])
+                ->withInput();
+        }
 
         $rendezvous = Rendezvous::create([
             'patient_id' => $validated['patient_id'],
@@ -158,6 +176,25 @@ class RendezvousController extends Controller
                 ->withErrors(['datetime' => 'La date et l\'heure du rendez-vous ne peuvent pas être dans le passé.'])
                 ->withInput();
         }
+        
+        // Validation : vérifier les conflits d'horaires pour le médecin (exclure le rendez-vous actuel)
+        $conflictCheck = $this->checkDoctorScheduleConflict(
+            $validated['medecin_id'], 
+            $appointmentDateTime,
+            $rendezvous->id // Exclure ce rendez-vous de la vérification
+        );
+        
+        if ($conflictCheck['hasConflict']) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'error' => $conflictCheck['message']
+                ], 422);
+            }
+            
+            return redirect()->back()
+                ->withErrors(['schedule' => $conflictCheck['message']])
+                ->withInput();
+        }
 
         $rendezvous->update([
             'patient_id' => $validated['patient_id'],
@@ -200,5 +237,68 @@ class RendezvousController extends Controller
 
             return redirect()->route('secretaire.rendezvous')->with('error', 'Erreur lors de la suppression.');
         }
+    }
+    
+    /**
+     * Vérifier les conflits d'horaires pour un médecin
+     */
+    private function checkDoctorScheduleConflict($medecinId, $appointmentDateTime, $excludeRendezvousId = null)
+    {
+        // Calculer la plage de 30 minutes avant et après
+        $startRange = $appointmentDateTime->copy()->subMinutes(30);
+        $endRange = $appointmentDateTime->copy()->addMinutes(30);
+        
+        // Chercher les rendez-vous existants du médecin dans cette plage
+        $query = Rendezvous::where('medecin_id', $medecinId)
+            ->where('statut', '!=', 'annulé') // Exclure les rendez-vous annulés
+            ->where(function($q) use ($startRange, $endRange) {
+                $q->whereBetween('date', [$startRange, $endRange]);
+            });
+            
+        // Exclure le rendez-vous actuel lors de la modification
+        if ($excludeRendezvousId) {
+            $query->where('id', '!=', $excludeRendezvousId);
+        }
+        
+        $conflictingAppointment = $query->with(['patient'])->first();
+        
+        if ($conflictingAppointment) {
+            $conflictTime = Carbon::parse($conflictingAppointment->date)->format('H:i');
+            $conflictDate = Carbon::parse($conflictingAppointment->date)->format('d/m/Y');
+            $patientName = $conflictingAppointment->patient 
+                ? $conflictingAppointment->patient->nom . ' ' . $conflictingAppointment->patient->prenom
+                : 'Patient inconnu';
+                
+            return [
+                'hasConflict' => true,
+                'message' => "Le médecin a déjà un rendez-vous le {$conflictDate} à {$conflictTime} avec {$patientName}. Veuillez choisir un créneau avec au moins 30 minutes d'écart."
+            ];
+        }
+        
+        return ['hasConflict' => false];
+    }
+    
+    /**
+     * API endpoint pour vérifier les conflits d'horaires
+     */
+    public function checkScheduleConflictApi(Request $request)
+    {
+        $validated = $request->validate([
+            'medecin_id' => 'required|exists:users,id',
+            'date' => 'required|date',
+            'heure' => 'required|date_format:H:i',
+            'exclude_id' => 'nullable|integer'
+        ]);
+        
+        $datetime = $validated['date'] . ' ' . $validated['heure'] . ':00';
+        $appointmentDateTime = Carbon::parse($datetime);
+        
+        $conflictCheck = $this->checkDoctorScheduleConflict(
+            $validated['medecin_id'],
+            $appointmentDateTime,
+            $validated['exclude_id'] ?? null
+        );
+        
+        return response()->json($conflictCheck);
     }
 }

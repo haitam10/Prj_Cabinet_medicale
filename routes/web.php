@@ -46,6 +46,9 @@ Route::get('/secretaire/documents', function () {
     return view('secretaire.documents');
 })->name('secretaire.documents');
 
+// Route API pour vérifier les conflits d'horaires
+Route::post('/api/check-schedule-conflict', [RendezvousController::class, 'checkScheduleConflictApi'])->name('api.check-schedule-conflict');
+
 // Routes resource pour les rendez-vous (avec noms personnalisés)
 Route::post('/rendezvous', [RendezvousController::class, 'store'])->name('rendezvous.store');
 Route::put('/rendezvous/{rendezvous}', [RendezvousController::class, 'update'])->name('rendezvous.update');

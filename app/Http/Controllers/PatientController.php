@@ -9,13 +9,13 @@ class PatientController extends Controller
 {
     public function index(Request $request)
     {
-        $patients = Patient::paginate(10);
+        $patients = Patient::orderBy('created_at', 'desc')->paginate(10);
 
         if ($request->wantsJson()) {
             return response()->json($patients);
         }
 
-        return view('patients.index', compact('patients'));
+        return view('secretaire.patients', compact('patients'));
     }
 
     public function create(Request $request)
@@ -46,7 +46,7 @@ class PatientController extends Controller
             ], 201);
         }
 
-        return redirect()->route('patients.index')->with('success', 'Patient créé avec succès.');
+        return redirect()->route('secretaire.patients')->with('success', 'Patient créé avec succès.');
     }
 
     public function show(Request $request, Patient $patient)
@@ -86,17 +86,25 @@ class PatientController extends Controller
             ]);
         }
 
-        return redirect()->route('patients.index')->with('success', 'Patient mis à jour avec succès.');
+        return redirect()->route('secretaire.patients')->with('success', 'Patient mis à jour avec succès.');
     }
 
     public function destroy(Request $request, Patient $patient)
     {
-        $patient->delete();
+        try {
+            $patient->delete();
 
-        if ($request->wantsJson()) {
-            return response()->json(['message' => 'Patient supprimé avec succès.']);
+            if ($request->wantsJson()) {
+                return response()->json(['message' => 'Patient supprimé avec succès.']);
+            }
+
+            return redirect()->route('secretaire.patients')->with('success', 'Patient supprimé avec succès.');
+        } catch (\Exception $e) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Erreur lors de la suppression.'], 500);
+            }
+
+            return redirect()->route('secretaire.patients')->with('error', 'Erreur lors de la suppression.');
         }
-
-        return redirect()->route('patients.index')->with('success', 'Patient supprimé avec succès.');
     }
 }

@@ -90,19 +90,19 @@
 
         <main class="p-6">
             @if (session('success'))
-                <div class="mb-4 p-4 bg-green-100 text-green-800 rounded-lg border border-green-200">
+                <div id="successMessage" class="mb-4 p-4 bg-green-100 text-green-800 rounded-lg border border-green-200 transition-opacity duration-500">
                     <i class="fas fa-check-circle mr-2"></i>{{ session('success') }}
                 </div>
             @endif
 
             @if (session('error'))
-                <div class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200">
+                <div id="errorMessage" class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 transition-opacity duration-500">
                     <i class="fas fa-exclamation-circle mr-2"></i>{{ session('error') }}
                 </div>
             @endif
 
             @if ($errors->any())
-                <div class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200">
+                <div id="validationErrors" class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 transition-opacity duration-500">
                     <i class="fas fa-exclamation-circle mr-2"></i>
                     <ul class="list-disc list-inside">
                         @foreach ($errors->all() as $error)
@@ -346,6 +346,105 @@
         // Configuration CSRF pour les requêtes AJAX
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
+        // Fonction pour masquer automatiquement les messages après 5 secondes
+        function autoHideMessages() {
+            const messages = [
+                document.getElementById('successMessage'),
+                document.getElementById('errorMessage'),
+                document.getElementById('validationErrors')
+            ];
+
+            messages.forEach(message => {
+                if (message) {
+                    // Ajouter un bouton de fermeture
+                    const closeButton = document.createElement('button');
+                    closeButton.innerHTML = '<i class="fas fa-times"></i>';
+                    closeButton.className = 'float-right text-current opacity-70 hover:opacity-100 transition-opacity ml-2';
+                    closeButton.onclick = () => hideMessage(message);
+                    message.appendChild(closeButton);
+
+                    // Masquer automatiquement après 5 secondes
+                    setTimeout(() => {
+                        hideMessage(message);
+                    }, 5000);
+                }
+            });
+        }
+
+        // Fonction pour masquer un message avec animation
+        function hideMessage(messageElement) {
+            if (messageElement) {
+                messageElement.style.opacity = '0';
+                setTimeout(() => {
+                    messageElement.style.display = 'none';
+                }, 500); // Attendre la fin de l'animation de transition
+            }
+        }
+
+        // Fonction pour afficher un message temporaire (pour les actions AJAX)
+        function showTemporaryMessage(message, type = 'success') {
+            // Supprimer les anciens messages temporaires
+            const existingTemp = document.querySelector('.temp-message');
+            if (existingTemp) {
+                existingTemp.remove();
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `temp-message mb-4 p-4 rounded-lg border transition-opacity duration-500 ${
+                type === 'success' 
+                    ? 'bg-green-100 text-green-800 border-green-200' 
+                    : 'bg-red-100 text-red-800 border-red-200'
+            }`;
+            
+            messageDiv.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} mr-2"></i>
+                ${message}
+                <button onclick="hideMessage(this.parentElement)" class="float-right text-current opacity-70 hover:opacity-100 transition-opacity ml-2">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+
+            // Insérer le message au début du main
+            const main = document.querySelector('main');
+            main.insertBefore(messageDiv, main.firstChild);
+
+            // Masquer automatiquement après 5 secondes
+            setTimeout(() => {
+                hideMessage(messageDiv);
+            }, 5000);
+        }
+
+        // Initialiser le masquage automatique au chargement de la page
+        document.addEventListener('DOMContentLoaded', function() {
+            autoHideMessages();
+        });
+
+        // Fonction pour vérifier les conflits d'horaires côté client
+        async function checkScheduleConflict(medecinId, date, heure, excludeId = null) {
+            try {
+                const response = await fetch('/api/check-schedule-conflict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        medecin_id: medecinId,
+                        date: date,
+                        heure: heure,
+                        exclude_id: excludeId
+                    })
+                });
+                
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Erreur lors de la vérification des conflits:', error);
+                return { hasConflict: false };
+            }
+        }
+
         // Fonction pour valider la date et l'heure
         function validateDateTime(dateValue, timeValue) {
             const now = new Date();
@@ -390,10 +489,15 @@
             document.querySelector('#addModal form').addEventListener('submit', function(e) {
                 const dateValue = dateInput.value;
                 const timeValue = timeInput.value;
+                const medecinId = document.getElementById('medecin_id').value;
                 
                 if (!validateDateTime(dateValue, timeValue)) {
                     e.preventDefault();
+                    return;
                 }
+                
+                // Vérification des conflits d'horaires (optionnel côté client)
+                // La validation principale se fait côté serveur
             });
         }
 
@@ -430,10 +534,15 @@
             document.getElementById('editForm').addEventListener('submit', function(e) {
                 const dateValue = editDateInput.value;
                 const timeValue = editTimeInput.value;
+                const medecinId = document.getElementById('edit_medecin_id').value;
                 
                 if (!validateDateTime(dateValue, timeValue)) {
                     e.preventDefault();
+                    return;
                 }
+                
+                // Vérification des conflits d'horaires (optionnel côté client)
+                // La validation principale se fait côté serveur
             });
             
             // Mettre à jour l'heure minimale immédiatement
@@ -446,28 +555,31 @@
 
         function deleteRendezVous(id) {
             if (confirm('Êtes-vous sûr de vouloir supprimer ce rendez-vous ?')) {
-                // Créer un formulaire pour la suppression
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `{{ url('/rendezvous') }}/${id}`;
-                
-                // Ajouter le token CSRF
-                const csrfInput = document.createElement('input');
-                csrfInput.type = 'hidden';
-                csrfInput.name = '_token';
-                csrfInput.value = csrfToken;
-                form.appendChild(csrfInput);
-                
-                // Ajouter la méthode DELETE
-                const methodInput = document.createElement('input');
-                methodInput.type = 'hidden';
-                methodInput.name = '_method';
-                methodInput.value = 'DELETE';
-                form.appendChild(methodInput);
-                
-                // Ajouter le formulaire au DOM et le soumettre
-                document.body.appendChild(form);
-                form.submit();
+                // Utiliser fetch pour une suppression AJAX
+                fetch(`{{ url('/rendezvous') }}/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        showTemporaryMessage(data.message, 'success');
+                        // Recharger la page après un court délai
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else if (data.error) {
+                        showTemporaryMessage(data.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    showTemporaryMessage('Erreur lors de la suppression.', 'error');
+                });
             }
         }
 
