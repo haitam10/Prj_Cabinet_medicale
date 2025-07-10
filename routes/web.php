@@ -35,21 +35,22 @@ Route::get('/secretaire/dashboard', function () {
     return view('secretaire.dashboard');
 })->name('secretaire.dashboard');
 
+// Route pour la page des rendez-vous (via controller)
 Route::get('/secretaire/rendezvous', [RendezvousController::class, 'index'])->name('secretaire.rendezvous');
-Route::get('/secretaire/patients', function () {
-    return view('secretaire.patients');
-})->name('secretaire.patients');
+
+// Route pour la page des patients (via controller)
+Route::get('/secretaire/patients', [PatientController::class, 'index'])->name('secretaire.patients');
+
+// Routes pour les autres pages secrétaire (statiques)
 Route::get('/secretaire/factures', function () {
     return view('secretaire.factures');
 })->name('secretaire.factures');
+
 Route::get('/secretaire/documents', function () {
     return view('secretaire.documents');
 })->name('secretaire.documents');
 
-// Route API pour vérifier les conflits d'horaires
-Route::post('/api/check-schedule-conflict', [RendezvousController::class, 'checkScheduleConflictApi'])->name('api.check-schedule-conflict');
-
-// Routes resource pour les rendez-vous (avec noms personnalisés)
+// Routes CRUD pour les rendez-vous
 Route::post('/rendezvous', [RendezvousController::class, 'store'])->name('rendezvous.store');
 Route::put('/rendezvous/{rendezvous}', [RendezvousController::class, 'update'])->name('rendezvous.update');
 Route::delete('/rendezvous/{rendezvous}', [RendezvousController::class, 'destroy'])->name('rendezvous.destroy');
@@ -57,8 +58,15 @@ Route::get('/rendezvous/{rendezvous}', [RendezvousController::class, 'show'])->n
 Route::get('/rendezvous/{rendezvous}/edit', [RendezvousController::class, 'edit'])->name('rendezvous.edit');
 Route::get('/rendezvous/create', [RendezvousController::class, 'create'])->name('rendezvous.create');
 
-// Autres routes resource
+// Routes CRUD pour les patients
+Route::post('/patients', [PatientController::class, 'store'])->name('patients.store');
+Route::put('/patients/{patient}', [PatientController::class, 'update'])->name('patients.update');
+Route::delete('/patients/{patient}', [PatientController::class, 'destroy'])->name('patients.destroy');
+Route::get('/patients/{patient}', [PatientController::class, 'show'])->name('patients.show');
+Route::get('/patients/{patient}/edit', [PatientController::class, 'edit'])->name('patients.edit');
+Route::get('/patients/create', [PatientController::class, 'create'])->name('patients.create');
+
+// Routes resource pour les autres entités
 Route::resource('users', UserController::class);
-Route::resource('patients', PatientController::class);
 Route::resource('factures', FactureController::class);
 Route::resource('paiements', PaiementController::class);

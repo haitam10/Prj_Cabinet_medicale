@@ -458,7 +458,7 @@
             }
 
             // Mettre à jour le compteur
-            document.getElementById('patientCount').textContent = `${visibleCount} patient${visibleCount > 1 ? 's' : ''}`;
+            document.getElementById('patientCount').textContent = visibleCount + ' patient' + (visibleCount > 1 ? 's' : '');
         }
 
         // Initialiser le masquage automatique au chargement de la page
@@ -481,7 +481,7 @@
 
         function openEditModal(patient) {
             document.getElementById('editModal').classList.remove('hidden');
-            document.getElementById('editForm').action = `{{ url('/patients') }}/${patient.id}`;
+            document.getElementById('editForm').action = '/patients/' + patient.id;
             document.getElementById('edit_id').value = patient.id;
             document.getElementById('edit_cin').value = patient.cin;
             document.getElementById('edit_nom').value = patient.nom;
@@ -496,7 +496,7 @@
 
         function deletePatient(id) {
             if (confirm('Êtes-vous sûr de vouloir supprimer ce patient ?')) {
-                fetch(`{{ url('/patients') }}/${id}`, {
+                fetch('/patients/' + id, {
                     method: 'DELETE',
                     headers: {
                         'X-CSRF-TOKEN': csrfToken,
