@@ -9,9 +9,9 @@ use App\Http\Controllers\RemarqueController;
 use App\Http\Controllers\RendezvousController;
 use App\Http\Controllers\SecretaireController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Route::get('/', function () {
+//     return view('welcome');
+// });
 
 Route::resource('users', UserController::class);
 Route::resource('patients', PatientController::class);
