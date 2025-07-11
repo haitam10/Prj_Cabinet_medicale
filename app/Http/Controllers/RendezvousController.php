@@ -15,9 +15,28 @@ class RendezvousController extends Controller
      */
     public function index(Request $request)
     {
-        $rendezvous = Rendezvous::with(['patient', 'medecin'])
-            ->orderBy('date', 'desc')
-            ->paginate(10);
+        $query = Rendezvous::with(['patient', 'medecin']);
+
+        // Recherche par nom/prénom du patient
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->whereHas('patient', function($q) use ($search) {
+                $q->where('nom', 'like', '%' . $search . '%')
+                  ->orWhere('prenom', 'like', '%' . $search . '%');
+            });
+        }
+
+        // Filtrage par statut
+        if ($request->has('statut') && !empty($request->statut)) {
+            $query->where('statut', $request->statut);
+        }
+
+        // Filtrage par date
+        if ($request->has('date') && !empty($request->date)) {
+            $query->whereDate('date', $request->date);
+        }
+
+        $rendezvous = $query->orderBy('date', 'desc')->paginate(10);
 
         if ($request->wantsJson()) {
             return response()->json($rendezvous);
@@ -30,7 +49,10 @@ class RendezvousController extends Controller
         return view('secretaire.rendezvous', [
             'latest_rvs' => $rendezvous,
             'patients' => $patients,
-            'medecins' => $medecins
+            'medecins' => $medecins,
+            'search' => $request->search, // Passer les valeurs de filtre pour les conserver dans les inputs
+            'statut' => $request->statut,
+            'date' => $request->date,
         ]);
     }
 
@@ -42,10 +64,8 @@ class RendezvousController extends Controller
         if ($request->wantsJson()) {
             return response()->json(['message' => 'Formulaire non disponible via API'], 405);
         }
-
         $patients = Patient::all();
         $medecins = User::where('role', 'medecin')->get();
-        
         return view('rendezvous.create', compact('patients', 'medecins'));
     }
 
@@ -65,34 +85,26 @@ class RendezvousController extends Controller
         ]);
 
         $datetime = $validated['date'] . ' ' . $validated['heure'] . ':00';
-        
         // Validation : la date/heure ne peut pas être dans le passé
         $appointmentDateTime = Carbon::parse($datetime);
         if ($appointmentDateTime->isPast()) {
             if ($request->wantsJson()) {
-                return response()->json([
-                    'error' => 'La date et l\'heure du rendez-vous ne peuvent pas être dans le passé.'
+                return response()->json(['error' => 'La date et l\'heure du rendez-vous ne peuvent pas être dans le passé.'
                 ], 422);
             }
-            
             return redirect()->back()
                 ->withErrors(['datetime' => 'La date et l\'heure du rendez-vous ne peuvent pas être dans le passé.'])
                 ->withInput();
         }
-        
+
         // Validation : vérifier les conflits d'horaires pour le médecin
-        $conflictCheck = $this->checkDoctorScheduleConflict(
-            $validated['medecin_id'], 
-            $appointmentDateTime
+        $conflictCheck = $this->checkDoctorScheduleConflict($validated['medecin_id'], $appointmentDateTime
         );
-        
         if ($conflictCheck['hasConflict']) {
             if ($request->wantsJson()) {
-                return response()->json([
-                    'error' => $conflictCheck['message']
+                return response()->json(['error' => $conflictCheck['message']
                 ], 422);
             }
-            
             return redirect()->back()
                 ->withErrors(['schedule' => $conflictCheck['message']])
                 ->withInput();
@@ -108,8 +120,7 @@ class RendezvousController extends Controller
         ]);
 
         if ($request->wantsJson()) {
-            return response()->json([
-                'message' => 'Rendez-vous créé avec succès.',
+            return response()->json(['message' => 'Rendez-vous créé avec succès.',
                 'rendezvous' => $rendezvous,
             ], 201);
         }
@@ -123,11 +134,9 @@ class RendezvousController extends Controller
     public function show(Request $request, Rendezvous $rendezvous)
     {
         $rendezvous->load(['patient', 'medecin', 'secretaire']);
-        
         if ($request->wantsJson()) {
             return response()->json($rendezvous);
         }
-
         return view('rendezvous.show', compact('rendezvous'));
     }
 
@@ -139,10 +148,8 @@ class RendezvousController extends Controller
         if ($request->wantsJson()) {
             return response()->json(['message' => 'Formulaire non disponible via API'], 405);
         }
-
         $patients = Patient::all();
         $medecins = User::where('role', 'medecin')->get();
-        
         return view('rendezvous.edit', compact('rendezvous', 'patients', 'medecins'));
     }
 
@@ -162,35 +169,29 @@ class RendezvousController extends Controller
         ]);
 
         $datetime = $validated['date'] . ' ' . $validated['heure'] . ':00';
-        
         // Validation : la date/heure ne peut pas être dans le passé
         $appointmentDateTime = Carbon::parse($datetime);
         if ($appointmentDateTime->isPast()) {
             if ($request->wantsJson()) {
-                return response()->json([
-                    'error' => 'La date et l\'heure du rendez-vous ne peuvent pas être dans le passé.'
+                return response()->json(['error' => 'La date et l\'heure du rendez-vous ne peuvent pas être dans le passé.'
                 ], 422);
             }
-            
             return redirect()->back()
                 ->withErrors(['datetime' => 'La date et l\'heure du rendez-vous ne peuvent pas être dans le passé.'])
                 ->withInput();
         }
-        
+
         // Validation : vérifier les conflits d'horaires pour le médecin (exclure le rendez-vous actuel)
         $conflictCheck = $this->checkDoctorScheduleConflict(
-            $validated['medecin_id'], 
+            $validated['medecin_id'],
             $appointmentDateTime,
             $rendezvous->id // Exclure ce rendez-vous de la vérification
         );
-        
         if ($conflictCheck['hasConflict']) {
             if ($request->wantsJson()) {
-                return response()->json([
-                    'error' => $conflictCheck['message']
+                return response()->json(['error' => $conflictCheck['message']
                 ], 422);
             }
-            
             return redirect()->back()
                 ->withErrors(['schedule' => $conflictCheck['message']])
                 ->withInput();
@@ -206,8 +207,7 @@ class RendezvousController extends Controller
         ]);
 
         if ($request->wantsJson()) {
-            return response()->json([
-                'message' => 'Rendez-vous mis à jour avec succès.',
+            return response()->json(['message' => 'Rendez-vous mis à jour avec succès.',
                 'rendezvous' => $rendezvous->fresh(['patient', 'medecin']),
             ]);
         }
@@ -224,21 +224,18 @@ class RendezvousController extends Controller
     {
         try {
             $rendezvous->delete();
-
             if ($request->wantsJson()) {
                 return response()->json(['message' => 'Rendez-vous supprimé avec succès.']);
             }
-
             return redirect()->route('secretaire.rendezvous')->with('success', 'Rendez-vous supprimé avec succès.');
         } catch (\Exception $e) {
             if ($request->wantsJson()) {
                 return response()->json(['error' => 'Erreur lors de la suppression.'], 500);
             }
-
             return redirect()->route('secretaire.rendezvous')->with('error', 'Erreur lors de la suppression.');
         }
     }
-    
+
     /**
      * Vérifier les conflits d'horaires pour un médecin
      */
@@ -247,37 +244,37 @@ class RendezvousController extends Controller
         // Calculer la plage de 30 minutes avant et après
         $startRange = $appointmentDateTime->copy()->subMinutes(30);
         $endRange = $appointmentDateTime->copy()->addMinutes(30);
-        
+
         // Chercher les rendez-vous existants du médecin dans cette plage
         $query = Rendezvous::where('medecin_id', $medecinId)
             ->where('statut', '!=', 'annulé') // Exclure les rendez-vous annulés
             ->where(function($q) use ($startRange, $endRange) {
                 $q->whereBetween('date', [$startRange, $endRange]);
             });
-            
+
         // Exclure le rendez-vous actuel lors de la modification
         if ($excludeRendezvousId) {
             $query->where('id', '!=', $excludeRendezvousId);
         }
-        
+
         $conflictingAppointment = $query->with(['patient'])->first();
-        
+
         if ($conflictingAppointment) {
             $conflictTime = Carbon::parse($conflictingAppointment->date)->format('H:i');
             $conflictDate = Carbon::parse($conflictingAppointment->date)->format('d/m/Y');
-            $patientName = $conflictingAppointment->patient 
+            $patientName = $conflictingAppointment->patient
                 ? $conflictingAppointment->patient->nom . ' ' . $conflictingAppointment->patient->prenom
                 : 'Patient inconnu';
-                
+
             return [
                 'hasConflict' => true,
                 'message' => "Le médecin a déjà un rendez-vous le {$conflictDate} à {$conflictTime} avec {$patientName}. Veuillez choisir un créneau avec au moins 30 minutes d'écart."
             ];
         }
-        
+
         return ['hasConflict' => false];
     }
-    
+
     /**
      * API endpoint pour vérifier les conflits d'horaires
      */
@@ -289,16 +286,16 @@ class RendezvousController extends Controller
             'heure' => 'required|date_format:H:i',
             'exclude_id' => 'nullable|integer'
         ]);
-        
+
         $datetime = $validated['date'] . ' ' . $validated['heure'] . ':00';
         $appointmentDateTime = Carbon::parse($datetime);
-        
+
         $conflictCheck = $this->checkDoctorScheduleConflict(
             $validated['medecin_id'],
             $appointmentDateTime,
             $validated['exclude_id'] ?? null
         );
-        
+
         return response()->json($conflictCheck);
     }
 }

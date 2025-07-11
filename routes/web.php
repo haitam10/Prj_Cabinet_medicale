@@ -41,11 +41,13 @@ Route::get('/secretaire/rendezvous', [RendezvousController::class, 'index'])->na
 // Route pour la page des patients (via controller)
 Route::get('/secretaire/patients', [PatientController::class, 'index'])->name('secretaire.patients');
 
-// Routes pour les autres pages secrétaire (statiques)
-Route::get('/secretaire/factures', function () {
-    return view('secretaire.factures');
-})->name('secretaire.factures');
+// Route pour la page des factures (via controller)
+Route::get('/secretaire/factures', [FactureController::class, 'index'])->name('secretaire.factures');
 
+// Route pour la page des paiements (via controller)
+Route::get('/secretaire/paiements', [PaiementController::class, 'index'])->name('secretaire.paiements');
+
+// Routes pour les autres pages secrétaire (statiques)
 Route::get('/secretaire/documents', function () {
     return view('secretaire.documents');
 })->name('secretaire.documents');

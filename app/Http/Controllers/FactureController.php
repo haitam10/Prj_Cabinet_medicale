@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Facture;
+use App\Models\Patient;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class FactureController extends Controller
@@ -12,13 +14,29 @@ class FactureController extends Controller
      */
     public function index(Request $request)
     {
-        $factures = Facture::paginate(10);
+        try {
+            $factures = Facture::with(['patient', 'medecin', 'secretaire', 'utilisateur'])->paginate(10);
+        } catch (\Exception $e) {
+            // Si la table n'existe pas, créer une collection vide paginée
+            $factures = new \Illuminate\Pagination\LengthAwarePaginator(
+                collect([]), // Collection vide
+                0, // Total d'éléments
+                10, // Éléments par page
+                1, // Page actuelle
+                ['path' => request()->url()] // Options
+            );
+        }
+
+        $patients = Patient::all();
+        $medecins = User::where('role', 'medecin')->get();
+        $secretaires = User::where('role', 'secretaire')->get();
+        $users = User::all(); // Variable que la vue attend
 
         if ($request->wantsJson()) {
             return response()->json($factures);
         }
 
-        return view('factures.index', compact('factures'));
+        return view('secretaire.factures', compact('factures', 'patients', 'medecins', 'secretaires', 'users'));
     }
 
     /**
@@ -47,17 +65,27 @@ class FactureController extends Controller
             'date' => 'required|date',
             'utilisateur_id' => 'required|exists:users,id',
         ]);
-
-        $facture = Facture::create($validated);
-
-        if ($request->wantsJson()) {
-            return response()->json([
-                'message' => 'Facture créée avec succès.',
-                'facture' => $facture
-            ], 201);
+        if (empty($validated['date'])) {
+            $validated['date'] = now()->format('Y-m-d');
         }
+        try {
+            $facture = Facture::create($validated);
 
-        return redirect()->route('factures.index')->with('success', 'Facture créée avec succès.');
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => 'Facture créée avec succès.',
+                    'facture' => $facture
+                ], 201);
+            }
+
+            return redirect()->route('secretaire.factures')->with('success', 'Facture créée avec succès.');
+        } catch (\Exception $e) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Erreur lors de la création de la facture.'], 500);
+            }
+
+            return redirect()->route('secretaire.factures')->with('error', 'Erreur lors de la création de la facture.');
+        }
     }
 
     /**
@@ -96,19 +124,26 @@ class FactureController extends Controller
             'montant' => 'required|numeric|min:0',
             'statut' => 'required|string',
             'date' => 'required|date',
-            'utilisateur_id' => 'required|exists:users,id',
         ]);
 
-        $facture->update($validated);
+        try {
+            $facture->update($validated);
 
-        if ($request->wantsJson()) {
-            return response()->json([
-                'message' => 'Facture mise à jour avec succès.',
-                'facture' => $facture
-            ]);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => 'Facture mise à jour avec succès.',
+                    'facture' => $facture
+                ]);
+            }
+
+            return redirect()->route('secretaire.factures')->with('success', 'Facture mise à jour avec succès.');
+        } catch (\Exception $e) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Erreur lors de la mise à jour de la facture.'], 500);
+            }
+
+            return redirect()->route('secretaire.factures')->with('error', 'Erreur lors de la mise à jour de la facture.');
         }
-
-        return redirect()->route('factures.index')->with('success', 'Facture mise à jour avec succès.');
     }
 
     /**
@@ -116,12 +151,20 @@ class FactureController extends Controller
      */
     public function destroy(Request $request, Facture $facture)
     {
-        $facture->delete();
+        try {
+            $facture->delete();
 
-        if ($request->wantsJson()) {
-            return response()->json(['message' => 'Facture supprimée avec succès.']);
+            if ($request->wantsJson()) {
+                return response()->json(['message' => 'Facture supprimée avec succès.']);
+            }
+
+            return redirect()->route('secretaire.factures')->with('success', 'Facture supprimée avec succès.');
+        } catch (\Exception $e) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Erreur lors de la suppression de la facture.'], 500);
+            }
+
+            return redirect()->route('secretaire.factures')->with('error', 'Erreur lors de la suppression de la facture.');
         }
-
-        return redirect()->route('factures.index')->with('success', 'Facture supprimée avec succès.');
     }
 }

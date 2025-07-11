@@ -37,25 +37,30 @@
         </div>
         <nav class="mt-8 px-4">
             <div class="space-y-2">
-                <a href="#"
+                <a href="{{ route('secretaire.dashboard') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-home mr-3 text-cordes-accent group-hover:text-white"></i>
                     Dashboard
                 </a>
                 <a href="{{ route('secretaire.rendezvous') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-calendar-check mr-3 text-gray-400 group-hover:text-white"></i>
+                    <i class="fas fa-calendar-check mr-3 text-white"></i>
                     Rendez-vous
                 </a>
                 <a href="{{ route('secretaire.patients') }}"
                     class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
-                    <i class="fas fa-user-injured mr-3 text-white"></i>
+                    <i class="fas fa-user-injured mr-3 text-gray-400 group-hover:text-white"></i>
                     Patients
                 </a>
                 <a href="{{ route('secretaire.factures') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-file-invoice-dollar mr-3 text-gray-400 group-hover:text-white"></i>
                     Factures
+                </a>
+                <a href="{{ route('secretaire.paiements') }}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-credit-card mr-3 text-gray-400 group-hover:text-white"></i>
+                    Paiements
                 </a>
             </div>
         </nav>
@@ -90,19 +95,22 @@
 
         <main class="p-6">
             @if (session('success'))
-                <div id="successMessage" class="mb-4 p-4 bg-green-100 text-green-800 rounded-lg border border-green-200 transition-opacity duration-500">
+                <div id="successMessage"
+                    class="mb-4 p-4 bg-green-100 text-green-800 rounded-lg border border-green-200 transition-opacity duration-500">
                     <i class="fas fa-check-circle mr-2"></i>{{ session('success') }}
                 </div>
             @endif
 
             @if (session('error'))
-                <div id="errorMessage" class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 transition-opacity duration-500">
+                <div id="errorMessage"
+                    class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 transition-opacity duration-500">
                     <i class="fas fa-exclamation-circle mr-2"></i>{{ session('error') }}
                 </div>
             @endif
 
             @if ($errors->any())
-                <div id="validationErrors" class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 transition-opacity duration-500">
+                <div id="validationErrors"
+                    class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 transition-opacity duration-500">
                     <i class="fas fa-exclamation-circle mr-2"></i>
                     <ul class="list-disc list-inside">
                         @foreach ($errors->all() as $error)
@@ -120,7 +128,7 @@
                         <input type="text" id="searchInput" placeholder="Rechercher un patient..."
                             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                     </div>
-                    
+
                     <div class="relative">
                         <i class="fas fa-filter absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                         <select id="sexeFilter"
@@ -130,10 +138,11 @@
                             <option value="femme">Femme</option>
                         </select>
                     </div>
-                    
+
                     <div class="flex items-center text-sm text-gray-600">
                         <i class="fas fa-users mr-2"></i>
-                        <span id="patientCount">{{ $patients->total() }} patient{{ $patients->total() > 1 ? 's' : '' }}</span>
+                        <span id="patientCount">{{ $patients->total() }}
+                            patient{{ $patients->total() > 1 ? 's' : '' }}</span>
                     </div>
                 </div>
             </div>
@@ -142,18 +151,25 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CIN</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom complet</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sexe</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Âge</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ajouté le</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                CIN</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Nom complet</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Sexe</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Âge</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Contact</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Ajouté le</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200" id="patientsTableBody">
                         @forelse ($patients as $patient)
-                            <tr class="hover:bg-gray-50 transition-colors patient-row" 
+                            <tr class="hover:bg-gray-50 transition-colors patient-row"
                                 data-search="{{ strtolower($patient->nom . ' ' . $patient->cin) }}"
                                 data-sexe="{{ $patient->sexe }}">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -161,7 +177,8 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
-                                        <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3 {{ $patient->sexe === 'homme' ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800' }}">
+                                        <div
+                                            class="w-8 h-8 rounded-full flex items-center justify-center mr-3 {{ $patient->sexe === 'homme' ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800' }}">
                                             <i class="fas fa-user text-sm"></i>
                                         </div>
                                         <div>
@@ -175,7 +192,8 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $patient->sexe === 'homme' ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800' }}">
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $patient->sexe === 'homme' ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800' }}">
                                         {{ ucfirst($patient->sexe) }}
                                     </span>
                                 </td>
@@ -183,7 +201,7 @@
                                     {{ \Carbon\Carbon::parse($patient->date_naissance)->age }} ans
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    @if($patient->contact)
+                                    @if ($patient->contact)
                                         <div class="flex items-center">
                                             <i class="fas fa-phone text-gray-400 mr-1 text-xs"></i>
                                             {{ $patient->contact }}
@@ -219,8 +237,8 @@
                         @endforelse
                     </tbody>
                 </table>
-                
-                @if($patients->hasPages())
+
+                @if ($patients->hasPages())
                     <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
                         {{ $patients->links() }}
                     </div>
@@ -246,14 +264,14 @@
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
                         placeholder="Ex: AB123456">
                 </div>
-                
+
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label for="nom" class="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
                         <input type="text" name="nom" id="nom" required
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                     </div>
-                    
+
                     <div>
                         <label for="sexe" class="block text-sm font-medium text-gray-700 mb-1">Sexe *</label>
                         <select name="sexe" id="sexe" required
@@ -263,22 +281,23 @@
                             <option value="femme">Femme</option>
                         </select>
                     </div>
-                    
+
                     <div>
-                        <label for="date_naissance" class="block text-sm font-medium text-gray-700 mb-1">Date de naissance *</label>
+                        <label for="date_naissance" class="block text-sm font-medium text-gray-700 mb-1">Date de
+                            naissance *</label>
                         <input type="date" name="date_naissance" id="date_naissance" required
                             max="{{ date('Y-m-d') }}"
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                     </div>
                 </div>
-                
+
                 <div>
                     <label for="contact" class="block text-sm font-medium text-gray-700 mb-1">Contact</label>
                     <input type="tel" name="contact" id="contact"
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
                         placeholder="Ex: 0612345678">
                 </div>
-                
+
                 <div class="flex justify-end space-x-3 pt-4">
                     <button type="button" onclick="closeAddModal()"
                         class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
@@ -306,21 +325,21 @@
                 @csrf
                 @method('PUT')
                 <input type="hidden" name="id" id="edit_id">
-                
+
                 <div>
                     <label for="edit_cin" class="block text-sm font-medium text-gray-700 mb-1">CIN *</label>
                     <input type="text" name="cin" id="edit_cin" required
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
                         placeholder="Ex: AB123456">
                 </div>
-                
+
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label for="edit_nom" class="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
                         <input type="text" name="nom" id="edit_nom" required
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                     </div>
-                    
+
                     <div>
                         <label for="edit_sexe" class="block text-sm font-medium text-gray-700 mb-1">Sexe *</label>
                         <select name="sexe" id="edit_sexe" required
@@ -330,22 +349,23 @@
                             <option value="femme">Femme</option>
                         </select>
                     </div>
-                    
+
                     <div>
-                        <label for="edit_date_naissance" class="block text-sm font-medium text-gray-700 mb-1">Date de naissance *</label>
+                        <label for="edit_date_naissance" class="block text-sm font-medium text-gray-700 mb-1">Date de
+                            naissance *</label>
                         <input type="date" name="date_naissance" id="edit_date_naissance" required
                             max="{{ date('Y-m-d') }}"
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                     </div>
                 </div>
-                
+
                 <div>
                     <label for="edit_contact" class="block text-sm font-medium text-gray-700 mb-1">Contact</label>
                     <input type="tel" name="contact" id="edit_contact"
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
                         placeholder="Ex: 0612345678">
                 </div>
-                
+
                 <div class="flex justify-end space-x-3 pt-4">
                     <button type="button" onclick="closeEditModal()"
                         class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
@@ -377,7 +397,8 @@
                     // Ajouter un bouton de fermeture
                     const closeButton = document.createElement('button');
                     closeButton.innerHTML = '<i class="fas fa-times"></i>';
-                    closeButton.className = 'float-right text-current opacity-70 hover:opacity-100 transition-opacity ml-2';
+                    closeButton.className =
+                        'float-right text-current opacity-70 hover:opacity-100 transition-opacity ml-2';
                     closeButton.onclick = () => hideMessage(message);
                     message.appendChild(closeButton);
 
@@ -412,7 +433,7 @@
                     ? 'bg-green-100 text-green-800 border-green-200' 
                     : 'bg-red-100 text-red-800 border-red-200'
             }`;
-            
+
             messageDiv.innerHTML = `
                 <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} mr-2"></i>
                 ${message}
@@ -440,10 +461,10 @@
             rows.forEach(row => {
                 const searchData = row.getAttribute('data-search');
                 const sexeData = row.getAttribute('data-sexe');
-                
+
                 const matchesSearch = !searchTerm || searchData.includes(searchTerm);
                 const matchesSexe = !sexeFilter || sexeData === sexeFilter;
-                
+
                 if (matchesSearch && matchesSexe) {
                     row.style.display = '';
                     visibleCount++;
@@ -464,7 +485,7 @@
         // Initialiser le masquage automatique au chargement de la page
         document.addEventListener('DOMContentLoaded', function() {
             autoHideMessages();
-            
+
             // Ajouter les événements de filtrage
             document.getElementById('searchInput').addEventListener('input', filterPatients);
             document.getElementById('sexeFilter').addEventListener('change', filterPatients);
@@ -497,28 +518,28 @@
         function deletePatient(id) {
             if (confirm('Êtes-vous sûr de vouloir supprimer ce patient ?')) {
                 fetch('/patients/' + id, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': csrfToken,
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.message) {
-                        showTemporaryMessage(data.message, 'success');
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1000);
-                    } else if (data.error) {
-                        showTemporaryMessage(data.error, 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Erreur:', error);
-                    showTemporaryMessage('Erreur lors de la suppression.', 'error');
-                });
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.message) {
+                            showTemporaryMessage(data.message, 'success');
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                        } else if (data.error) {
+                            showTemporaryMessage(data.error, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur:', error);
+                        showTemporaryMessage('Erreur lors de la suppression.', 'error');
+                    });
             }
         }
 
