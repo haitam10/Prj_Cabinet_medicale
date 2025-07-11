@@ -47,13 +47,13 @@ class PatientController extends Controller
                 ], 201);
             }
 
-            return redirect()->route('secretaire.patients')->with('success', 'Patient créé avec succès.');
+            return redirect()->back()->with('success', 'Patient créé avec succès.');
         } catch (\Exception $e) {
             if ($request->wantsJson()) {
                 return response()->json(['error' => 'Erreur lors de la création du patient.'], 500);
             }
 
-            return redirect()->route('secretaire.patients')->with('error', 'Erreur lors de la création du patient.');
+            return redirect()->back()->with('error', 'Erreur lors de la création du patient.');
         }
     }
 

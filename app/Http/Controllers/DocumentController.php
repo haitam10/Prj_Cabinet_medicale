@@ -2,46 +2,73 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Certificat;
 use App\Models\Facture;
+use App\Models\Ordonnance;
 use App\Models\User;
 use App\Models\Patient;
-
+use App\Models\Remarque;
 use Illuminate\Http\Request;
 
-class FactureController extends Controller
+class DocumentController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
-{
-    $factures = Facture::with(['patient', 'medecin', 'secretaire', 'utilisateur'])->paginate(10);
-    
-    $patients = Patient::all();
-    $medecins = User::where('role', 'medecin')->get();
-    $secretaires = User::where('role', 'secretaire')->get();
+  public function index(Request $request){
+    $ordonns = Ordonnance::with(['patient', 'medecin'])->paginate(5);
+    $certifs = Certificat::with(['patient', 'medecin'])->paginate(5);
+    $remarqs = Remarque::with(['patient', 'medecin'])->paginate(5);
 
     if ($request->wantsJson()) {
-    $formatted = $factures->map(function ($facture) {
-        return [
-            'id' => $facture->id,
-            'montant' => $facture->montant,
-            'statut' => $facture->statut,
-            'date' => $facture->date,
-            'patient_nom' => $facture->patient->nom ?? null,
-            'patient_cin' => $facture->patient->cin ?? null,
-            'medecin_nom' => $facture->medecin->nom ?? null,
-            'secretaire_nom' => $facture->secretaire->nom ?? null,
-            'utilisateur_nom' => $facture->utilisateur->nom ?? null,
-            'at' => $facture->created_at ?? null,
-        ];
-    });
+        return response()->json([
+            'ordonnances' => $ordonns,
+            'certificats' => $certifs,
+            'remarques' => $remarqs,
+        ]);
+    }
 
-    return response()->json($formatted);
-}
+    // Build the documents array for the Blade view
+    $documents = [
+        'ordonnances' => $ordonns->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'type' => 'ordonnance', // Fixed typo here
+                'patient_cin' => $item->patient->cin ?? null,
+                'patient_nom' => $item->patient->nom ?? null,
+                'medecin_nom' => $item->medecin->nom ?? null,
+                'instructions' => $item->instructions ?? null,
+                'medicaments' => $item->medicaments ?? null,
+                'duree_traitement' => $item->duree_traitement ?? null,
+                'date' => $item->date_ordonance ?? null, // Unified date field
+            ];
+        }),
+        'certificats' => $certifs->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'type' => 'certificat',
+                'patient_cin' => $item->patient->cin ?? null,
+                'patient_nom' => $item->patient->nom ?? null,
+                'medecin_nom' => $item->medecin->nom ?? null,
+                'certificat_type' => $item->type ?? null, // Renamed to avoid conflict
+                'contenu' => $item->contenu ?? null,
+                'date' => $item->date_certificat ?? null, // Unified date field
+            ];
+        }),
+        'remarques' => $remarqs->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'type' => 'remarque',
+                'patient_cin' => $item->patient->cin ?? null,
+                'patient_nom' => $item->patient->nom ?? null,
+                'medecin_nom' => $item->medecin->nom ?? null,
+                'remarque' => $item->remarque ?? null,
+                'date' => $item->date_remarque ?? null, // Unified date field
+            ];
+        }),
+    ];
 
-
-    return view('secretaire.factures', compact('factures','patients','medecins','secretaires')); // fixed view name
+    return view('secretaire.documents', compact('documents'));
 }
 
 

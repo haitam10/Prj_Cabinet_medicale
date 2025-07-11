@@ -7,6 +7,7 @@ use App\Http\Controllers\RendezvousController;
 use App\Http\Controllers\FactureController;
 use App\Http\Controllers\PaiementController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DocumentController;
 
 Route::get('/', function () {
     return view('auth.login');
@@ -30,10 +31,12 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
 Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register.form');
 
-// Routes secrétaire spécifiques
-Route::get('/secretaire/dashboard', function () {
-    return view('secretaire.dashboard');
-})->name('secretaire.dashboard');
+// // Routes secrétaire spécifiques
+// Route::get('/secretaire/dashboard', function () {
+//     return view('secretaire.dashboard');
+// })->name('secretaire.dashboard');
+
+Route::get('/secretaire/dashboard', [AuthController::class, 'secretDash'])->name('secretaire.dashboard');
 
 // Route pour la page des rendez-vous (via controller)
 Route::get('/secretaire/rendezvous', [RendezvousController::class, 'index'])->name('secretaire.rendezvous');
@@ -41,10 +44,14 @@ Route::get('/secretaire/rendezvous', [RendezvousController::class, 'index'])->na
 // Route pour la page des patients (via controller)
 Route::get('/secretaire/patients', [PatientController::class, 'index'])->name('secretaire.patients');
 
-// Routes pour les autres pages secrétaire (statiques)
-Route::get('/secretaire/factures', function () {
-    return view('secretaire.factures');
-})->name('secretaire.factures');
+Route::get('/secretaire/factures', [FactureController::class, 'index'])->name('secretaire.factures');
+
+Route::get('/secretaire/docs', [DocumentController::class, 'index'])->name('secretaire.docs');
+
+// // Routes pour les autres pages secrétaire (statiques)
+// Route::get('/secretaire/factures', function () {
+//     return view('secretaire.factures');
+// })->name('secretaire.factures');
 
 Route::get('/secretaire/documents', function () {
     return view('secretaire.documents');
@@ -65,6 +72,13 @@ Route::delete('/patients/{patient}', [PatientController::class, 'destroy'])->nam
 Route::get('/patients/{patient}', [PatientController::class, 'show'])->name('patients.show');
 Route::get('/patients/{patient}/edit', [PatientController::class, 'edit'])->name('patients.edit');
 Route::get('/patients/create', [PatientController::class, 'create'])->name('patients.create');
+
+
+// Routes CRUD pour les factures
+Route::put('/facture/{facture}', [FactureController::class, 'update'])->name('facture.update');
+Route::delete('/facture/{facture}', [FactureController::class, 'destroy'])->name('facture.destroy');
+Route::post('/facture/create', [FactureController::class, 'store'])->name('facture.create');
+
 
 // Routes resource pour les autres entités
 Route::resource('users', UserController::class);

@@ -114,7 +114,7 @@ class RendezvousController extends Controller
             ], 201);
         }
 
-        return redirect()->route('secretaire.rendezvous')->with('success', 'Rendez-vous créé avec succès.');
+        return redirect()->back()->with('success', 'Rendez-vous créé avec succès.');
     }
 
     /**

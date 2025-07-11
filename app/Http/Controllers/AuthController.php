@@ -5,7 +5,12 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+
 use App\Models\User;
+use App\Models\Rendezvous;
+use App\Models\Facture;
+use App\Models\Patient;
+use App\Models\Paiement;
 
 class AuthController extends Controller
 {
@@ -129,5 +134,63 @@ public function apiRegister(Request $request)
         'user' => $user
     ], 201);
 }
+
+
+public function secretDash (Request $request)
+{
+    try {
+        // Get the count of rows for each table
+        $count_rvs = Rendezvous::count();
+        $count_facts = Facture::count();
+        $count_pats = Patient::count();
+        $count_pais = Paiement::count();
+
+        // Get the latest 5 records for each table
+        $latest_rvs = Rendezvous::latest()->take(5)->get();
+        $latest_facs = Facture::latest()->take(5)->get();
+        $latest_pats = Patient::latest()->take(5)->get();
+        $latest_pais = Paiement::latest()->take(5)->get();
+
+        // // Paginate records if needed (optional, depending on the use case)
+        $medecins = User::where('role', 'medecin')->get();
+
+        // Fetching secretaires with pagination
+        $secretaires = User::where('role', 'secretaire')->get();
+
+        // Fetching all patients without pagination
+        $patients = Patient::all();
+
+        if ($request->wantsJson()) {
+            // Return all the data as a JSON response
+            return response()->json([
+                'count_rvs' => $count_rvs,
+                'count_facts' => $count_facts,
+                'count_pats' => $count_pats,
+                'count_pais' => $count_pais,
+                'latest_rvs' => $latest_rvs,
+                'latest_facs' => $latest_facs,
+                'latest_pats' => $latest_pats,
+                'latest_pais' => $latest_pais,
+                'medecins' => $medecins,
+                'secretaires' => $secretaires,
+                'patients' => $patients
+            ]);
+        }
+
+        // Return data to the view with counts and latest records
+        return view('secretaire.dashboard', compact(
+            'count_rvs', 'count_facts', 'count_pats', 'count_pais',
+            'latest_rvs', 'latest_facs', 'latest_pats', 'latest_pais','medecins','secretaires','patients'
+        ));
+    } catch (\Throwable $e) {
+        return response()->json([
+            'error' => true,
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], 500);
+    }
+}
+
+
 
 }
