@@ -9,7 +9,11 @@
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
+<<<<<<< HEAD
                 <form action="{{ route('secretaire.patientStore') }}" method="POST" class="p-6 space-y-4">
+=======
+                <form action="{{ route('patients.store') }}" method="POST" class="p-6 space-y-4">
+>>>>>>> main
                     @csrf
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Prénom</label>
@@ -63,7 +67,13 @@
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
+<<<<<<< HEAD
                 <form action="{{ route('secretaire.factureStore') }}" method="POST" class="p-6 space-y-4">
+=======
+                {{-- <form action="{{ route('secretaire.factureStore') }}" method="POST" class="p-6 space-y-4"> --}}
+                <form action="#" method="POST" class="p-6 space-y-4">
+
+>>>>>>> main
                     @csrf
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Patient (CNI)</label>
@@ -118,6 +128,7 @@
         </div>
     </div>
 
+<<<<<<< HEAD
     <!-- Ajouter RDV Modal -->
     <div id="rdvModal" class="modal hidden">
         <div class="fixed inset-0 flex items-center justify-center p-4">
@@ -170,6 +181,81 @@
             </div>
         </div>
     </div>
+=======
+     <!-- MODAL AJOUTER RDV -->
+    <div id="addModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white w-full max-w-md rounded-lg shadow-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">Ajouter un rendez-vous</h2>
+                <button onclick="closeAddModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+            <form action="{{ route('rendezvous.store') }}" method="POST" class="space-y-4">
+                @csrf
+                <div>
+                    <label for="patient_id" class="block text-sm font-medium text-gray-700 mb-1">Patient</label>
+                    <select name="patient_id" id="patient_id" required
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                        <option value="">Sélectionnez un patient</option>
+                        @foreach ($patients as $patient)
+                            <option value="{{ $patient->id }}">{{ $patient->nom }} {{ $patient->prenom }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label for="medecin_id" class="block text-sm font-medium text-gray-700 mb-1">Médecin</label>
+                    <select name="medecin_id" id="medecin_id" required
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                        <option value="">Sélectionnez un médecin</option>
+                        @foreach ($medecins as $medecin)
+                            <option value="{{ $medecin->id }}">{{ $medecin->nom }} {{ $medecin->prenom }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                        <input type="date" name="date" id="date" required
+                            min="{{ date('Y-m-d') }}"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
+                    </div>
+                    <div>
+                        <label for="heure" class="block text-sm font-medium text-gray-700 mb-1">Heure</label>
+                        <input type="time" name="heure" id="heure" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
+                    </div>
+                </div>
+                <div>
+                    <label for="statut" class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+                    <select name="statut" id="statut" required
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                        <option value="en attente">En attente</option>
+                        <option value="confirmé">Confirmé</option>
+                        <option value="annulé">Annulé</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="motif" class="block text-sm font-medium text-gray-700 mb-1">Motif</label>
+                    <textarea name="motif" id="motif" rows="3"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
+                        placeholder="Décrivez le motif du rendez-vous..."></textarea>
+                </div>
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeAddModal()"
+                        class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                        Annuler
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-cordes-blue text-white rounded-lg hover:bg-cordes-dark transition-colors">
+                        <i class="fas fa-save mr-2"></i>Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+>>>>>>> main
 </div>
 <!-- Load jQuery and Select2 -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -178,6 +264,53 @@
 
 <script>
 // Modal Functions
+<<<<<<< HEAD
+=======
+
+function openAddModal() {
+    document.getElementById('addModal').classList.remove('hidden');
+    // Réinitialiser le formulaire
+    document.querySelector('#addModal form').reset();
+    
+    // Configurer les contraintes de date/heure
+    const dateInput = document.getElementById('date');
+    const timeInput = document.getElementById('heure');
+    
+    dateInput.addEventListener('change', function() {
+        updateMinTime(dateInput, timeInput);
+    });
+    
+    // Validation avant soumission
+    document.querySelector('#addModal form').addEventListener('submit', function(e) {
+        const dateValue = dateInput.value;
+        const timeValue = timeInput.value;
+        const medecinId = document.getElementById('medecin_id').value;
+        
+        if (!validateDateTime(dateValue, timeValue)) {
+            e.preventDefault();
+            return;
+        }
+        
+        // Vérification des conflits d'horaires (optionnel côté client)
+        // La validation principale se fait côté serveur
+    });
+}
+
+function closeAddModal() {
+    document.getElementById('addModal').classList.add('hidden');
+}
+
+
+
+
+
+
+
+
+
+
+//////////////////////////
+>>>>>>> main
 function openModal(modalId) {
     document.getElementById('modalOverlay').classList.remove('hidden');
     document.getElementById(modalId).classList.remove('hidden');

@@ -14,3 +14,8 @@ Route::apiResource('certificats', RemarqueController::class);
 
 
 
+
+   // Route::post('/logout', [AuthController::class, 'logout's]);
+//});
+
+

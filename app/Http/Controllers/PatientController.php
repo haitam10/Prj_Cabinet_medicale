@@ -15,7 +15,7 @@ class PatientController extends Controller
             return response()->json($patients);
         }
 
-        return view('patients.index', compact('patients'));
+        return view('secretaire.patients', compact('patients'));
     }
 
     public function create(Request $request)
@@ -37,16 +37,24 @@ class PatientController extends Controller
             'contact' => 'nullable|string|max:255',
         ]);
 
-        $patient = Patient::create($validated);
+        try {
+            $patient = Patient::create($validated);
 
-        if ($request->wantsJson()) {
-            return response()->json([
-                'message' => 'Patient créé avec succès.',
-                'patient' => $patient
-            ], 201);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => 'Patient créé avec succès.',
+                    'patient' => $patient
+                ], 201);
+            }
+
+            return redirect()->back()->with('success', 'Patient créé avec succès.');
+        } catch (\Exception $e) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Erreur lors de la création du patient.'], 500);
+            }
+
+            return redirect()->back()->with('error', 'Erreur lors de la création du patient.');
         }
-
-        return redirect()->route('patients.index')->with('success', 'Patient créé avec succès.');
     }
 
     public function show(Request $request, Patient $patient)
@@ -77,26 +85,42 @@ class PatientController extends Controller
             'contact' => 'nullable|string|max:255',
         ]);
 
-        $patient->update($validated);
+        try {
+            $patient->update($validated);
 
-        if ($request->wantsJson()) {
-            return response()->json([
-                'message' => 'Patient mis à jour avec succès.',
-                'patient' => $patient
-            ]);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => 'Patient mis à jour avec succès.',
+                    'patient' => $patient
+                ]);
+            }
+
+            return redirect()->route('secretaire.patients')->with('success', 'Patient mis à jour avec succès.');
+        } catch (\Exception $e) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Erreur lors de la mise à jour du patient.'], 500);
+            }
+
+            return redirect()->route('secretaire.patients')->with('error', 'Erreur lors de la mise à jour du patient.');
         }
-
-        return redirect()->route('patients.index')->with('success', 'Patient mis à jour avec succès.');
     }
 
     public function destroy(Request $request, Patient $patient)
     {
-        $patient->delete();
+        try {
+            $patient->delete();
 
-        if ($request->wantsJson()) {
-            return response()->json(['message' => 'Patient supprimé avec succès.']);
+            if ($request->wantsJson()) {
+                return response()->json(['message' => 'Patient supprimé avec succès.']);
+            }
+
+            return redirect()->route('secretaire.patients')->with('success', 'Patient supprimé avec succès.');
+        } catch (\Exception $e) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Erreur lors de la suppression du patient.'], 500);
+            }
+
+            return redirect()->route('secretaire.patients')->with('error', 'Erreur lors de la suppression du patient.');
         }
-
-        return redirect()->route('patients.index')->with('success', 'Patient supprimé avec succès.');
     }
 }
