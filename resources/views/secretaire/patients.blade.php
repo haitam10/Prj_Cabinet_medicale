@@ -62,6 +62,11 @@
                     <i class="fas fa-credit-card mr-3 text-gray-400 group-hover:text-white"></i>
                     Paiements
                 </a>
+                <a href="{{ route('secretaire.docs') }}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-file-medical mr-3 text-white"></i>
+                    Documents
+                </a>
             </div>
         </nav>
         <div class="absolute bottom-4 left-4 right-4">
@@ -128,7 +133,6 @@
                         <input type="text" id="searchInput" placeholder="Rechercher un patient..."
                             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                     </div>
-
                     <div class="relative">
                         <i class="fas fa-filter absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                         <select id="sexeFilter"
@@ -264,14 +268,12 @@
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
                         placeholder="Ex: AB123456">
                 </div>
-
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label for="nom" class="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
                         <input type="text" name="nom" id="nom" required
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                     </div>
-
                     <div>
                         <label for="sexe" class="block text-sm font-medium text-gray-700 mb-1">Sexe *</label>
                         <select name="sexe" id="sexe" required
@@ -290,14 +292,12 @@
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                     </div>
                 </div>
-
                 <div>
                     <label for="contact" class="block text-sm font-medium text-gray-700 mb-1">Contact</label>
                     <input type="tel" name="contact" id="contact"
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
                         placeholder="Ex: 0612345678">
                 </div>
-
                 <div class="flex justify-end space-x-3 pt-4">
                     <button type="button" onclick="closeAddModal()"
                         class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
@@ -325,21 +325,18 @@
                 @csrf
                 @method('PUT')
                 <input type="hidden" name="id" id="edit_id">
-
                 <div>
                     <label for="edit_cin" class="block text-sm font-medium text-gray-700 mb-1">CIN *</label>
                     <input type="text" name="cin" id="edit_cin" required
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
                         placeholder="Ex: AB123456">
                 </div>
-
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label for="edit_nom" class="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
                         <input type="text" name="nom" id="edit_nom" required
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                     </div>
-
                     <div>
                         <label for="edit_sexe" class="block text-sm font-medium text-gray-700 mb-1">Sexe *</label>
                         <select name="sexe" id="edit_sexe" required
@@ -358,14 +355,12 @@
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                     </div>
                 </div>
-
                 <div>
                     <label for="edit_contact" class="block text-sm font-medium text-gray-700 mb-1">Contact</label>
                     <input type="tel" name="contact" id="edit_contact"
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
                         placeholder="Ex: 0612345678">
                 </div>
-
                 <div class="flex justify-end space-x-3 pt-4">
                     <button type="button" onclick="closeEditModal()"
                         class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
@@ -433,7 +428,6 @@
                     ? 'bg-green-100 text-green-800 border-green-200' 
                     : 'bg-red-100 text-red-800 border-red-200'
             }`;
-
             messageDiv.innerHTML = `
                 <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} mr-2"></i>
                 ${message}
@@ -485,7 +479,6 @@
         // Initialiser le masquage automatique au chargement de la page
         document.addEventListener('DOMContentLoaded', function() {
             autoHideMessages();
-
             // Ajouter les événements de filtrage
             document.getElementById('searchInput').addEventListener('input', filterPatients);
             document.getElementById('sexeFilter').addEventListener('change', filterPatients);

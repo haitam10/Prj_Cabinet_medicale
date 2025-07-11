@@ -7,14 +7,11 @@ use App\Http\Controllers\RendezvousController;
 use App\Http\Controllers\FactureController;
 use App\Http\Controllers\PaiementController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DocumentController; // Assurez-vous que cette ligne est présente
 
 Route::get('/', function () {
     return view('auth.login');
 })->name('login');
-
-Route::get('/dashboard/secretaire', function () {
-    return 'Bienvenue Secrétaire !';
-});
 
 Route::get('/dashboard/medecin', function () {
     return 'Bienvenue Médecin !';
@@ -31,9 +28,7 @@ Route::post('/register', [AuthController::class, 'register'])->name('register.su
 Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register.form');
 
 // Routes secrétaire spécifiques
-Route::get('/secretaire/dashboard', function () {
-    return view('secretaire.dashboard');
-})->name('secretaire.dashboard');
+Route::get('/secretaire/dashboard', [AuthController::class, 'secretDash'])->name('secretaire.dashboard');
 
 // Route pour la page des rendez-vous (via controller)
 Route::get('/secretaire/rendezvous', [RendezvousController::class, 'index'])->name('secretaire.rendezvous');
@@ -47,10 +42,8 @@ Route::get('/secretaire/factures', [FactureController::class, 'index'])->name('s
 // Route pour la page des paiements (via controller)
 Route::get('/secretaire/paiements', [PaiementController::class, 'index'])->name('secretaire.paiements');
 
-// Routes pour les autres pages secrétaire (statiques)
-Route::get('/secretaire/documents', function () {
-    return view('secretaire.documents');
-})->name('secretaire.documents');
+// MODIFICATION ICI : Re-pointer vers le contrôleur DocumentController
+Route::get('/secretaire/docs', [DocumentController::class, 'index'])->name('secretaire.docs');
 
 // Routes CRUD pour les rendez-vous
 Route::post('/rendezvous', [RendezvousController::class, 'store'])->name('rendezvous.store');

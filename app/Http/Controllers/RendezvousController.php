@@ -42,7 +42,6 @@ class RendezvousController extends Controller
             return response()->json($rendezvous);
         }
 
-        // Récupérer les patients et médecins pour les formulaires
         $patients = Patient::all();
         $medecins = User::where('role', 'medecin')->get();
 
@@ -85,7 +84,7 @@ class RendezvousController extends Controller
         ]);
 
         $datetime = $validated['date'] . ' ' . $validated['heure'] . ':00';
-        // Validation : la date/heure ne peut pas être dans le passé
+
         $appointmentDateTime = Carbon::parse($datetime);
         if ($appointmentDateTime->isPast()) {
             if ($request->wantsJson()) {
