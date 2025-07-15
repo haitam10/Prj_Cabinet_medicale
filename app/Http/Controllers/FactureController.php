@@ -6,6 +6,7 @@ use App\Models\Facture;
 use App\Models\Patient;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // Import the Auth facade
 
 class FactureController extends Controller
 {
@@ -15,22 +16,26 @@ class FactureController extends Controller
     public function index(Request $request)
     {
         try {
+            // Eager load relationships for patient, medecin, secretaire, and utilisateur
             $factures = Facture::with(['patient', 'medecin', 'secretaire', 'utilisateur'])->paginate(10);
         } catch (\Exception $e) {
             // Si la table n'existe pas, créer une collection vide paginée
-            $factures = new \Illuminate\Pagination\LengthAwarePaginator(
-                collect([]), // Collection vide
+            $factures = new \Illuminate\Pagination\LengthAwarePaginator(collect([]), // Collection vide
                 0, // Total d'éléments
                 10, // Éléments par page
                 1, // Page actuelle
                 ['path' => request()->url()] // Options
             );
         }
-
         $patients = Patient::all();
-        $medecins = User::where('role', 'medecin')->get();
-        $secretaires = User::where('role', 'secretaire')->get();
-        $users = User::all(); // Variable que la vue attend
+        // Filter medecins by role and active status
+        $medecins = User::where('role', 'medecin')->where('statut', 'actif')->get();
+        // Filter secretaires by role and active status
+        $secretaires = User::where('role', 'secretaire')->where('statut', 'actif')->get();
+        // The 'utilisateur_id' field is being removed from the form, so 'users' is no longer needed here.
+        // However, if 'utilisateur' relationship is still used elsewhere, you might keep a filtered list.
+        // For now, we'll keep it as it was, assuming it's used for the 'utilisateur' relationship display in the table.
+        $users = User::all(); // This is still needed for displaying the 'utilisateur' in the table
 
         if ($request->wantsJson()) {
             return response()->json($factures);
@@ -47,7 +52,6 @@ class FactureController extends Controller
         if ($request->wantsJson()) {
             return response()->json(['message' => 'Formulaire non disponible via API'], 405);
         }
-
         return view('factures.create');
     }
 
@@ -63,27 +67,29 @@ class FactureController extends Controller
             'montant' => 'required|numeric|min:0',
             'statut' => 'required|string',
             'date' => 'required|date',
-            'utilisateur_id' => 'required|exists:users,id',
+            // 'utilisateur_id' => 'required|exists:users,id', // Removed from validation as it's set automatically
         ]);
+
         if (empty($validated['date'])) {
             $validated['date'] = now()->format('Y-m-d');
         }
+
+        // Automatically set utilisateur_id to the authenticated user's ID
+        $validated['utilisateur_id'] = Auth::id();
+
         try {
             $facture = Facture::create($validated);
-
             if ($request->wantsJson()) {
                 return response()->json([
                     'message' => 'Facture créée avec succès.',
                     'facture' => $facture
                 ], 201);
             }
-
             return redirect()->route('secretaire.factures')->with('success', 'Facture créée avec succès.');
         } catch (\Exception $e) {
             if ($request->wantsJson()) {
                 return response()->json(['error' => 'Erreur lors de la création de la facture.'], 500);
             }
-
             return redirect()->route('secretaire.factures')->with('error', 'Erreur lors de la création de la facture.');
         }
     }
@@ -96,7 +102,6 @@ class FactureController extends Controller
         if ($request->wantsJson()) {
             return response()->json($facture);
         }
-
         return view('factures.show', compact('facture'));
     }
 
@@ -108,7 +113,6 @@ class FactureController extends Controller
         if ($request->wantsJson()) {
             return response()->json(['message' => 'Formulaire non disponible via API'], 405);
         }
-
         return view('factures.edit', compact('facture'));
     }
 
@@ -128,20 +132,17 @@ class FactureController extends Controller
 
         try {
             $facture->update($validated);
-
             if ($request->wantsJson()) {
                 return response()->json([
                     'message' => 'Facture mise à jour avec succès.',
                     'facture' => $facture
                 ]);
             }
-
             return redirect()->route('secretaire.factures')->with('success', 'Facture mise à jour avec succès.');
         } catch (\Exception $e) {
             if ($request->wantsJson()) {
                 return response()->json(['error' => 'Erreur lors de la mise à jour de la facture.'], 500);
             }
-
             return redirect()->route('secretaire.factures')->with('error', 'Erreur lors de la mise à jour de la facture.');
         }
     }
@@ -153,17 +154,14 @@ class FactureController extends Controller
     {
         try {
             $facture->delete();
-
             if ($request->wantsJson()) {
                 return response()->json(['message' => 'Facture supprimée avec succès.']);
             }
-
             return redirect()->route('secretaire.factures')->with('success', 'Facture supprimée avec succès.');
         } catch (\Exception $e) {
             if ($request->wantsJson()) {
                 return response()->json(['error' => 'Erreur lors de la suppression de la facture.'], 500);
             }
-
             return redirect()->route('secretaire.factures')->with('error', 'Erreur lors de la suppression de la facture.');
         }
     }

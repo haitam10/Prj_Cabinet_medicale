@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -22,6 +23,7 @@
         };
     </script>
 </head>
+
 <body class="bg-gray-100 min-h-screen">
     <!-- SIDEBAR -->
     <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50">
@@ -30,50 +32,80 @@
                 <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
                     <i class="fas fa-cube text-cordes-blue text-lg"></i>
                 </div>
-                <span class="text-white text-xl font-bold">Espace Secrétaire</span>
+                <span class="text-white text-xl font-bold">C-M</span>
             </div>
         </div>
-        <nav class="mt-8 px-4">
+
+       <nav class="mt-8 px-4">
             <div class="space-y-2">
                 <a href="{{ route('secretaire.dashboard') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-home mr-3 text-cordes-accent group-hover:text-white"></i>
                     Dashboard
                 </a>
+
                 <a href="{{ route('secretaire.rendezvous') }}"
-                   class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
+                    class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
                     <i class="fas fa-calendar-check mr-3 text-white"></i>
                     Rendez-vous
                 </a>
+
                 <a href="{{ route('secretaire.patients') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-user-injured mr-3 text-gray-400 group-hover:text-white"></i>
                     Patients
                 </a>
+
                 <a href="{{ route('secretaire.factures') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-file-invoice-dollar mr-3 text-gray-400 group-hover:text-white"></i>
                     Factures
                 </a>
+
                 <a href="{{ route('secretaire.paiements') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-credit-card mr-3 text-gray-400 group-hover:text-white"></i>
                     Paiements
                 </a>
+
+                @if (Auth::check() && Auth::user()->role === 'medecin')
+                    <a href="{{ route('secretaire.dossier-medical') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-file-medical mr-3 text-white"></i>
+                        Dossier Médical
+                    </a>
+                    <a href="{{ route('secretaire.calendrier') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-calendar-alt mr-3 text-gray-400 group-hover:text-white"></i>
+                        Calendrier
+                    </a>
+                @endif
             </div>
         </nav>
+
+        <!-- Section utilisateur avec bouton de déconnexion -->
         <div class="absolute bottom-4 left-4 right-4">
-            <div class="bg-gray-800 rounded-lg p-4">
-                <div class="flex items-center space-x-3">
-                    <img src="https://cdn-icons-png.flaticon.com/512/17003/17003310.png" alt="Secrétaire"
-                         class="w-10 h-10 rounded-full" />
-                    <div>
-                        <p class="text-white text-sm font-medium">Secrétaire</p>
-                        <p class="text-gray-400 text-xs">Connecté</p>
+            <div
+                class="bg-gray-800 rounded-lg p-4 group cursor-pointer hover:bg-red-600 transition-colors duration-200">
+                <form method="POST" action="{{ route('logout') }}" id="logout-form">
+                    @csrf
+                    <div class="flex items-center space-x-3" onclick="document.getElementById('logout-form').submit();">
+                        <img src="https://cdn-icons-png.flaticon.com/512/17003/17003310.png" alt="User"
+                            class="w-10 h-10 rounded-full">
+                        <div>
+                            <p class="text-white text-sm font-medium">
+                                {{ Auth::user()->nom ?? 'Utilisateur' }}
+                            </p>
+                            <p class="text-gray-400 text-xs">
+                                {{ ucfirst(Auth::user()->role ?? '') }} — <span class="text-red-400">Se
+                                    déconnecter</span>
+                            </p>
+                        </div>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
+
     </div>
     <!-- CONTENU PRINCIPAL -->
     <div class="ml-64">
@@ -84,24 +116,27 @@
                     <p class="text-gray-600 text-sm mt-1">Liste des rendez-vous enregistrés</p>
                 </div>
                 <button onclick="openAddModal()"
-                        class="px-4 py-2 bg-cordes-blue text-white rounded-lg hover:bg-cordes-dark transition-colors">
+                    class="px-4 py-2 bg-cordes-blue text-white rounded-lg hover:bg-cordes-dark transition-colors">
                     <i class="fas fa-plus mr-2"></i>Ajouter RDV
                 </button>
             </div>
         </header>
         <main class="p-6">
             @if (session('success'))
-                <div id="successMessage" class="mb-4 p-4 bg-green-100 text-green-800 rounded-lg border border-green-200 transition-opacity duration-500">
+                <div id="successMessage"
+                    class="mb-4 p-4 bg-green-100 text-green-800 rounded-lg border border-green-200 transition-opacity duration-500">
                     <i class="fas fa-check-circle mr-2"></i>{{ session('success') }}
                 </div>
             @endif
             @if (session('error'))
-                <div id="errorMessage" class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 transition-opacity duration-500">
+                <div id="errorMessage"
+                    class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 transition-opacity duration-500">
                     <i class="fas fa-exclamation-circle mr-2"></i>{{ session('error') }}
                 </div>
             @endif
             @if ($errors->any())
-                <div id="validationErrors" class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 transition-opacity duration-500">
+                <div id="validationErrors"
+                    class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 transition-opacity duration-500">
                     <i class="fas fa-exclamation-circle mr-2"></i>
                     <ul class="list-disc list-inside">
                         @foreach ($errors->all() as $error)
@@ -117,12 +152,12 @@
                     <div class="relative">
                         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                         <input type="text" id="searchInput" placeholder="Rechercher un rendez-vous..."
-                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                     </div>
                     <div class="relative">
                         <i class="fas fa-filter absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                         <select id="statutFilter"
-                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent appearance-none">
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent appearance-none">
                             <option value="">Tous les statuts</option>
                             <option value="confirmé">Confirmé</option>
                             <option value="en attente">En attente</option>
@@ -132,7 +167,7 @@
                     <div class="relative">
                         <i class="fas fa-calendar absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                         <input type="date" id="dateFilter"
-                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                     </div>
                     <div class="flex items-center text-sm text-gray-600">
                         <i class="fas fa-calendar-check mr-2"></i>
@@ -145,13 +180,20 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Heure</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Médecin</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Motif</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Heure</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Médecin</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Patient</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Statut</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Motif</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200" id="rdvsTableBody">
@@ -160,33 +202,43 @@
                                 data-search="{{ strtolower($rdv->patient->nom ?? '') }} {{ strtolower($rdv->patient->prenom ?? '') }}"
                                 data-statut="{{ $rdv->statut }}"
                                 data-date="{{ \Carbon\Carbon::parse($rdv->date)->format('Y-m-d') }}">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ \Carbon\Carbon::parse($rdv->date)->format('d/m/Y') }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ \Carbon\Carbon::parse($rdv->date)->format('H:i') }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {{ \Carbon\Carbon::parse($rdv->date)->format('d/m/Y') }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {{ \Carbon\Carbon::parse($rdv->date)->format('H:i') }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {{ $rdv->medecin->nom ?? 'Inconnu' }} {{ $rdv->medecin->prenom ?? '' }}
-                                    @if($rdv->medecin && isset($rdv->medecin->specialite))
+                                    @if ($rdv->medecin && isset($rdv->medecin->specialite))
                                         <div class="text-xs text-gray-500">{{ $rdv->medecin->specialite }}</div>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $rdv->patient->nom ?? 'Inconnu' }} {{ $rdv->patient->prenom ?? '' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {{ $rdv->patient->nom ?? 'Inconnu' }} {{ $rdv->patient->prenom ?? '' }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @if ($rdv->statut == 'confirmé')
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><i class="fas fa-check-circle mr-1"></i>Confirmé</span>
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><i
+                                                class="fas fa-check-circle mr-1"></i>Confirmé</span>
                                     @elseif($rdv->statut == 'en attente')
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><i class="fas fa-clock mr-1"></i>En attente</span>
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><i
+                                                class="fas fa-clock mr-1"></i>En attente</span>
                                     @else
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><i class="fas fa-times-circle mr-1"></i>Annulé</span>
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><i
+                                                class="fas fa-times-circle mr-1"></i>Annulé</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">{{ $rdv->motif ?? 'Aucun motif' }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
+                                    {{ $rdv->motif ?? 'Aucun motif' }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex space-x-2">
                                         <button onclick='openEditModal(@json($rdv))'
-                                                class="text-blue-600 hover:text-blue-800 transition-colors p-1 rounded hover:bg-blue-50">
+                                            class="text-blue-600 hover:text-blue-800 transition-colors p-1 rounded hover:bg-blue-50">
                                             <i class="fas fa-edit"></i>
                                         </button>
                                         <button onclick="deleteRendezVous({{ $rdv->id }})"
-                                                class="text-red-600 hover:text-red-800 transition-colors p-1 rounded hover:bg-red-50">
+                                            class="text-red-600 hover:text-red-800 transition-colors p-1 rounded hover:bg-red-50">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
@@ -202,7 +254,7 @@
                         @endforelse
                     </tbody>
                 </table>
-                @if($latest_rvs->hasPages())
+                @if ($latest_rvs->hasPages())
                     <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
                         {{ $latest_rvs->links() }}
                     </div>
@@ -225,17 +277,17 @@
                 <div>
                     <label for="patient_id" class="block text-sm font-medium text-gray-700 mb-1">Patient</label>
                     <select name="patient_id" id="patient_id" required
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                         <option value="">Sélectionnez un patient</option>
                         @foreach ($patients as $patient)
-                            <option value="{{ $patient->id }}">{{ $patient->nom }} {{ $patient->prenom }}</option>
+                            <option value="{{ $patient->id }}">{{ $patient->nom }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div>
                     <label for="medecin_id" class="block text-sm font-medium text-gray-700 mb-1">Médecin</label>
                     <select name="medecin_id" id="medecin_id" required
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                         <option value="">Sélectionnez un médecin</option>
                         @foreach ($medecins as $medecin)
                             <option value="{{ $medecin->id }}">{{ $medecin->nom }} {{ $medecin->prenom }}</option>
@@ -246,18 +298,18 @@
                     <div>
                         <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
                         <input type="date" name="date" id="date" required min="{{ date('Y-m-d') }}"
-                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
                     </div>
                     <div>
                         <label for="heure" class="block text-sm font-medium text-gray-700 mb-1">Heure</label>
                         <input type="time" name="heure" id="heure" required
-                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
                     </div>
                 </div>
                 <div>
                     <label for="statut" class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
                     <select name="statut" id="statut" required
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                         <option value="en attente">En attente</option>
                         <option value="confirmé">Confirmé</option>
                         <option value="annulé">Annulé</option>
@@ -265,17 +317,17 @@
                 </div>
                 <div>
                     <label for="motif" class="block text-sm font-medium text-gray-700 mb-1">Motif</label>
-                    <textarea name="motif" id="motif" rows="3"
-                              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
-                              placeholder="Décrivez le motif du rendez-vous..."></textarea>
+                    <textarea name="motif" id="motif" rows="3" required
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
+                        placeholder="Décrivez le motif du rendez-vous..."></textarea>
                 </div>
                 <div class="flex justify-end space-x-3 pt-4">
                     <button type="button" onclick="closeAddModal()"
-                            class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                        class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
                         Annuler
                     </button>
                     <button type="submit"
-                            class="px-4 py-2 bg-cordes-blue text-white rounded-lg hover:bg-cordes-dark transition-colors">
+                        class="px-4 py-2 bg-cordes-blue text-white rounded-lg hover:bg-cordes-dark transition-colors">
                         <i class="fas fa-save mr-2"></i>Enregistrer
                     </button>
                 </div>
@@ -299,17 +351,17 @@
                 <div>
                     <label for="edit_patient_id" class="block text-sm font-medium text-gray-700 mb-1">Patient</label>
                     <select name="patient_id" id="edit_patient_id" required
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                         <option value="">Sélectionnez un patient</option>
                         @foreach ($patients as $patient)
-                            <option value="{{ $patient->id }}">{{ $patient->nom }} {{ $patient->prenom }}</option>
+                            <option value="{{ $patient->id }}">{{ $patient->nom }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div>
                     <label for="edit_medecin_id" class="block text-sm font-medium text-gray-700 mb-1">Médecin</label>
                     <select name="medecin_id" id="edit_medecin_id" required
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                         <option value="">Sélectionnez un médecin</option>
                         @foreach ($medecins as $medecin)
                             <option value="{{ $medecin->id }}">{{ $medecin->nom }} {{ $medecin->prenom }}</option>
@@ -320,18 +372,18 @@
                     <div>
                         <label for="edit_date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
                         <input type="date" name="date" id="edit_date" required min="{{ date('Y-m-d') }}"
-                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
                     </div>
                     <div>
                         <label for="edit_heure" class="block text-sm font-medium text-gray-700 mb-1">Heure</label>
                         <input type="time" name="heure" id="edit_heure" required
-                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
                     </div>
                 </div>
                 <div>
                     <label for="edit_statut" class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
                     <select name="statut" id="edit_statut" required
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                         <option value="en attente">En attente</option>
                         <option value="confirmé">Confirmé</option>
                         <option value="annulé">Annulé</option>
@@ -339,17 +391,17 @@
                 </div>
                 <div>
                     <label for="edit_motif" class="block text-sm font-medium text-gray-700 mb-1">Motif</label>
-                    <textarea name="motif" id="edit_motif" rows="3"
-                              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
-                              placeholder="Décrivez le motif du rendez-vous..."></textarea>
+                    <textarea name="motif" id="edit_motif" rows="3" required
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
+                        placeholder="Décrivez le motif du rendez-vous..."></textarea>
                 </div>
                 <div class="flex justify-end space-x-3 pt-4">
                     <button type="button" onclick="closeEditModal()"
-                            class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                        class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
                         Annuler
                     </button>
                     <button type="submit"
-                            class="px-4 py-2 bg-cordes-blue text-white rounded-lg hover:bg-cordes-dark transition-colors">
+                        class="px-4 py-2 bg-cordes-blue text-white rounded-lg hover:bg-cordes-dark transition-colors">
                         <i class="fas fa-save mr-2"></i>Mettre à jour
                     </button>
                 </div>
@@ -373,7 +425,8 @@
                     // Ajouter un bouton de fermeture
                     const closeButton = document.createElement('button');
                     closeButton.innerHTML = '<i class="fas fa-times"></i>';
-                    closeButton.className = 'float-right text-current opacity-70 hover:opacity-100 transition-opacity ml-2';
+                    closeButton.className =
+                        'float-right text-current opacity-70 hover:opacity-100 transition-opacity ml-2';
                     closeButton.onclick = () => hideMessage(message);
                     message.appendChild(closeButton);
 
@@ -457,7 +510,8 @@
             }
 
             // Mettre à jour le compteur
-            document.getElementById('rdvCount').textContent = visibleCount + ' rendez-vous' + (visibleCount > 1 ? 's' : '') + ' au total';
+            document.getElementById('rdvCount').textContent = visibleCount + ' rendez-vous' + (visibleCount > 1 ? 's' :
+                '') + ' au total';
         }
 
         // Initialiser le masquage automatique au chargement de la page
@@ -491,7 +545,9 @@
                 return data;
             } catch (error) {
                 console.error('Erreur lors de la vérification des conflits:', error);
-                return { hasConflict: false };
+                return {
+                    hasConflict: false
+                };
             }
         }
 
@@ -512,7 +568,8 @@
             const today = new Date().toISOString().split('T')[0];
             if (selectedDate === today) {
                 const now = new Date();
-                const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+                const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(
+                    2, '0');
                 timeInput.min = currentTime;
             } else {
                 timeInput.removeAttribute('min');
@@ -549,7 +606,7 @@
 
         function openEditModal(rdv) {
             document.getElementById('editModal').classList.remove('hidden');
-            document.getElementById('editForm').action = `{{ url('/rendezvous') }}/${rdv.id}`;
+            document.getElementById('editForm').action = '/rendezvous/' + rdv.id;
             document.getElementById('edit_id').value = rdv.id;
             document.getElementById('edit_patient_id').value = rdv.patient_id;
             document.getElementById('edit_medecin_id').value = rdv.medecin_id;
@@ -592,29 +649,29 @@
             if (confirm('Êtes-vous sûr de vouloir supprimer ce rendez-vous ?')) {
                 // Utiliser fetch pour une suppression AJAX
                 fetch(`{{ url('/rendezvous') }}/${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': csrfToken,
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.message) {
-                        showTemporaryMessage(data.message, 'success');
-                        // Recharger la page après un court délai
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1000);
-                    } else if (data.error) {
-                        showTemporaryMessage(data.error, 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Erreur:', error);
-                    showTemporaryMessage('Erreur lors de la suppression.', 'error');
-                });
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.message) {
+                            showTemporaryMessage(data.message, 'success');
+                            // Recharger la page après un court délai
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                        } else if (data.error) {
+                            showTemporaryMessage(data.error, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur:', error);
+                        showTemporaryMessage('Erreur lors de la suppression.', 'error');
+                    });
             }
         }
 
@@ -639,4 +696,5 @@
         });
     </script>
 </body>
+
 </html>

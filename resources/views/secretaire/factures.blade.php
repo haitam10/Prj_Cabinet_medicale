@@ -22,17 +22,71 @@
             },
         };
     </script>
+    <style>
+        /* Styles pour l'impression */
+        @media print {
+            body>*:not(#printArea) {
+                display: none !important;
+            }
+
+            #printArea {
+                display: block !important;
+                width: 100%;
+                margin: 0;
+                padding: 20px;
+                box-sizing: border-box;
+                font-family: Arial, sans-serif;
+                color: #333;
+            }
+
+            #printArea h1,
+            #printArea h2,
+            #printArea h3 {
+                color: #000;
+            }
+
+            #printArea table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+            }
+
+            #printArea th,
+            #printArea td {
+                border: 1px solid #ddd;
+                padding: 8px;
+                text-align: left;
+            }
+
+            #printArea th {
+                background-color: #f2f2f2;
+            }
+
+            #printArea .text-right {
+                text-align: right;
+            }
+
+            #printArea .text-center {
+                text-align: center;
+            }
+
+            /* Masquer les éléments avec la classe no-print */
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
 </head>
 
 <body class="bg-gray-100 min-h-screen">
     <!-- SIDEBAR -->
-    <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50">
+    <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50 no-print">
         <div class="flex items-center justify-center h-16 bg-cordes-blue">
             <div class="flex items-center space-x-3">
                 <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
                     <i class="fas fa-cube text-cordes-blue text-lg"></i>
                 </div>
-                <span class="text-white text-xl font-bold">Espace Secrétaire</span>
+                <span class="text-white text-xl font-bold">C-M</span>
             </div>
         </div>
         <nav class="mt-8 px-4">
@@ -42,45 +96,68 @@
                     <i class="fas fa-home mr-3 text-cordes-accent group-hover:text-white"></i>
                     Dashboard
                 </a>
+
                 <a href="{{ route('secretaire.rendezvous') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-calendar-check mr-3 text-white"></i>
                     Rendez-vous
                 </a>
+
                 <a href="{{ route('secretaire.patients') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-user-injured mr-3 text-gray-400 group-hover:text-white"></i>
                     Patients
                 </a>
+
                 <a href="{{ route('secretaire.factures') }}"
                     class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
                     <i class="fas fa-file-invoice-dollar mr-3 text-gray-400 group-hover:text-white"></i>
                     Factures
                 </a>
+
                 <a href="{{ route('secretaire.paiements') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-credit-card mr-3 text-gray-400 group-hover:text-white"></i>
                     Paiements
                 </a>
+
+                @if (Auth::check() && Auth::user()->role === 'medecin')
+                    <a href="{{ route('secretaire.dossier-medical') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-file-medical mr-3 text-white"></i>
+                        Dossier Médical
+                    </a>
+                    <a href="{{ route('secretaire.calendrier') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-calendar-alt mr-3 text-gray-400 group-hover:text-white"></i>
+                        Calendrier
+                    </a>
+                @endif
             </div>
         </nav>
+        <!-- Section utilisateur avec bouton de déconnexion -->
         <div class="absolute bottom-4 left-4 right-4">
-            <div class="bg-gray-800 rounded-lg p-4">
-                <div class="flex items-center space-x-3">
-                    <img src="https://cdn-icons-png.flaticon.com/512/17003/17003310.png" alt="Secrétaire"
-                        class="w-10 h-10 rounded-full" />
-                    <div>
-                        <p class="text-white text-sm font-medium">Secrétaire</p>
-                        <p class="text-gray-400 text-xs">Connecté</p>
+            <div
+                class="bg-gray-800 rounded-lg p-4 group cursor-pointer hover:bg-red-600 transition-colors duration-200">
+                <form method="POST" action="{{ route('logout') }}" id="logout-form">
+                    @csrf
+                    <div class="flex items-center space-x-3" onclick="document.getElementById('logout-form').submit();">
+                        <img src="https://cdn-icons-png.flaticon.com/512/17003/17003310.png" alt="User"
+                            class="w-10 h-10 rounded-full">
+                        <div>
+                            <p class="text-white text-sm font-medium">{{ Auth::user()->nom ?? 'Utilisateur' }}</p>
+                            <p class="text-gray-400 text-xs">{{ ucfirst(Auth::user()->role ?? '') }} — <span
+                                    class="text-red-400">Se
+                                    déconnecter</span></p>
+                        </div>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
     </div>
-
     <!-- CONTENU PRINCIPAL -->
     <div class="ml-64">
-        <header class="bg-white shadow-sm border-b border-gray-200">
+        <header class="bg-white shadow-sm border-b border-gray-200 no-print">
             <div class="px-6 py-4 flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-semibold text-gray-900">Gestion des Factures</h1>
@@ -88,11 +165,9 @@
                 </div>
                 <button onclick="openAddModal()"
                     class="px-4 py-2 bg-cordes-blue text-white rounded-lg hover:bg-cordes-dark transition-colors">
-                    <i class="fas fa-plus mr-2"></i>Ajouter Facture
-                </button>
+                    <i class="fas fa-plus mr-2"></i>Ajouter Facture</button>
             </div>
         </header>
-
         <main class="p-6">
             @if (session('success'))
                 <div id="successMessage"
@@ -100,14 +175,12 @@
                     <i class="fas fa-check-circle mr-2"></i>{{ session('success') }}
                 </div>
             @endif
-
             @if (session('error'))
                 <div id="errorMessage"
                     class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 transition-opacity duration-500">
                     <i class="fas fa-exclamation-circle mr-2"></i>{{ session('error') }}
                 </div>
             @endif
-
             @if ($errors->any())
                 <div id="validationErrors"
                     class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 transition-opacity duration-500">
@@ -119,16 +192,14 @@
                     </ul>
                 </div>
             @endif
-
             <!-- Filtres et recherche -->
-            <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-6 no-print">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div class="relative">
                         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                         <input type="text" id="searchInput" placeholder="Rechercher une facture..."
                             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                     </div>
-
                     <div class="relative">
                         <i class="fas fa-filter absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                         <select id="statutFilter"
@@ -139,13 +210,11 @@
                             <option value="annulée">Annulée</option>
                         </select>
                     </div>
-
                     <div class="relative">
                         <i class="fas fa-calendar absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                         <input type="date" id="dateFilter"
                             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                     </div>
-
                     <div class="flex items-center text-sm text-gray-600">
                         <i class="fas fa-file-invoice-dollar mr-2"></i>
                         <span id="factureCount">{{ $factures->total() }}
@@ -153,7 +222,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="overflow-x-auto bg-white shadow rounded-xl">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
@@ -170,7 +238,8 @@
                                 Date</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Créée le</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider no-print">
                                 Actions</th>
                         </tr>
                     </thead>
@@ -187,36 +256,26 @@
                                         </div>
                                         <div>
                                             <div class="text-sm font-medium text-gray-900">
-                                                {{ $facture->patient->nom ?? 'N/A' }}
-                                            </div>
+                                                {{ $facture->patient->nom ?? 'N/A' }}</div>
                                             <div class="text-sm text-gray-500">
-                                                {{ $facture->patient->cin ?? 'N/A' }}
-                                            </div>
+                                                {{ $facture->patient->cin ?? 'N/A' }}</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ $facture->medecin->nom ?? 'N/A' }}
-                                </td>
+                                    {{ $facture->medecin->nom ?? 'N/A' }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    {{ number_format($facture->montant, 2) }} DH
-                                </td>
+                                    {{ number_format($facture->montant, 2) }} DH</td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span
-                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                        @if ($facture->statut === 'payée') bg-green-100 text-green-800 
-                                        @elseif($facture->statut === 'en_attente') bg-yellow-100 text-yellow-800 
-                                        @else bg-red-100 text-red-800 @endif">
-                                        {{ ucfirst(str_replace('_', ' ', $facture->statut)) }}
-                                    </span>
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @if ($facture->statut === 'payée') bg-green-100 text-green-800 @elseif($facture->statut === 'en_attente') bg-yellow-100 text-yellow-800 @else bg-red-100 text-red-800 @endif">
+                                        {{ ucfirst(str_replace('_', ' ', $facture->statut)) }}</span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ \Carbon\Carbon::parse($facture->date)->format('d/m/Y') }}
-                                </td>
+                                    {{ \Carbon\Carbon::parse($facture->date)->format('d/m/Y') }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ $facture->created_at->format('d/m/Y') }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    {{ $facture->created_at->format('d/m/Y') }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium no-print">
                                     <div class="flex space-x-2">
                                         <button onclick='openEditModal(@json($facture))'
                                             class="text-blue-600 hover:text-blue-800 transition-colors p-1 rounded hover:bg-blue-50">
@@ -226,6 +285,14 @@
                                             class="text-red-600 hover:text-red-800 transition-colors p-1 rounded hover:bg-red-50">
                                             <i class="fas fa-trash"></i>
                                         </button>
+                                        @if ($facture->statut === 'payée')
+                                            <button onclick="printFacture(this)"
+                                                class="text-green-600 hover:text-green-800 transition-colors p-1 rounded hover:bg-green-50"
+                                                title="Imprimer la facture"
+                                                data-facture-json="{{ json_encode($facture) }}">
+                                                <i class="fas fa-print"></i>
+                                            </button>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -240,9 +307,8 @@
                         @endforelse
                     </tbody>
                 </table>
-
                 @if ($factures->hasPages())
-                    <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+                    <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6 no-print">
                         {{ $factures->links() }}
                     </div>
                 @endif
@@ -251,7 +317,8 @@
     </div>
 
     <!-- MODAL AJOUTER FACTURE -->
-    <div id="addModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div id="addModal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden no-print">
         <div class="bg-white w-full max-w-lg rounded-lg shadow-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-semibold text-gray-800">Ajouter une nouvelle facture</h2>
@@ -271,35 +338,26 @@
                         @endforeach
                     </select>
                 </div>
-
                 <div>
                     <label for="medecin_id" class="block text-sm font-medium text-gray-700 mb-1">Médecin *</label>
                     <select name="medecin_id" id="medecin_id" required
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                         <option value="">Sélectionner un médecin</option>
                         @foreach ($medecins as $medecin)
-                            <option value="{{ $medecin->id }}"
-                                {{ $facture->medecin_id == $medecin->id ? 'selected' : '' }}>
-                                {{ $medecin->nom }}
-                            </option>
+                            <option value="{{ $medecin->id }}">{{ $medecin->nom }}</option>
                         @endforeach
                     </select>
                 </div>
-
                 <div>
                     <label for="secretaire_id" class="block text-sm font-medium text-gray-700 mb-1">Secrétaire</label>
                     <select name="secretaire_id" id="secretaire_id"
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                         <option value="">Sélectionner un secrétaire</option>
                         @foreach ($secretaires as $secretaire)
-                            <option value="{{ $secretaire->id }}"
-                                {{ $facture->secretaire_id == $secretaire->id ? 'selected' : '' }}>
-                                {{ $secretaire->nom }}
-                            </option>
+                            <option value="{{ $secretaire->id }}">{{ $secretaire->nom }}</option>
                         @endforeach
                     </select>
                 </div>
-
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label for="montant" class="block text-sm font-medium text-gray-700 mb-1">Montant (DH)
@@ -307,7 +365,6 @@
                         <input type="number" name="montant" id="montant" step="0.01" min="0" required
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                     </div>
-
                     <div>
                         <label for="statut" class="block text-sm font-medium text-gray-700 mb-1">Statut *</label>
                         <select name="statut" id="statut" required
@@ -319,16 +376,14 @@
                         </select>
                     </div>
                 </div>
-
                 <div>
                     <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Date *</label>
                     <input type="date" name="date" id="date" required readonly
                         value="{{ date('Y-m-d') }}"
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                 </div>
-
-
-                <div>
+                {{-- Removed "Utilisateur créateur" field as per request --}}
+                {{-- <div>
                     <label for="utilisateur_id" class="block text-sm font-medium text-gray-700 mb-1">Utilisateur
                         créateur *</label>
                     <select name="utilisateur_id" id="utilisateur_id" required
@@ -338,24 +393,22 @@
                             <option value="{{ $user->id }}">{{ $user->nom }}</option>
                         @endforeach
                     </select>
-                </div>
-
+                </div> --}}
                 <div class="flex justify-end space-x-3 pt-4">
                     <button type="button" onclick="closeAddModal()"
                         class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-                        Annuler
-                    </button>
+                        Annuler</button>
                     <button type="submit"
                         class="px-4 py-2 bg-cordes-blue text-white rounded-lg hover:bg-cordes-dark transition-colors">
-                        <i class="fas fa-save mr-2"></i>Enregistrer
-                    </button>
+                        <i class="fas fa-save mr-2"></i>Enregistrer</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- MODAL MODIFIER FACTURE -->
-    <div id="editModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div id="editModal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden no-print">
         <div class="bg-white w-full max-w-lg rounded-lg shadow-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-semibold text-gray-800">Modifier la facture</h2>
@@ -367,7 +420,6 @@
                 @csrf
                 @method('PUT')
                 <input type="hidden" name="id" id="edit_id">
-
                 <div>
                     <label for="edit_patient_id" class="block text-sm font-medium text-gray-700 mb-1">Patient
                         *</label>
@@ -379,7 +431,6 @@
                         @endforeach
                     </select>
                 </div>
-
                 <div>
                     <label for="edit_medecin_id" class="block text-sm font-medium text-gray-700 mb-1">Médecin
                         *</label>
@@ -387,14 +438,10 @@
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                         <option value="">Sélectionner un médecin</option>
                         @foreach ($medecins as $medecin)
-                            <option value="{{ $medecin->id }}"
-                                {{ $facture->medecin_id == $medecin->id ? 'selected' : '' }}>
-                                {{ $medecin->nom }}
-                            </option>
+                            <option value="{{ $medecin->id }}">{{ $medecin->nom }}</option>
                         @endforeach
                     </select>
                 </div>
-
                 <div>
                     <label for="edit_secretaire_id"
                         class="block text-sm font-medium text-gray-700 mb-1">Secrétaire</label>
@@ -402,14 +449,10 @@
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                         <option value="">Sélectionner un secrétaire</option>
                         @foreach ($secretaires as $secretaire)
-                            <option value="{{ $secretaire->id }}"
-                                {{ $facture->secretaire_id == $secretaire->id ? 'selected' : '' }}>
-                                {{ $secretaire->nom }}
-                            </option>
+                            <option value="{{ $secretaire->id }}">{{ $secretaire->nom }}</option>
                         @endforeach
                     </select>
                 </div>
-
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label for="edit_montant" class="block text-sm font-medium text-gray-700 mb-1">Montant (DH)
@@ -418,7 +461,6 @@
                             required
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                     </div>
-
                     <div>
                         <label for="edit_statut" class="block text-sm font-medium text-gray-700 mb-1">Statut *</label>
                         <select name="statut" id="edit_statut" required
@@ -430,28 +472,31 @@
                         </select>
                     </div>
                 </div>
-
                 <div>
                     <label for="edit_date" class="block text-sm font-medium text-gray-700 mb-1">Date *</label>
                     <input type="date" name="date" id="edit_date" required readonly
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                 </div>
-
                 <div class="flex justify-end space-x-3 pt-4">
                     <button type="button" onclick="closeEditModal()"
                         class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-                        Annuler
-                    </button>
+                        Annuler</button>
                     <button type="submit"
                         class="px-4 py-2 bg-cordes-blue text-white rounded-lg hover:bg-cordes-dark transition-colors">
-                        <i class="fas fa-save mr-2"></i>Mettre à jour
-                    </button>
+                        <i class="fas fa-save mr-2"></i>Mettre à jour</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- ZONE D'IMPRESSION (cachée par défaut) -->
+    <div id="printArea" style="display: none;">
+        <!-- Le contenu de la facture sera injecté ici par JavaScript -->
+    </div>
+
     <script>
+        console.log('Script de factures chargé !'); // Premier log pour vérifier si le script s'exécute
+
         // Configuration CSRF pour les requêtes AJAX
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
@@ -462,7 +507,6 @@
                 document.getElementById('errorMessage'),
                 document.getElementById('validationErrors')
             ];
-
             messages.forEach(message => {
                 if (message) {
                     // Ajouter un bouton de fermeture
@@ -497,25 +541,18 @@
             if (existingTemp) {
                 existingTemp.remove();
             }
-
             const messageDiv = document.createElement('div');
-            messageDiv.className = `temp-message mb-4 p-4 rounded-lg border transition-opacity duration-500 ${
-                type === 'success' 
-                    ? 'bg-green-100 text-green-800 border-green-200' 
-                    : 'bg-red-100 text-red-800 border-red-200'
-            }`;
-
+            messageDiv.className = `temp-message mb-4 p-4 rounded-lg border transition-opacity duration-500 ${type === 'success'
+                    ? 'bg-green-100 text-green-800 border-green-200'
+                    : 'bg-red-100 text-red-800 border-red-200'}`;
             messageDiv.innerHTML = `
-                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} mr-2"></i>
-                ${message}
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} mr-2"></i>${message}
                 <button onclick="hideMessage(this.parentElement)" class="float-right text-current opacity-70 hover:opacity-100 transition-opacity ml-2">
                     <i class="fas fa-times"></i>
                 </button>
             `;
-
             const main = document.querySelector('main');
             main.insertBefore(messageDiv, main.firstChild);
-
             setTimeout(() => {
                 hideMessage(messageDiv);
             }, 5000);
@@ -559,7 +596,6 @@
         // Initialiser le masquage automatique au chargement de la page
         document.addEventListener('DOMContentLoaded', function() {
             autoHideMessages();
-
             // Ajouter les événements de filtrage
             document.getElementById('searchInput').addEventListener('input', filterFactures);
             document.getElementById('statutFilter').addEventListener('change', filterFactures);
@@ -619,13 +655,166 @@
             }
         }
 
+        // Fonction pour imprimer la facture
+        function printFacture(buttonElement) {
+            console.log('printFacture a été appelée !');
+            const factureJson = buttonElement.getAttribute('data-facture-json');
+            let facture;
+            try {
+                facture = JSON.parse(factureJson);
+                console.log('Facture parsée avec succès:', facture);
+            } catch (e) {
+                console.error('Erreur lors du parsing JSON de la facture:', e);
+                // Pas d'alerte, juste un log pour le débogage
+                return;
+            }
+
+            const printArea = document.getElementById('printArea');
+            if (!printArea) {
+                console.error('Élément de zone d\'impression non trouvé !');
+                return;
+            }
+
+            const patientName = facture.patient ? facture.patient.nom : 'N/A';
+            const patientCin = facture.patient ? facture.patient.cin : 'N/A';
+            const medecinName = facture.medecin ? facture.medecin.nom : 'N/A';
+            const secretaireName = facture.secretaire ? facture.secretaire.nom : 'N/A';
+            const utilisateurName = facture.utilisateur ? facture.utilisateur.nom : 'N/A';
+
+            const formattedDate = new Date(facture.date).toLocaleDateString('fr-FR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            const createdAt = new Date(facture.created_at).toLocaleDateString('fr-FR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            const invoiceContent = `
+                <div style="max-width: 800px; margin: 0 auto; padding: 30px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h1 style="font-size: 28px; margin-bottom: 5px; color: #1e40af;">Facture Médicale</h1>
+                        <p style="font-size: 14px; color: #555;">Date d'émission: ${formattedDate}</p>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
+                        <div>
+                            <h2 style="font-size: 18px; margin-bottom: 10px; color: #333;">Informations du Cabinet</h2>
+                            <p style="font-size: 14px; line-height: 1.6;">
+                                Nom du Cabinet: Clinique C-M<br>
+                                Adresse: 123 Rue de la Santé, Ville<br>
+                                Téléphone: +212 5XX XXX XXX<br>
+                                Email: contact@cliniquecm.com
+                            </p>
+                        </div>
+                        <div style="text-align: right;">
+                            <h2 style="font-size: 18px; margin-bottom: 10px; color: #333;">Détails de la Facture</h2>
+                            <p style="font-size: 14px; line-height: 1.6;">
+                                Statut: <span style="font-weight: bold; color: green;">${ucfirst(facture.statut.replace('_', ' '))}</span><br>
+                                Créée le: ${createdAt}<br>
+                                Par: ${utilisateurName}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 30px;">
+                        <h2 style="font-size: 18px; margin-bottom: 10px; color: #333;">Informations du Patient</h2>
+                        <p style="font-size: 14px; line-height: 1.6;">
+                            Nom: ${patientName}<br>
+                            CIN: ${patientCin}
+                        </p>
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                        <thead>
+                            <tr>
+                                <th style="padding: 10px; border: 1px solid #ddd; background-color: #f2f2f2; text-align: left;">Description</th>
+                                <th style="padding: 10px; border: 1px solid #ddd; background-color: #f2f2f2; text-align: right;">Montant (DH)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding: 10px; border: 1px solid #ddd;">Consultation / Prestation Médicale</td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">${number_format(facture.montant, 2)}</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="1" style="padding: 10px; border: 1px solid #ddd; text-align: right; font-weight: bold;">Total à payer:</td>
+                                <td style="padding: 10px; border: 1px solid #ddd; text-align: right; font-weight: bold; font-size: 18px; color: #1e40af;">${number_format(facture.montant, 2)} DH</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <div style="margin-bottom: 30px;">
+                        <h2 style="font-size: 18px; margin-bottom: 10px; color: #333;">Détails du Personnel</h2>
+                        <p style="font-size: 14px; line-height: 1.6;">
+                            Médecin Traitant: ${medecinName}<br>
+                            Secrétaire: ${secretaireName}
+                        </p>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 50px; font-size: 12px; color: #777;">
+                        Merci de votre confiance.
+                        <p style="margin-top: 10px;">Ce document est une facture et ne nécessite pas de signature.</p>
+                    </div>
+                </div>
+            `;
+            printArea.innerHTML = invoiceContent;
+            console.log('Contenu de la zone d\'impression défini.');
+
+            const originalAfterPrint = window.onafterprint;
+            window.onafterprint = function() {
+                printArea.innerHTML = '';
+                window.onafterprint = originalAfterPrint;
+                console.log('Zone d\'impression nettoyée après impression.');
+            };
+
+            window.print();
+            console.log('window.print() appelée.');
+        }
+
+        // Helper function for ucfirst (from PHP)
+        function ucfirst(str) {
+            if (typeof str !== 'string' || str.length === 0) {
+                return '';
+            }
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        // Helper function for number_format (from PHP)
+        function number_format(number, decimals, decPoint, thousandsSep) {
+            number = (number + '').replace(/[^0-9+\-Ee.]/g, '');
+            var n = !isFinite(+number) ? 0 : +number,
+                prec = !isFinite(+decimals) ? 0 : Math.abs(decimals),
+                sep = (typeof thousandsSep === 'undefined') ? ' ' : thousandsSep,
+                dec = (typeof decPoint === 'undefined') ? '.' : decPoint,
+                s = '',
+                toFixedFix = function(n, prec) {
+                    var k = Math.pow(10, prec);
+                    return '' + Math.round(n * k) / k;
+                };
+
+            s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.');
+            if (s[0].length > 3) {
+                s[0] = s[0].replace(/\B(?=(?:\d{3})+(?!\d))/g, sep);
+            }
+            if ((s[1] || '').length < prec) {
+                s[1] = s[1] || '';
+                s[1] += new Array(prec - s[1].length + 1).join('0');
+            }
+            return s.join(dec);
+        }
+
+
         // Fermer les modales en cliquant à l'extérieur
         document.getElementById('addModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeAddModal();
             }
         });
-
         document.getElementById('editModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeEditModal();
