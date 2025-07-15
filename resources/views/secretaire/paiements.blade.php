@@ -44,37 +44,47 @@
                 <span class="text-white text-xl font-bold">Espace Secrétaire</span>
             </div>
         </div>
-        <nav class="mt-8 px-4">
+         <nav class="mt-8 px-4">
             <div class="space-y-2">
                 <a href="{{ route('secretaire.dashboard') }}"
-                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-home mr-3 text-cordes-accent group-hover:text-white"></i>
                     Dashboard
                 </a>
                 <a href="{{ route('secretaire.rendezvous') }}"
-                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-calendar-check mr-3 text-white"></i>
                     Rendez-vous
                 </a>
                 <a href="{{ route('secretaire.patients') }}"
-                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-user-injured mr-3 text-gray-400 group-hover:text-white"></i>
                     Patients
                 </a>
                 <a href="{{ route('secretaire.factures') }}"
-                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-file-invoice-dollar mr-3 text-gray-400 group-hover:text-white"></i>
                     Factures
                 </a>
                 <a href="{{ route('secretaire.paiements') }}"
-                    class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
+                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-credit-card mr-3 text-gray-400 group-hover:text-white"></i>
                     Paiements
                 </a>
-                <a href="{{ route('secretaire.docs') }}"
-                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                <a href="{{ route('secretaire.certificats') }}"
+                    class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
                     <i class="fas fa-file-medical mr-3 text-white"></i>
-                    Documents
+                    Certificats
+                </a>
+                <a href="{{ route('secretaire.ordonnances') }}"
+                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-file-medical mr-3 text-white"></i>
+                    Ordonnances
+                </a>
+                <a href="{{ route('secretaire.remarques') }}"
+                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-file-medical mr-3 text-white"></i>
+                    Remarques
                 </a>
             </div>
         </nav>

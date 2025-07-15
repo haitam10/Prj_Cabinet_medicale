@@ -90,10 +90,20 @@
                     <i class="fas fa-credit-card mr-3 text-gray-400 group-hover:text-white"></i>
                     Paiements
                 </a>
-                <a href="{{ route('secretaire.docs') }}"
+                <a href="{{ route('secretaire.certificats') }}"
                     class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
                     <i class="fas fa-file-medical mr-3 text-white"></i>
-                    Documents
+                    Certificats
+                </a>
+                <a href="{{ route('secretaire.ordonnances') }}"
+                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-file-medical mr-3 text-white"></i>
+                    Ordonnances
+                </a>
+                <a href="{{ route('secretaire.remarques') }}"
+                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-file-medical mr-3 text-white"></i>
+                    Remarques
                 </a>
             </div>
         </nav>
