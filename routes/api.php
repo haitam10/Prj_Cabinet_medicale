@@ -26,7 +26,7 @@ Route::apiResource('paiements', PaiementController::class);
 
 
 
-   // Route::post('/logout', [AuthController::class, 'logout's]);
+   // Route::post('/logout', [AuthController::class, 'logout']);
 //});
 
 
