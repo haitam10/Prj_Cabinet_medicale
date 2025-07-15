@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ordonnance;
+use App\Models\Patient;
+use App\Models\User;
+
+
 use Illuminate\Http\Request;
 
 class OrdonnanceController extends Controller
@@ -12,7 +16,7 @@ class OrdonnanceController extends Controller
      */
     public function index()
     {
-        return response()->json(Ordonnance::all());
+        //
     }
 
     /**
@@ -26,30 +30,60 @@ class OrdonnanceController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'patient_id' => 'required|exists:patients,id',
-            'medecin_id' => 'required|exists:users,id',
-            'date_ordonance' => 'required|date',
-            'medicaments' => 'required|string',
-            'duree_traitement' => 'required|string',
-            'instructions' => 'required|string',
-        ]);
-        $ordonnance = Ordonnance::create($validated);
-        return response()->json(['message' => 'Ordonnance créée', 'ordonnance' => $ordonnance], 201);
+   public function store(Request $request)
+{
+    $request->validate([
+        'patient_id' => 'required|exists:patients,id',
+        'medecin_id' => 'required|exists:users,id',
+        'medicaments' => 'required|string',
+        'instructions' => 'required|string',
+        'duree_traitement' => 'required|string',
+        'date_ordonnance' => 'required|date',
+    ]);
+
+    try {
+        $patient = Patient::findOrFail($request->patient_id);
+        $medecin = User::findOrFail($request->medecin_id);
+
+        $ordonnance = new Ordonnance();
+        $ordonnance->patient_id = $request->patient_id;
+        $ordonnance->medecin_id = $request->medecin_id;
+        $ordonnance->medicaments = $request->medicaments;
+        $ordonnance->instructions = $request->instructions;
+        $ordonnance->duree_traitement = $request->duree_traitement;
+        $ordonnance->date_ordonance = $request->date_ordonnance;
+        $ordonnance->save();
+
+        // Prepare for printing
+        $documentData = [
+            'patient_cin' => $patient->cin,
+            'patient_nom' => $patient->nom,
+            'medecin_nom' => $medecin->nom,
+            'medicaments' => $request->medicaments,
+            'instructions' => $request->instructions,
+            'duree_traitement' => $request->duree_traitement,
+            'date' => $request->date_ordonnance,
+        ];
+
+        session(['print_ordonnance' => $documentData]);
+
+        return redirect()->route('secretaire.ordonnances')
+            ->with('success', 'Ordonnance générée avec succès!')
+            ->with('print_document', true);
+
+    } catch (\Exception $e) {
+        return redirect()->back()
+            ->with('error', 'Erreur lors de la génération de l\'ordonnance: ' . $e->getMessage())
+            ->withInput();
     }
+}
 
     /**
      * Display the specified resource.
      */
-    public function show($id)
+    public function show(Ordonnance $ordonnance)
     {
-        $ordonnance = Ordonnance::find($id);
-        if (!$ordonnance) {
-            return response()->json(['message' => 'Ordonnance non trouvée'], 404);
-        }
-        return response()->json($ordonnance);
+        //
     }
 
     /**
@@ -63,34 +97,16 @@ class OrdonnanceController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Ordonnance $ordonnance)
     {
-        $ordonnance = Ordonnance::find($id);
-        if (!$ordonnance) {
-            return response()->json(['message' => 'Ordonnance non trouvée'], 404);
-        }
-        $validated = $request->validate([
-            'patient_id' => 'sometimes|exists:patients,id',
-            'medecin_id' => 'sometimes|exists:users,id',
-            'date_ordonance' => 'sometimes|date',
-            'medicaments' => 'sometimes|string',
-            'duree_traitement' => 'sometimes|string',
-            'instructions' => 'sometimes|string',
-        ]);
-        $ordonnance->update($validated);
-        return response()->json(['message' => 'Ordonnance mise à jour', 'ordonnance' => $ordonnance]);
+        //
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id)
+    public function destroy(Ordonnance $ordonnance)
     {
-        $ordonnance = Ordonnance::find($id);
-        if (!$ordonnance) {
-            return response()->json(['message' => 'Ordonnance non trouvée'], 404);
-        }
-        $ordonnance->delete();
-        return response()->json(['message' => 'Ordonnance supprimée']);
+        //
     }
 }

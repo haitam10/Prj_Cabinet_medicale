@@ -63,27 +63,52 @@
                 <span class="text-white text-xl font-bold">Espace Secrétaire</span>
             </div>
         </div>
-        <nav class="mt-8 px-4">
+         <nav class="mt-8 px-4">
             <div class="space-y-2">
-                <a href="{{ route('secretaire.dashboard') }}" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                <a href="{{ route('secretaire.dashboard') }}"
+                    class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
                     <i class="fas fa-home mr-3 text-cordes-accent group-hover:text-white"></i>
                     Dashboard
                 </a>
-                <a href="{{ route('secretaire.rendezvous') }}" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-users mr-3 text-gray-400 group-hover:text-white"></i>
+                <a href="{{ route('secretaire.rendezvous') }}"
+                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-calendar-check mr-3 text-gray-400 group-hover:text-white"></i>
                     Rendez-vous
                 </a>
-                <a href="{{ route('secretaire.patients') }}" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-chart-bar mr-3 text-gray-400 group-hover:text-white"></i>
+                <a href="{{ route('secretaire.patients') }}"
+                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-user-injured mr-3 text-gray-400 group-hover:text-white"></i>
                     Patients
                 </a>
-                <a href="{{ route('secretaire.factures') }}" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-shopping-cart mr-3 text-gray-400 group-hover:text-white"></i>
+                <a href="{{ route('secretaire.factures') }}"
+                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-file-invoice-dollar mr-3 text-gray-400 group-hover:text-white"></i>
                     Factures
                 </a>
-                <a href="{{ route('secretaire.docs') }}" class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
+                <a href="{{ route('secretaire.paiements') }}"
+                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-credit-card mr-3 text-gray-400 group-hover:text-white"></i>
+                    Paiements
+                </a>
+                <a href="{{ route('secretaire.certificats') }}"
+                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-file-medical mr-3 text-white"></i>
-                    Documents
+                    Certificats
+                </a>
+                <a href="{{ route('secretaire.ordonnances') }}"
+                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-prescription-bottle-medical mr-3 text-gray-400 group-hover:text-white"></i>
+                    Ordonnances
+                </a>
+                <a href="{{ route('secretaire.remarques') }}"
+                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-sticky-note mr-3 text-gray-400 group-hover:text-white"></i>
+                    Remarques
+                </a>
+                <a href="{{ route('secretaire.papier') }}"
+                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-cog mr-3 text-gray-400 group-hover:text-white"></i>
+                    Papier
                 </a>
             </div>
         </nav>
@@ -131,7 +156,8 @@
                     <div class="relative">
                         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                         <input type="text" id="searchInput" placeholder="Rechercher par patient..."
-                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
+                            value="{{ request('search') }}">
                     </div>
                     
                     <div class="relative">
@@ -139,9 +165,9 @@
                         <select id="typeFilter"
                             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent appearance-none">
                             <option value="">Tous les types</option>
-                            <option value="ordonnance">Ordonnance</option>
-                            <option value="certificat">Certificat</option>
-                            <option value="remarque">Remarque</option>
+                            <option value="ordonnance" {{ request('type') == 'ordonnance' ? 'selected' : '' }}>Ordonnance</option>
+                            <option value="certificat" {{ request('type') == 'certificat' ? 'selected' : '' }}>Certificat</option>
+                            <option value="remarque" {{ request('type') == 'remarque' ? 'selected' : '' }}>Remarque</option>
                         </select>
                     </div>
                     
@@ -150,16 +176,20 @@
                         <select id="medecinFilter"
                             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent appearance-none">
                             <option value="">Tous les médecins</option>
-                            <option value="Hamza">Dr. Hamza</option>
-                            <option value="Reda">Dr. Reda</option>
+                            {{-- Vous pouvez dynamiquement peupler les médecins ici si vous les passez depuis le contrôleur --}}
+                            {{-- @foreach($medecins as $medecin)
+                                <option value="{{ $medecin->nom }}" {{ request('medecin') == $medecin->nom ? 'selected' : '' }}>Dr. {{ $medecin->nom }}</option>
+                            @endforeach --}}
+                            <option value="Hamza" {{ request('medecin') == 'Hamza' ? 'selected' : '' }}>Dr. Hamza</option>
+                            <option value="Reda" {{ request('medecin') == 'Reda' ? 'selected' : '' }}>Dr. Reda</option>
                         </select>
                     </div>
                     
                     <div class="flex items-center text-sm text-gray-600">
                         <i class="fas fa-file-medical mr-2"></i>
                         <span id="documentCount">
-                            {{ count($documents['ordonnances']) + count($documents['certificats']) + count($documents['remarques']) }} 
-                            Document{{ (count($documents['ordonnances']) + count($documents['certificats']) + count($documents['remarques'])) > 1 ? 's' : '' }}
+                            {{ $documents->total() }} 
+                            Document{{ $documents->total() > 1 ? 's' : '' }}
                         </span>
                     </div>
                 </div>
@@ -178,31 +208,7 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        @php
-                            $allDocuments = [];
-                            
-                            // Add ordonnances
-                            foreach($documents['ordonnances'] as $ordonnance) {
-                                $allDocuments[] = $ordonnance;
-                            }
-                            
-                            // Add certificats
-                            foreach($documents['certificats'] as $certificat) {
-                                $allDocuments[] = $certificat;
-                            }
-                            
-                            // Add remarques
-                            foreach($documents['remarques'] as $remarque) {
-                                $allDocuments[] = $remarque;
-                            }
-                            
-                            // Sort by date (newest first)
-                            usort($allDocuments, function($a, $b) {
-                                return strtotime($b['date']) - strtotime($a['date']);
-                            });
-                        @endphp
-
-                        @forelse ($allDocuments as $doc)
+                        @forelse ($documents as $doc) {{-- Itérer directement sur la collection paginée $documents --}}
                             <tr class="hover:bg-gray-50 transition-colors" data-type="{{ $doc['type'] }}" data-medecin="{{ $doc['medecin_nom'] }}">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {{ $doc['patient_cin'] }}
@@ -249,6 +255,11 @@
                         @endforelse
                     </tbody>
                 </table>
+                @if($documents->hasPages())
+                    <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+                        {{ $documents->links() }}
+                    </div>
+                @endif
             </div>
         </main>
     </div>
@@ -584,39 +595,28 @@
             const searchInput = document.getElementById('searchInput');
             const typeFilter = document.getElementById('typeFilter');
             const medecinFilter = document.getElementById('medecinFilter');
-            const tableRows = document.querySelectorAll('tbody tr[data-type]');
+            
+            function applyFiltersAndReload() {
+                const searchTerm = searchInput.value;
+                const selectedType = typeFilter.value;
+                const selectedMedecin = medecinFilter.value;
 
-            function filterTable() {
-                const searchTerm = searchInput.value.toLowerCase();
-                const selectedType = typeFilter.value.toLowerCase();
-                const selectedMedecin = medecinFilter.value.toLowerCase();
-                let visibleCount = 0;
+                const url = new URL(window.location.href);
+                url.searchParams.set('search', searchTerm);
+                url.searchParams.set('type', selectedType);
+                url.searchParams.set('medecin', selectedMedecin);
+                url.searchParams.set('page', 1); // Réinitialiser à la première page lors du changement de filtre
 
-                tableRows.forEach(row => {
-                    const cin = row.cells[0].textContent.toLowerCase();
-                    const patientName = row.cells[1].textContent.toLowerCase();
-                    const documentType = row.getAttribute('data-type').toLowerCase();
-                    const medecinName = row.getAttribute('data-medecin').toLowerCase();
-                    
-                    const matchesSearch = patientName.includes(searchTerm) || cin.includes(searchTerm);
-                    const matchesType = !selectedType || documentType === selectedType;
-                    const matchesMedecin = !selectedMedecin || medecinName === selectedMedecin;
-                    
-                    if (matchesSearch && matchesType && matchesMedecin) {
-                        row.style.display = '';
-                        visibleCount++;
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-
-                // Update count
-                document.getElementById('documentCount').textContent = `${visibleCount} Document${visibleCount > 1 ? 's' : ''}`;
+                window.location.href = url.toString();
             }
 
-            searchInput.addEventListener('input', filterTable);
-            typeFilter.addEventListener('change', filterTable);
-            medecinFilter.addEventListener('change', filterTable);
+            // Utiliser 'input' pour la recherche en temps réel (ou 'change' pour un rechargement moins fréquent)
+            searchInput.addEventListener('input', applyFiltersAndReload); 
+            typeFilter.addEventListener('change', applyFiltersAndReload);
+            medecinFilter.addEventListener('change', applyFiltersAndReload);
+
+            // Les valeurs initiales des filtres sont déjà définies par Laravel dans le Blade (value="{{ request('search') }}", etc.)
+            // Donc pas besoin de les appliquer au chargement initial côté client.
         }
 
         // Event Listeners for clicking outside modals

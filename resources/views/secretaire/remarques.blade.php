@@ -4,10 +4,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Espace Secrétaire - Certificats</title>
+    <title>Espace Secrétaire - Remarques</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />*
-    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
@@ -24,23 +23,28 @@
             },
         };
     </script>
-    
     <style>
-        /* ONLY print styles - NO template styles in main page */
         @media print {
             body * {
                 visibility: hidden;
             }
-            #printFrame {
+            #printContent, #printContent * {
                 visibility: visible;
+            }
+            #printContent {
                 position: absolute;
                 left: 0;
                 top: 0;
                 width: 100%;
-                height: 100%;
+                background: white;
+                page-break-after: avoid;
             }
             .no-print {
                 display: none !important;
+            }
+            @page {
+                size: A4;
+                margin: 1cm;
             }
         }
     </style>
@@ -85,18 +89,18 @@
                     Paiements
                 </a>
                 <a href="{{ route('secretaire.certificats') }}"
-                    class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
-                    <i class="fas fa-file-medical mr-3 text-white"></i>
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-file-medical mr-3 text-gray-400 group-hover:text-white"></i>
                     Certificats
                 </a>
                 <a href="{{ route('secretaire.ordonnances') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-prescription-bottle-medical mr-3 text-gray-400 group-hover:text-white"></i>
                     Ordonnances
                 </a>
                 <a href="{{ route('secretaire.remarques') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-sticky-note mr-3 text-gray-400 group-hover:text-white"></i>
+                    class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
+                    <i class="fas fa-sticky-note mr-3 text-white"></i>
                     Remarques
                 </a>
                 <a href="{{ route('secretaire.papier') }}"
@@ -125,12 +129,12 @@
         <header class="bg-white shadow-sm border-b border-gray-200">
             <div class="px-6 py-4 flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-semibold text-gray-900">Gestion des Certificats</h1>
-                    <p class="text-gray-600 text-sm mt-1">Liste des certificats médicaux générés</p>
+                    <h1 class="text-2xl font-semibold text-gray-900">Gestion des Remarques</h1>
+                    <p class="text-gray-600 text-sm mt-1">Liste des remarques médicales générées</p>
                 </div>
                 <button onclick="openGenerateModal()"
-                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                    <i class="fas fa-plus mr-2"></i>Générer Certificat
+                    class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                    <i class="fas fa-plus mr-2"></i>Ajouter Remarque
                 </button>
             </div>
         </header>
@@ -168,10 +172,10 @@
                     </div>
                     
                     <div class="flex items-center text-sm text-gray-600">
-                        <i class="fas fa-file-medical mr-2 text-green-600"></i>
+                        <i class="fas fa-sticky-note mr-2 text-purple-600"></i>
                         <span id="documentCount">
                             {{ count($documents ?? []) }} 
-                            Certificat{{ count($documents ?? []) > 1 ? 's' : '' }}
+                            Remarque{{ count($documents ?? []) > 1 ? 's' : '' }}
                         </span>
                     </div>
                 </div>
@@ -183,7 +187,7 @@
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CIN</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PATIENT</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DOCUMENT</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">REMARQUE</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MÉDECIN</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AJOUTÉ LE</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACTIONS</th>
@@ -201,10 +205,8 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {{ $doc['patient_nom'] ?? '' }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <span class="inline-flex px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                                        {{ $doc['certificat_type'] ?? 'Certificat' }}
-                                    </span>
+                                <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
+                                    {{ Str::limit($doc['remarque'] ?? 'Non spécifié', 50) }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     Dr. {{ $doc['medecin_nom'] ?? '' }}
@@ -230,8 +232,8 @@
                         @empty
                             <tr id="emptyRow">
                                 <td colspan="6" class="px-6 py-12 text-center text-gray-500">
-                                    <i class="fas fa-file-medical text-4xl mb-2 text-gray-300"></i>
-                                    <p class="text-lg">Aucun certificat trouvé</p>
+                                    <i class="fas fa-sticky-note text-4xl mb-2 text-gray-300"></i>
+                                    <p class="text-lg">Aucune remarque trouvée</p>
                                 </td>
                             </tr>
                         @endforelse
@@ -241,79 +243,75 @@
         </main>
     </div>
 
-    <!-- MODAL GÉNERER CERTIFICAT -->
+    <!-- MODAL AJOUTER REMARQUE -->
     <div id="generateModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white w-full max-w-2xl rounded-lg shadow-xl m-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center p-6 border-b border-gray-200">
-                <h2 class="text-2xl font-semibold text-gray-800">Générer Certificat</h2>
+                <h2 class="text-2xl font-semibold text-gray-800">
+                    <i class="fas fa-sticky-note mr-2 text-purple-600"></i>Ajouter Remarque
+                </h2>
                 <button onclick="closeGenerateModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
             
-            <form action="{{ route('certificat.store') }}" method="POST" class="p-6">
+            {{-- <form action="{{ route('remarque.store') ?? '#' }}" method="POST" class="p-6"> --}}
+                <form action="#" method="POST" class="p-6">
                 @csrf
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Patient</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-user mr-1"></i>Patient
+                        </label>
                         <select name="patient_id" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
                             <option value="">Sélectionner un patient</option>
-                            @foreach($patients ?? [] as $patient)
-                            <option value="{{ $patient->id }}">{{ $patient->cin }} - {{ $patient->nom }}</option>
-                            @endforeach
+                            <!-- Add patients from controller -->
                         </select>
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Médecin</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-user-md mr-1"></i>Médecin
+                        </label>
                         <select name="medecin_id" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
                             <option value="">Sélectionner un médecin</option>
-                            @foreach($medecins ?? [] as $medecin)
-                            <option value="{{ $medecin->id }}">Dr. {{ $medecin->nom }}</option>
-                            @endforeach
+                            <option value="1">Dr. Hamza</option>
+                            <option value="2">Dr. Reda</option>
                         </select>
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Type de certificat</label>
-                        <select name="type" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
-                            <option value="">Sélectionner un type</option>
-                            <option value="Repos">Repos</option>
-                            <option value="Travail">Travail</option>
-                            <option value="Sport">Sport</option>
-                            <option value="École">École</option>
-                            <option value="Voyage">Voyage</option>
-                        </select>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-file-alt mr-1"></i>Remarque
+                        </label>
+                        <textarea name="remarque" rows="6" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none" placeholder="Saisir la remarque médicale..."></textarea>
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Contenu</label>
-                        <textarea name="contenu" rows="4" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none" placeholder="Contenu du certificat..."></textarea>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
-                        <input type="date" name="date_certificat" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-calendar mr-1"></i>Date
+                        </label>
+                        <input type="date" name="date_remarque" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
                     </div>
                 </div>
                 
                 <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200 mt-6">
                     <button type="button" onclick="closeGenerateModal()" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-                        Annuler
+                        <i class="fas fa-times mr-2"></i>Annuler
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                        <i class="fas fa-save mr-2"></i>Générer
+                    <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                        <i class="fas fa-save mr-2"></i>Ajouter
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- MODAL VISUALISATION CERTIFICAT -->
+    <!-- MODAL VISUALISATION REMARQUE -->
     <div id="viewModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white w-full max-w-4xl rounded-lg shadow-xl m-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center p-6 border-b border-gray-200">
-                <h2 id="modalTitle" class="text-2xl font-semibold text-gray-800">Certificat Médical</h2>
+                <h2 id="modalTitle" class="text-2xl font-semibold text-gray-800">Remarque Médicale</h2>
                 <button onclick="closeViewModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
                     <i class="fas fa-times text-xl"></i>
                 </button>
@@ -334,15 +332,9 @@
                                     <label class="block text-sm font-medium text-gray-600">Médecin</label>
                                     <p id="medecinInfo" class="text-gray-900"></p>
                                 </div>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-600">Type de certificat</label>
-                                        <p id="certificatType" class="text-gray-900"></p>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-600">Date</label>
-                                        <p id="documentDate" class="text-gray-900"></p>
-                                    </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-600">Date</label>
+                                    <p id="documentDate" class="text-gray-900"></p>
                                 </div>
                             </div>
                         </div>
@@ -351,10 +343,10 @@
                     <!-- Right Side - Document Content -->
                     <div class="space-y-6">
                         <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Contenu du Certificat</h3>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Contenu de la Remarque</h3>
                             <div>
-                                <label class="block text-sm font-medium text-gray-600">Contenu</label>
-                                <p id="contenu" class="text-gray-900 bg-white p-3 rounded border min-h-[120px]"></p>
+                                <label class="block text-sm font-medium text-gray-600">Remarque</label>
+                                <p id="remarque" class="text-gray-900 bg-white p-3 rounded border min-h-[120px]"></p>
                             </div>
                         </div>
                     </div>
@@ -372,18 +364,47 @@
         </div>
     </div>
 
-    <!-- HIDDEN IFRAME FOR PRINTING - NO TEMPLATE INCLUSION -->
-    <iframe id="printFrame" style="display: none;"></iframe>
-
-    <!-- AUTO PRINT SCRIPT -->
-    @if(session('print_document') && session('print_certificat'))
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const printData = @json(session('print_certificat'));
-                printCertificat(printData);
-            });
-        </script>
-    @endif
+    <!-- PRINT CONTENT (Hidden) -->
+    <div id="printContent" class="hidden print:block">
+        <div class="max-w-4xl mx-auto p-6 bg-white min-h-screen">
+            <div class="text-center mb-6 border-b-2 border-gray-300 pb-4">
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">REMARQUE MÉDICALE</h1>
+                <p class="text-gray-600">Cabinet Médical</p>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-6 mb-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b border-gray-200 pb-2">Informations Patient</h3>
+                    <div class="space-y-2">
+                        <div class="flex">
+                            <span class="font-medium text-gray-600 w-20">Patient:</span>
+                            <span id="printPatientInfo" class="text-gray-900"></span>
+                        </div>
+                        <div class="flex">
+                            <span class="font-medium text-gray-600 w-20">Médecin:</span>
+                            <span id="printMedecinInfo" class="text-gray-900"></span>
+                        </div>
+                        <div class="flex">
+                            <span class="font-medium text-gray-600 w-20">Date:</span>
+                            <span id="printDocumentDate" class="text-gray-900"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3 border-b border-gray-200 pb-2">Contenu</h3>
+                    <div>
+                        <span class="font-medium text-gray-600 block mb-1">Remarque:</span>
+                        <p id="printRemarque" class="text-gray-900 border-l-4 border-purple-500 pl-2 text-sm"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8 pt-4 border-t border-gray-300 text-center text-sm text-gray-600">
+                <p>Document généré le {{ date('d/m/Y à H:i') }}</p>
+            </div>
+        </div>
+    </div>
 
     <script>
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -409,7 +430,7 @@
                 }
             });
         }
-        
+
         function hideMessage(messageElement) {
             if (messageElement) {
                 messageElement.style.opacity = '0';
@@ -431,11 +452,10 @@
         function openViewModal(docData) {
             currentDocument = docData;
             
-            document.getElementById('patientInfo').textContent = `${docData.patient_cin} - ${docData.patient_nom}`;
-            document.getElementById('medecinInfo').textContent = `Dr. ${docData.medecin_nom}`;
-            document.getElementById('certificatType').textContent = docData.certificat_type || docData.type || 'Non spécifié';
-            document.getElementById('documentDate').textContent = new Date(docData.date).toLocaleDateString('fr-FR');
-            document.getElementById('contenu').textContent = docData.contenu || 'Non spécifié';
+            document.getElementById('patientInfo').textContent = `${docData.patient_cin || ''} - ${docData.patient_nom || ''}`;
+            document.getElementById('medecinInfo').textContent = `Dr. ${docData.medecin_nom || ''}`;
+            document.getElementById('documentDate').textContent = docData.date ? new Date(docData.date).toLocaleDateString('fr-FR') : '';
+            document.getElementById('remarque').textContent = docData.remarque || 'Non spécifié';
             
             document.getElementById('viewModal').classList.remove('hidden');
         }
@@ -447,226 +467,27 @@
 
         function openPrintModal(docData) {
             currentDocument = docData;
-            printCertificat(docData);
+            preparePrintContent();
+            window.print();
         }
 
         function printCurrentDocument() {
             if (currentDocument) {
-                printCertificat(currentDocument);
+                preparePrintContent();
+                window.print();
             }
         }
 
-        function printCertificat(data) {
-            const template = data.template || {};
+        function preparePrintContent() {
+            if (!currentDocument) return;
             
-            const certificatHTML = `
-                <!DOCTYPE html>
-                <html lang="fr">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Certificat Médical</title>
-                    <style>
-                        @page { 
-                            size: A4; 
-                            margin: 2cm; 
-                        }
-                        
-                        * {
-                            margin: 0;
-                            padding: 0;
-                            box-sizing: border-box;
-                        }
-
-                        body {
-                            font-family: 'Times New Roman', serif;
-                            line-height: 1.6;
-                            padding: 20px;
-                            width: 700px;
-                            margin: 0 auto;
-                            background: white;
-                            color: black;
-                        }
-
-                        .header {
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            margin-bottom: 30px;
-                        }
-                        
-                        .logo {
-                            max-height: 80px;
-                            max-width: 80px;
-                            object-fit: contain;
-                            margin-right: 20px;
-                        }
-
-                        .medical-symbol {
-                            margin-right: 30px;
-                        }
-
-                        .doctor-info {
-                            text-align: left;
-                        }
-
-                        .doctor-info h1 {
-                            font-size: 20px;
-                            font-weight: bold;
-                            margin-bottom: 10px;
-                            color: black;
-                        }
-
-                        .doctor-info p {
-                            margin: 2px 0;
-                            font-size: 12px;
-                            color: black;
-                        }
-
-                        .date-section {
-                            text-align: right;
-                            margin-bottom: 30px;
-                            font-weight: bold;
-                            color: black;
-                        }
-
-                        .document-title {
-                            text-align: center;
-                            font-size: 24px;
-                            font-weight: bold;
-                            letter-spacing: 2px;
-                            margin-bottom: 30px;
-                            color: black;
-                        }
-
-                        .doctor-signature-line {
-                            margin-bottom: 20px;
-                        }
-
-                        .doctor-signature-line p {
-                            color: black;
-                            font-weight: bold;
-                        }
-
-                        .patient-info {
-                            margin-bottom: 20px;
-                            font-size: 14px;
-                            color: black;
-                        }
-
-                        .content {
-                            margin: 20px 0;
-                            padding: 15px;
-                            border: 1px solid #ddd;
-                            min-height: 150px;
-                            background: #f9f9f9;
-                            color: black;
-                        }
-
-                        .signature-section {
-                            text-align: center;
-                            margin-top: 50px;
-                        }
-
-                        .signature-section p {
-                            color: black;
-                            font-weight: bold;
-                        }
-
-                        .signature-line {
-                            border-bottom: 2px solid #000;
-                            width: 200px;
-                            margin: 0 auto 10px;
-                        }
-                        
-                        .closing {
-                            text-align: center;
-                            margin: 30px 0;
-                            font-style: italic;
-                            color: black;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="header">
-                        ${template.logo_file_path ? 
-                            `<img src="/uploads/${template.logo_file_path}" alt="Logo" class="logo">` : 
-                            `<div class="medical-symbol">
-                                <svg width="60" height="60" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M50 10C30 10 15 25 15 45C15 65 30 80 50 80C70 80 85 65 85 45C85 25 70 10 50 10Z" stroke="black" stroke-width="2" fill="none"/>
-                                    <path d="M35 35L65 65M65 35L35 65" stroke="black" stroke-width="2"/>
-                                    <path d="M50 20L50 70M30 50L70 50" stroke="black" stroke-width="3"/>
-                                </svg>
-                            </div>`
-                        }
-                        
-                        <div class="doctor-info">
-                            <h1>${template.nom_cabinet || 'Cabinet Médical'}</h1>
-                            <p><strong>DR. ${data.medecin_nom.toUpperCase()}</strong></p>
-                            <p><strong>MÉDECIN - CHIRURGIEN</strong></p>
-                            ${template.desc_cabinet ? 
-                                `<p>${template.desc_cabinet}</p>` : 
-                                `<p>MÉDECINE GÉNÉRALE, PÉDIATRIE, MALADIES RESPIRATOIRES ET CUTANÉES</p>
-                                 <p>CHIRURGIE VÉNÉRIENNE, MAJEURE ET MINEURE</p>`
-                            }
-                            <p>Adresse: ${template.addr_cabinet || '123 Rue Médicale, Casablanca'} | Tél: ${template.tel_cabinet || '0522-123456'}</p>
-                        </div>
-                    </div>
-
-                    <div class="date-section">
-                        BONNE FOI, ${new Date(data.date).toLocaleDateString('fr-FR', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric'
-                        }).toUpperCase()}
-                    </div>
-
-                    <div class="document-title">CERTIFICAT MÉDICAL</div>
-
-                    <div class="doctor-signature-line">
-                        <p><strong>YO, Dr. ${data.medecin_nom}</strong></p>
-                        <p><strong>MÉDECIN CHIRURGIEN</strong></p>
-                    </div>
-
-                    <div class="patient-info">
-                        <strong>Patient:</strong> ${data.patient_cin} - ${data.patient_nom}<br>
-                        <strong>Type:</strong> ${data.type}<br>
-                        <strong>Date:</strong> ${new Date(data.date).toLocaleDateString('fr-FR')}
-                    </div>
-
-                    <div class="content">
-                        <strong>Certificat:</strong>
-                        <div style="margin-top: 10px; line-height: 1.8;">
-                            ${data.contenu.replace(/\n/g, '<br>')}
-                        </div>
-                    </div>
-
-                    <div class="closing">
-                        <p>Je vous prie d'agréer, Monsieur le Président, l'expression de mes</p>
-                        <p>sentiments distingués,</p>
-                    </div>
-
-                    <div class="signature-section">
-                        <div class="signature-line"></div>
-                        <p><strong>DR. ${data.medecin_nom.toUpperCase()}</strong></p>
-                        <p><strong>Chirurgien</strong></p>
-                    </div>
-                </body>
-                </html>
-            `;
-
-            // Create iframe and print
-            const printFrame = document.getElementById('printFrame');
-            printFrame.contentDocument.open();
-            printFrame.contentDocument.write(certificatHTML);
-            printFrame.contentDocument.close();
-            
-            setTimeout(() => {
-                printFrame.contentWindow.print();
-            }, 500);
+            document.getElementById('printPatientInfo').textContent = `${currentDocument.patient_cin || ''} - ${currentDocument.patient_nom || ''}`;
+            document.getElementById('printMedecinInfo').textContent = `Dr. ${currentDocument.medecin_nom || ''}`;
+            document.getElementById('printDocumentDate').textContent = currentDocument.date ? new Date(currentDocument.date).toLocaleDateString('fr-FR') : '';
+            document.getElementById('printRemarque').textContent = currentDocument.remarque || 'Non spécifié';
         }
 
-        // Search and Filter Functions
+        // FIXED Search and Filter Functions
         function setupSearchAndFilter() {
             const searchInput = document.getElementById('searchInput');
             const medecinFilter = document.getElementById('medecinFilter');
@@ -698,14 +519,14 @@
                 if (emptyRow) {
                     if (visibleCount === 0 && tableRows.length > 0) {
                         emptyRow.style.display = '';
-                        emptyRow.querySelector('p').textContent = 'Aucun certificat trouvé pour cette recherche';
+                        emptyRow.querySelector('p').textContent = 'Aucune remarque trouvée pour cette recherche';
                     } else {
                         emptyRow.style.display = 'none';
                     }
                 }
 
                 // Update count
-                document.getElementById('documentCount').textContent = `${visibleCount} Certificat${visibleCount > 1 ? 's' : ''}`;
+                document.getElementById('documentCount').textContent = `${visibleCount} Remarque${visibleCount > 1 ? 's' : ''}`;
             }
 
             if (searchInput) searchInput.addEventListener('input', filterTable);
@@ -738,7 +559,7 @@
             
             // Set current date
             const today = new Date().toISOString().split('T')[0];
-            const dateInput = document.querySelector('input[name="date_certificat"]');
+            const dateInput = document.querySelector('input[name="date_remarque"]');
             if (dateInput) {
                 dateInput.value = today;
             }

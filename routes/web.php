@@ -20,46 +20,46 @@ Route::get('/dashboard/medecin', function () {
     return 'Bienvenue Médecin !';
 });
 
-// Route::get('/medecin/certifDef', function () {
-//     $template = (object)[
-//         'logo_file_path' => 'cm_logo_default.png', // Make sure this file exists in public/uploads/ or public/storage/
-//         'nom_cabinet' => 'Cabinet du Dr. Dupont',
-//         'addr_cabinet' => '123 Rue de Paris, 75000 Paris',
-//         'tel_cabinet' => '01 23 45 67 89',
-//         'desc_cabinet' => 'Spécialiste en médecine générale',
-//     ];
+Route::get('/medecin/certifDef', function () {
+    $template = (object)[
+        'logo_file_path' => 'cm_logo_default.png', // Make sure this file exists in public/uploads/ or public/storage/
+        'nom_cabinet' => 'Cabinet du Dr. Dupont',
+        'addr_cabinet' => '123 Rue de Paris, 75000 Paris',
+        'tel_cabinet' => '01 23 45 67 89',
+        'desc_cabinet' => 'Spécialiste en médecine générale',
+    ];
 
-//     $patient_cin = 'AB123456';
-//     $patient_nom = 'Jean Martin';
-//     $date = now()->format('d/m/Y');
-//     $type = 'Consultation générale';
-//     $description = "Le patient présente des symptômes grippaux.\nRepos conseillé pendant 3 jours.";
-//     $medecin_nom = 'Dupont';
+    $patient_cin = 'AB123456';
+    $patient_nom = 'Jean Martin';
+    $date = now()->format('d/m/Y');
+    $type = 'Consultation générale';
+    $description = "Le patient présente des symptômes grippaux.\nRepos conseillé pendant 3 jours.";
+    $medecin_nom = 'Dupont';
 
-//     return view('secretaire.templates.certifDefault', compact(
-//         'template', 'patient_cin', 'patient_nom', 'date', 'type', 'description', 'medecin_nom'
-//     ));
-// })->name('templates.certifDefault');
+    return view('secretaire.templates.certifDefault', compact(
+        'template', 'patient_cin', 'patient_nom', 'date', 'type', 'description', 'medecin_nom'
+    ));
+})->name('templates.certifDefault');
 
-// Route::get('/medecin/ordnnDef', function () {
-//     $template = (object)[
-//         'logo_file_path' => 'cm_logo_default.png', // Ensure this is in /public/uploads/ or /public/storage/
-//         'addr_cabinet' => '123 Rue de Lyon, 69000 Lyon',
-//         'tel_cabinet' => '04 56 78 90 12',
-//     ];
+Route::get('/medecin/ordnnDef', function () {
+    $template = (object)[
+        'logo_file_path' => 'cm_logo_default.png', // Ensure this is in /public/uploads/ or /public/storage/
+        'addr_cabinet' => '123 Rue de Lyon, 69000 Lyon',
+        'tel_cabinet' => '04 56 78 90 12',
+    ];
 
-//     $patient_cin = 'CD654321';
-//     $patient_nom = 'Marie Durand';
-//     $date = now()->format('d/m/Y');
-//     $medicaments = "Paracétamol 500mg - 3x/jour\nIbuprofène 200mg - 2x/jour";
-//     $instructions = "Boire beaucoup d'eau\nRepos complet";
-//     $duree = 5;
-//     $medecin_nom = 'Durand';
+    $patient_cin = 'CD654321';
+    $patient_nom = 'Marie Durand';
+    $date = now()->format('d/m/Y');
+    $medicaments = "Paracétamol 500mg - 3x/jour\nIbuprofène 200mg - 2x/jour";
+    $instructions = "Boire beaucoup d'eau\nRepos complet";
+    $duree = 5;
+    $medecin_nom = 'Durand';
 
-//     return view('secretaire.templates.ordonnDefault', compact(
-//         'template', 'patient_cin', 'patient_nom', 'date', 'medicaments', 'instructions', 'duree', 'medecin_nom'
-//     ));
-// })->name('templates.ordonnDefault');
+    return view('secretaire.templates.ordonnDefault', compact(
+        'template', 'patient_cin', 'patient_nom', 'date', 'medicaments', 'instructions', 'duree', 'medecin_nom'
+    ));
+})->name('templates.ordonnDefault');
 
 
 Route::get('/dashboard/admin', function () {
@@ -108,6 +108,7 @@ Route::delete('/rendezvous/{rendezvous}', [RendezvousController::class, 'destroy
 Route::get('/rendezvous/{rendezvous}', [RendezvousController::class, 'show'])->name('rendezvous.show');
 Route::get('/rendezvous/{rendezvous}/edit', [RendezvousController::class, 'edit'])->name('rendezvous.edit');
 Route::get('/rendezvous/create', [RendezvousController::class, 'create'])->name('rendezvous.create');
+
 
 // Routes CRUD pour les patients
 Route::post('/patients', [PatientController::class, 'store'])->name('patients.store');

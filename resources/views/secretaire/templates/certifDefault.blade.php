@@ -1,151 +1,104 @@
-<!DOCTYPE html>
+{{-- <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Certificat Médicale</title>
-    <style>
-        @page { size: A4; margin: 5cm; }
-
-        html, body {
-            padding: 0;
-            margin: 0;
-        }
-
-        body {
-            font-family: 'Times New Roman', serif;
-            line-height: 1.6;
-            padding: 20px;
-            width: 700px;
-            margin: 0 auto; /* Centers the content horizontally */
-            background: white;
-        }
-
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 30px;
-        }
-        .logo {
-            max-height: 220px;
-            max-width: 220px;
-            object-fit: contain;
-        }
-
-        .medical-symbol {
-            margin-right: 30px;
-        }
-
-        .doctor-info {
-            text-align: left;
-        }
-
-        .doctor-info h1 {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        .doctor-info p {
-            margin: 2px 0;
-            font-size: 12px;
-        }
-
-        .date-section {
-            text-align: right;
-            margin-bottom: 30px;
-            font-weight: bold;
-        }
-
-        .document-title {
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            letter-spacing: 2px;
-            margin-bottom: 30px;
-        }
-
-        .doctor-signature-line {
-            margin-bottom: 20px;
-        }
-
-        .prescription-box {
-            border: 2px solid #000;
-            padding: 20px;
-            margin: 20px 0;
-            min-height: 200px;
-            background: #fff;
-        }
-
-        .prescription-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
-
-        .instructions-section {
-            margin: 20px 0;
-            padding: 15px;
-            background: #f9f9f9;
-            border-left: 4px solid #007bff;
-        }
-
-        .signature-section {
-            text-align: center;
-            margin-top: 50px;
-        }
-
-        .signature-line {
-            border-bottom: 2px solid #000;
-            width: 200px;
-            margin: 0 auto 10px;
-        }
-</style>
-
+    <title>Certificat Médical</title>
+   
 </head>
+
+@php
+    // Safely extract data from session or passed variables
+    $printData = session('print_certificat', []);
+    
+    // Create template object with safe property access
+    $templateData = $printData['template'] ?? [];
+    $template = (object) array_merge([
+        'nom_cabinet' => 'Cabinet Médical',
+        'addr_cabinet' => '123 Rue Médicale, Casablanca',
+        'tel_cabinet' => '0522-123456',
+        'desc_cabinet' => '',
+        'logo_file_path' => null,
+    ], $templateData);
+    
+    // Extract other variables with defaults
+    $medecin_nom = $printData['medecin_nom'] ?? $medecin_nom ?? '';
+    $patient_cin = $printData['patient_cin'] ?? $patient_cin ?? '';
+    $patient_nom = $printData['patient_nom'] ?? $patient_nom ?? '';
+    $type = $printData['type'] ?? $type ?? '';
+    $contenu = $printData['contenu'] ?? $contenu ?? $printData['description'] ?? '';
+    $date = $printData['date'] ?? $date ?? now()->format('Y-m-d');
+@endphp
+
 <body>
     <div class="header">
-        @if($template->logo_file_path)
+        @if(!empty($template->logo_file_path))
             <img src="{{ asset('uploads/' . $template->logo_file_path) }}" alt="Logo" class="logo">
+        @else
+            <!-- Default medical symbol if no logo -->
+            <div class="medical-symbol">
+                <svg width="60" height="60" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 10C30 10 15 25 15 45C15 65 30 80 50 80C70 80 85 65 85 45C85 25 70 10 50 10Z" stroke="black" stroke-width="2" fill="none"/>
+                    <path d="M35 35L65 65M65 35L35 65" stroke="black" stroke-width="2"/>
+                    <path d="M50 20L50 70M30 50L70 50" stroke="black" stroke-width="3"/>
+                </svg>
+            </div>
         @endif
-        <h1>{{ $template->nom_cabinet ?? 'Cabinet Médical' }}</h1>
-        <div class="cabinet-info">
-            @if($template->addr_cabinet)
-                <p>{{ $template->addr_cabinet }}</p>
-            @endif
-            @if($template->tel_cabinet)
-                <p>Tél: {{ $template->tel_cabinet }}</p>
-            @endif
-            @if($template->desc_cabinet)
+        
+        <div class="doctor-info">
+            <h1>{{ $template->nom_cabinet }}</h1>
+            <p><strong>DR. {{ strtoupper($medecin_nom) }}</strong></p>
+            <p><strong>MÉDECIN - CHIRURGIEN</strong></p>
+            @if(!empty($template->desc_cabinet))
                 <p>{{ $template->desc_cabinet }}</p>
+            @else
+                <p>MÉDECINE GÉNÉRALE, PÉDIATRIE, MALADIES RESPIRATOIRES ET CUTANÉES</p>
+                <p>CHIRURGIE VÉNÉRIENNE, MAJEURE ET MINEURE</p>
             @endif
+            <p>Adresse: {{ $template->addr_cabinet }} | Tél: {{ $template->tel_cabinet }}</p>
         </div>
     </div>
 
+    <!-- Date -->
+    <div class="date-section">
+        BONNE FOI, {{ strtoupper(\Carbon\Carbon::parse($date)->translatedFormat('d F Y')) }}
+    </div>
+
+    <!-- Title -->
     <div class="document-title">CERTIFICAT MÉDICAL</div>
 
+    <!-- Doctor Info -->
+    <div class="doctor-signature-line">
+        <p><strong>YO, Dr. {{ $medecin_nom }}</strong></p>
+        <p><strong>MÉDECIN CHIRURGIEN</strong></p>
+    </div>
+
+    <!-- Patient Info -->
     <div class="patient-info">
         <strong>Patient:</strong> {{ $patient_cin }} - {{ $patient_nom }}<br>
-        <strong>Date:</strong> {{ $date }}
+        <strong>Type:</strong> {{ $type }}<br>
+        <strong>Date:</strong> {{ \Carbon\Carbon::parse($date)->format('d/m/Y') }}
     </div>
 
+    <!-- Certificate Content -->
     <div class="content">
-        <p><strong>Type:</strong> {{ $type }}</p>
-        <div style="margin-top: 20px;">
-            <strong>Description:</strong>
-            <div style="margin-top: 10px; padding: 15px; border: 1px solid #ddd; min-height: 100px;">
-                {!! nl2br(e($description)) !!}
-            </div>
+        <strong>Certificat:</strong>
+        <div style="margin-top: 10px; line-height: 1.8;">
+            {!! nl2br(e($contenu)) !!}
         </div>
     </div>
 
+    <!-- Closing -->
+    <div style="text-align: center; margin: 30px 0; font-style: italic;">
+        <p>Je vous prie d'agréer, Monsieur le Président, l'expression de mes</p>
+        <p>sentiments distingués,</p>
+    </div>
+
+    <!-- Signature -->
     <div class="signature-section">
-        <p>Fait le {{ $date }}</p>
-        <div style="margin-top: 50px;">
-            <strong>Dr. {{ $medecin_nom }}</strong><br>
-            <em>Signature et cachet</em>
-        </div>
+        <div class="signature-line"></div>
+        <p><strong>DR. {{ strtoupper($medecin_nom) }}</strong></p>
+        <p><strong>Chirurgien</strong></p>
     </div>
 </body>
-</html>
+</html> --}}

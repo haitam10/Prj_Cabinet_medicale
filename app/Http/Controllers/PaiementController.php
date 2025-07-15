@@ -16,7 +16,7 @@ class PaiementController extends Controller
             return response()->json($paiements);
         }
 
-        return view('paiements.index', compact('paiements'));
+        return view('secretaire.paiements', compact('paiements'));
     }
 
     public function create()

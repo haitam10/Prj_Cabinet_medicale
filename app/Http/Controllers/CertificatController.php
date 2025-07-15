@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Certificat;
+use App\Models\CertifDoc;
+use App\Models\Patient;
+use App\Models\User;
+
 use Illuminate\Http\Request;
 
 class CertificatController extends Controller
@@ -12,7 +16,7 @@ class CertificatController extends Controller
      */
     public function index()
     {
-        return response()->json(Certificat::all());
+        //
     }
 
     /**
@@ -26,29 +30,74 @@ class CertificatController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'patient_id' => 'required|exists:patients,id',
-            'medecin_id' => 'required|exists:users,id',
-            'date_certificat' => 'required|date',
-            'type' => 'required|in:arrêt maladie,aptitude,autre',
-            'contenu' => 'required|string',
-        ]);
-        $certificat = Certificat::create($validated);
-        return response()->json(['message' => 'Certificat créé', 'certificat' => $certificat], 201);
-    }
+  public function store(Request $request)
+{
+    $request->validate([
+        'patient_id' => 'required|exists:patients,id',
+        'medecin_id' => 'required|exists:users,id',
+        'type' => 'required|string',
+        'contenu' => 'required|string',
+        'date_certificat' => 'required|date',
+    ]);
 
+    try {
+        $patient = Patient::findOrFail($request->patient_id);
+        $medecin = User::findOrFail($request->medecin_id);
+        
+        // Save to DB
+        $certificat = new Certificat();
+        $certificat->patient_id = $request->patient_id;
+        $certificat->medecin_id = $request->medecin_id;
+        $certificat->date_certificat = $request->date_certificat;
+        $certificat->type = $request->type;
+        $certificat->contenu = $request->contenu;
+        $certificat->save();
+
+        // Get selected template for the doctor
+        $template = CertifDoc::where('id_docteur', $medecin->id)
+            ->where('is_selected', true)
+            ->first();
+
+        // Create template object with default values
+        $templateData = [
+            'nom_cabinet' => $template->nom_cabinet ?? 'Cabinet Médical',
+            'addr_cabinet' => $template->addr_cabinet ?? '123 Rue Médicale, Casablanca',
+            'tel_cabinet' => $template->tel_cabinet ?? '0522-123456',
+            'desc_cabinet' => $template->desc_cabinet ?? '',
+            'logo_file_path' => $template->logo_file_path ?? null,
+        ];
+
+        // Prepare printable data with template details
+        $documentData = [
+            'patient_cin' => $patient->cin,
+            'patient_nom' => $patient->nom,
+            'medecin_id' => $medecin->id,
+            'medecin_nom' => $medecin->nom,
+            'type' => $request->type,
+            'contenu' => $request->contenu,
+            'description' => $request->contenu,
+            'date' => $request->date_certificat,
+            'template' => $templateData, // pass template data as array
+        ];
+
+        session(['print_certificat' => $documentData]);
+
+        return redirect()->route('secretaire.certificats')
+            ->with('success', 'Certificat généré avec succès!')
+            ->with('print_document', true);
+
+    } catch (\Exception $e) {
+        return redirect()->back()
+            ->with('error', 'Erreur lors de la génération du certificat: ' . $e->getMessage())
+            ->withInput();
+    }
+}
     /**
      * Display the specified resource.
      */
-    public function show($id)
+    public function show(Certificat $certificat)
     {
-        $certificat = Certificat::find($id);
-        if (!$certificat) {
-            return response()->json(['message' => 'Certificat non trouvé'], 404);
-        }
-        return response()->json($certificat);
+        //
     }
 
     /**
@@ -62,33 +111,16 @@ class CertificatController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Certificat $certificat)
     {
-        $certificat = Certificat::find($id);
-        if (!$certificat) {
-            return response()->json(['message' => 'Certificat non trouvé'], 404);
-        }
-        $validated = $request->validate([
-            'patient_id' => 'sometimes|exists:patients,id',
-            'medecin_id' => 'sometimes|exists:users,id',
-            'date_certificat' => 'sometimes|date',
-            'type' => 'sometimes|in:arrêt maladie,aptitude,autre',
-            'contenu' => 'sometimes|string',
-        ]);
-        $certificat->update($validated);
-        return response()->json(['message' => 'Certificat mis à jour', 'certificat' => $certificat]);
+        //
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id)
+    public function destroy(Certificat $certificat)
     {
-        $certificat = Certificat::find($id);
-        if (!$certificat) {
-            return response()->json(['message' => 'Certificat non trouvé'], 404);
-        }
-        $certificat->delete();
-        return response()->json(['message' => 'Certificat supprimé']);
+        //
     }
 }

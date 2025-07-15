@@ -3,176 +3,253 @@
 namespace App\Http\Controllers;
 
 use App\Models\Certificat;
-use App\Models\Facture;
 use App\Models\Ordonnance;
-use App\Models\User;
+use App\Models\User; // Assuming User model is for doctors
 use App\Models\Patient;
 use App\Models\Remarque;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Log; // Cette ligne est cruciale pour Intelephense
 
 class DocumentController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-  public function index(Request $request){
-    $ordonns = Ordonnance::with(['patient', 'medecin'])->paginate(5);
-    $certifs = Certificat::with(['patient', 'medecin'])->paginate(5);
-    $remarqs = Remarque::with(['patient', 'medecin'])->paginate(5);
-
-    if ($request->wantsJson()) {
-        return response()->json([
-            'ordonnances' => $ordonns,
-            'certificats' => $certifs,
-            'remarques' => $remarqs,
-        ]);
-    }
-
-    // Build the documents array for the Blade view
-    $documents = [
-        'ordonnances' => $ordonns->map(function ($item) {
-            return [
-                'id' => $item->id,
-                'type' => 'ordonnance', // Fixed typo here
-                'patient_cin' => $item->patient->cin ?? null,
-                'patient_nom' => $item->patient->nom ?? null,
-                'medecin_nom' => $item->medecin->nom ?? null,
-                'instructions' => $item->instructions ?? null,
-                'medicaments' => $item->medicaments ?? null,
-                'duree_traitement' => $item->duree_traitement ?? null,
-                'date' => $item->date_ordonance ?? null, // Unified date field
-            ];
-        }),
-        'certificats' => $certifs->map(function ($item) {
-            return [
-                'id' => $item->id,
-                'type' => 'certificat',
-                'patient_cin' => $item->patient->cin ?? null,
-                'patient_nom' => $item->patient->nom ?? null,
-                'medecin_nom' => $item->medecin->nom ?? null,
-                'certificat_type' => $item->type ?? null, // Renamed to avoid conflict
-                'contenu' => $item->contenu ?? null,
-                'date' => $item->date_certificat ?? null, // Unified date field
-            ];
-        }),
-        'remarques' => $remarqs->map(function ($item) {
-            return [
-                'id' => $item->id,
-                'type' => 'remarque',
-                'patient_cin' => $item->patient->cin ?? null,
-                'patient_nom' => $item->patient->nom ?? null,
-                'medecin_nom' => $item->medecin->nom ?? null,
-                'remarque' => $item->remarque ?? null,
-                'date' => $item->date_remarque ?? null, // Unified date field
-            ];
-        }),
-    ];
-
-    return view('secretaire.documents', compact('documents'));
-}
-
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create(Request $request)
-    {
-        if ($request->wantsJson()) {
-            return response()->json(['message' => 'Formulaire non disponible via API'], 405);
+    public function showCerts(Request $request)
+        {
+            $documents = null;
+            
+            try {
+                $search = $request->query('search');
+                $medecinFilter = $request->query('medecin');
+                
+                $certificatsQuery = Certificat::with(['patient', 'medecin']);
+                
+                // Apply filters
+                if ($search) {
+                    $certificatsQuery->whereHas('patient', function ($q) use ($search) {
+                        $q->where('nom', 'like', '%' . $search . '%')
+                        ->orWhere('prenom', 'like', '%' . $search . '%')
+                        ->orWhere('cin', 'like', '%' . $search . '%');
+                    });
+                }
+                
+                if ($medecinFilter) {
+                    $certificatsQuery->whereHas('medecin', function ($q) use ($medecinFilter) {
+                        $q->where('nom', 'like', '%' . $medecinFilter . '%');
+                    });
+                }
+                
+                $certificats = $certificatsQuery->orderBy('date_certificat', 'desc')->get();
+                
+                // Map certificates to common format
+                $mappedCertificats = $certificats->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'type' => 'certificat',
+                        'patient_cin' => $item->patient->cin ?? 'N/A',
+                        'patient_nom' => ($item->patient->nom ?? 'N/A') . ' ' . ($item->patient->prenom ?? ''),
+                        'medecin_nom' => $item->medecin->nom ?? 'N/A',
+                        'certificat_type' => 'Certificat',
+                        'contenu' => $item->contenu ?? null,
+                        'date' => $item->date_certificat ?? null,
+                    ];
+                });
+                
+                // Manual pagination
+                $perPage = 10;
+                $currentPage = LengthAwarePaginator::resolveCurrentPage();
+                $currentItems = $mappedCertificats->slice(($currentPage - 1) * $perPage, $perPage)->values();
+                
+                $documents = new LengthAwarePaginator(
+                    $currentItems,
+                    $mappedCertificats->count(),
+                    $perPage,
+                    $currentPage,
+                    ['path' => $request->url(), 'query' => $request->query()]
+                );
+                $patients = Patient::all();
+                $medecins = User::where('role', 'medecin')->get();
+                
+            } catch (\Exception $e) {
+                $documents = new LengthAwarePaginator(
+                    collect([]), 0, 10, 1,
+                    ['path' => $request->url(), 'query' => $request->query()]
+                );
+                Log::error("Erreur dans DocumentController@showCerts: " . $e->getMessage());
+            }
+            
+            if ($request->wantsJson()) {
+               return response()->json([
+                    'documents' => $documents,
+                    'patients' => $patients,
+                    'medecins' => $medecins,
+                ]);
+            }
+            
+            return view('secretaire.certificats', compact('documents','patients','medecins'));
         }
 
-        return view('factures.create');
-    }
+/**
+ * Display ordonnances listing
+ */
+    public function showOrds(Request $request)
+        {
+            $documents = null;
+            
+            try {
+                $search = $request->query('search');
+                $medecinFilter = $request->query('medecin');
+                
+                $ordonnancesQuery = Ordonnance::with(['patient', 'medecin']);
+                
+                // Apply filters
+                if ($search) {
+                    $ordonnancesQuery->whereHas('patient', function ($q) use ($search) {
+                        $q->where('nom', 'like', '%' . $search . '%')
+                        ->orWhere('prenom', 'like', '%' . $search . '%')
+                        ->orWhere('cin', 'like', '%' . $search . '%');
+                    });
+                }
+                
+                if ($medecinFilter) {
+                    $ordonnancesQuery->whereHas('medecin', function ($q) use ($medecinFilter) {
+                        $q->where('nom', 'like', '%' . $medecinFilter . '%');
+                    });
+                }
+                
+                $ordonnances = $ordonnancesQuery->orderBy('date_ordonance', 'desc')->get();
+                
+                // Map ordonnances to common format
+                $mappedOrdonnances = $ordonnances->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'type' => 'ordonnance',
+                        'patient_cin' => $item->patient->cin ?? 'N/A',
+                        'patient_nom' => ($item->patient->nom ?? 'N/A') . ' ' . ($item->patient->prenom ?? ''),
+                        'medecin_nom' => $item->medecin->nom ?? 'N/A',
+                        'instructions' => $item->instructions ?? null,
+                        'medicaments' => $item->medicaments ?? null,
+                        'duree_traitement' => $item->duree_traitement ?? null,
+                        'date' => $item->date_ordonance ?? null,
+                    ];
+                });
+                
+                // Manual pagination
+                $perPage = 10;
+                $currentPage = LengthAwarePaginator::resolveCurrentPage();
+                $currentItems = $mappedOrdonnances->slice(($currentPage - 1) * $perPage, $perPage)->values();
+                
+                $documents = new LengthAwarePaginator(
+                    $currentItems,
+                    $mappedOrdonnances->count(),
+                    $perPage,
+                    $currentPage,
+                    ['path' => $request->url(), 'query' => $request->query()]
+                );
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'patient_id' => 'required|exists:patients,id',
-            'medecin_id' => 'required|exists:users,id',
-            'secretaire_id' => 'nullable|exists:users,id',
-            'montant' => 'required|numeric|min:0',
-            'statut' => 'required|string|in:en attente,payée',
-            'date' => 'required|date',
-            // 'utilisateur_id' => 'required|exists:users,id',
-        ]);
-
-        $facture = Facture::create($validated);
-
-        if ($request->wantsJson()) {
-            return response()->json([
-                'message' => 'Facture créée avec succès.',
-                'facture' => $facture
-            ], 201);
+                $patients = Patient::all();
+                $medecins = User::where('role', 'medecin')->get();
+                
+            } catch (\Exception $e) {
+                $documents = new LengthAwarePaginator(
+                    collect([]), 0, 10, 1,
+                    ['path' => $request->url(), 'query' => $request->query()]
+                );
+                Log::error("Erreur dans DocumentController@showOrds: " . $e->getMessage());
+            }
+            
+            if ($request->wantsJson()) {
+               return response()->json([
+                    'documents' => $documents,
+                    'patients' => $patients,
+                    'medecins' => $medecins,
+                ]);
+            }
+            
+            return view('secretaire.ordonnances', compact('documents','patients','medecins'));
         }
 
-        return redirect()->back()->with('success', 'Facture créée avec succès.');
-    }
-
     /**
-     * Display the specified resource.
+     * Display remarques listing
      */
-    public function show(Request $request, Facture $facture)
-    {
-        if ($request->wantsJson()) {
-            return response()->json($facture);
+    public function showRems(Request $request)
+        {
+            $documents = null;
+            
+            try {
+                $search = $request->query('search');
+                $medecinFilter = $request->query('medecin');
+                
+                $remarquesQuery = Remarque::with(['patient', 'medecin']);
+                
+                // Apply filters
+                if ($search) {
+                    $remarquesQuery->whereHas('patient', function ($q) use ($search) {
+                        $q->where('nom', 'like', '%' . $search . '%')
+                        ->orWhere('prenom', 'like', '%' . $search . '%')
+                        ->orWhere('cin', 'like', '%' . $search . '%');
+                    });
+                }
+                
+                if ($medecinFilter) {
+                    $remarquesQuery->whereHas('medecin', function ($q) use ($medecinFilter) {
+                        $q->where('nom', 'like', '%' . $medecinFilter . '%');
+                    });
+                }
+                
+                $remarques = $remarquesQuery->orderBy('date_remarque', 'desc')->get();
+                
+                // Map remarques to common format
+                $mappedRemarques = $remarques->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'type' => 'remarque',
+                        'patient_cin' => $item->patient->cin ?? 'N/A',
+                        'patient_nom' => ($item->patient->nom ?? 'N/A') . ' ' . ($item->patient->prenom ?? ''),
+                        'medecin_nom' => $item->medecin->nom ?? 'N/A',
+                        'remarque' => $item->remarque ?? null,
+                        'date' => $item->date_remarque ?? null,
+                    ];
+                });
+                
+                // Manual pagination
+                $perPage = 10;
+                $currentPage = LengthAwarePaginator::resolveCurrentPage();
+                $currentItems = $mappedRemarques->slice(($currentPage - 1) * $perPage, $perPage)->values();
+                
+                $documents = new LengthAwarePaginator(
+                    $currentItems,
+                    $mappedRemarques->count(),
+                    $perPage,
+                    $currentPage,
+                    ['path' => $request->url(), 'query' => $request->query()]
+                );
+                $patients = Patient::all();
+                $medecins = User::where('role', 'medecin')->get();
+                
+            } catch (\Exception $e) {
+                $documents = new LengthAwarePaginator(
+                    collect([]), 0, 10, 1,
+                    ['path' => $request->url(), 'query' => $request->query()]
+                );
+                Log::error("Erreur dans DocumentController@showRems: " . $e->getMessage());
+            }
+            
+            if ($request->wantsJson()) {
+               return response()->json([
+                    'documents' => $documents,
+                    'patients' => $patients,
+                    'medecins' => $medecins,
+                ]);
+            }
+            
+            return view('secretaire.remarques', compact('documents','patients','medecins'));
         }
 
-        return view('factures.show', compact('facture'));
+    
+    
+
     }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Request $request, Facture $facture)
-    {
-        if ($request->wantsJson()) {
-            return response()->json(['message' => 'Formulaire non disponible via API'], 405);
-        }
-
-        return view('factures.edit', compact('facture'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Facture $facture)
-    {
-        $validated = $request->validate([
-            'patient_id' => 'required|exists:patients,id',
-            'medecin_id' => 'required|exists:users,id',
-            'secretaire_id' => 'nullable|exists:users,id',
-            'montant' => 'required|numeric|min:0',
-            'statut' => 'required|string',
-            'date' => 'required|date',
-            // 'utilisateur_id' => 'required|exists:users,id',
-        ]);
-
-        $facture->update($validated);
-
-        if ($request->wantsJson()) {
-            return response()->json([
-                'message' => 'Facture mise à jour avec succès.',
-                'facture' => $facture
-            ]);
-        }
-
-        return redirect()->route('factures.index')->with('success', 'Facture mise à jour avec succès.');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Request $request, Facture $facture)
-    {
-        $facture->delete();
-
-        if ($request->wantsJson()) {
-            return response()->json(['message' => 'Facture supprimée avec succès.']);
-        }
-
-        return redirect()->route('factures.index')->with('success', 'Facture supprimée avec succès.');
-    }
-}
