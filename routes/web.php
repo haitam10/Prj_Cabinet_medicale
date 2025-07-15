@@ -11,7 +11,10 @@ use App\Http\Controllers\DocumentController; // Assurez-vous que cette ligne est
 use App\Http\Controllers\PapierController;
 use App\Http\Controllers\CertificatController;
 use App\Http\Controllers\OrdonnanceController;
+use App\Http\Controllers\DossierMedicalController;
+use App\Http\Controllers\CalendrierController;
 
+// Page de connexion
 Route::get('/', function () {
     return view('auth.login');
 })->name('login');
@@ -72,20 +75,32 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
 Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register.form');
 
-// Routes secrétaire spécifiques
-Route::get('/secretaire/dashboard', [AuthController::class, 'secretDash'])->name('secretaire.dashboard');
+// Toutes les routes protégées par auth
+Route::middleware(['auth'])->group(function () {
 
-// Route pour la page des rendez-vous (via controller)
-Route::get('/secretaire/rendezvous', [RendezvousController::class, 'index'])->name('secretaire.rendezvous');
+    Route::get('/dashboard/medecin', function () {
+        return 'Bienvenue Médecin !';
+    });
 
-// Route pour la page des patients (via controller)
-Route::get('/secretaire/patients', [PatientController::class, 'index'])->name('secretaire.patients');
+    Route::get('/dashboard/admin', function () {
+        return 'Bienvenue Admin !';
+    });
 
-// Route pour la page des factures (via controller)
-Route::get('/secretaire/factures', [FactureController::class, 'index'])->name('secretaire.factures');
+    // Espace secrétaire accessible aux secrétaires ET médecins
+    Route::prefix('secretaire')->name('secretaire.')->middleware('role:secretaire|medecin')->group(function () {
+        Route::get('/dashboard', [AuthController::class, 'secretDash'])->name('dashboard');
+        Route::get('/patients', [PatientController::class, 'index'])->name('patients');
+        Route::get('/factures', [FactureController::class, 'index'])->name('factures');
+        Route::get('/factures/print/{facture}', [FactureController::class, 'print'])->name('factures.print');
+        Route::get('/rendezvous', [RendezvousController::class, 'index'])->name('rendezvous');
+        Route::get('/paiements', [PaiementController::class, 'index'])->name('paiements');
+        Route::get('/docs', [DocumentController::class, 'index'])->name('docs');
+    });
 
-// Route pour la page des paiements (via controller)
-Route::get('/secretaire/paiements', [PaiementController::class, 'index'])->name('secretaire.paiements');
+    // Routes dossier médical et calendrier accessibles UNIQUEMENT au médecin
+    Route::prefix('secretaire')->name('secretaire.')->middleware('role:medecin')->group(function () {
+        Route::get('/dossier-medical', [DossierMedicalController::class, 'index'])->name('dossier-medical');
+        Route::get('/calendrier', [CalendrierController::class, 'index'])->name('calendrier');
 
 // MODIFICATION ICI : Re-pointer vers le contrôleur DocumentController
 Route::get('/secretaire/certificats', [DocumentController::class, 'showCerts'])->name('secretaire.certificats');
@@ -101,21 +116,20 @@ Route::get('/medecin/papier', [PapierController::class, 'index'])->name('secreta
 
 
 
-// Routes CRUD pour les rendez-vous
-Route::post('/rendezvous', [RendezvousController::class, 'store'])->name('rendezvous.store');
-Route::put('/rendezvous/{rendezvous}', [RendezvousController::class, 'update'])->name('rendezvous.update');
-Route::delete('/rendezvous/{rendezvous}', [RendezvousController::class, 'destroy'])->name('rendezvous.destroy');
-Route::get('/rendezvous/{rendezvous}', [RendezvousController::class, 'show'])->name('rendezvous.show');
-Route::get('/rendezvous/{rendezvous}/edit', [RendezvousController::class, 'edit'])->name('rendezvous.edit');
-Route::get('/rendezvous/create', [RendezvousController::class, 'create'])->name('rendezvous.create');
+        Route::delete('/dossier-medical/consultation', [DossierMedicalController::class, 'destroyConsultation'])->name('dossier-medical.consultation.destroy');
+        Route::delete('/dossier-medical/examen', [DossierMedicalController::class, 'destroyExamenBiologique'])->name('dossier-medical.examen.destroy');
+        Route::delete('/dossier-medical/imagerie', [DossierMedicalController::class, 'destroyImagerieMedicale'])->name('dossier-medical.imagerie.destroy');
+        Route::delete('/dossier-medical/vaccination', [DossierMedicalController::class, 'destroyVaccination'])->name('dossier-medical.vaccination.destroy');
+        Route::delete('/dossier-medical/fichier', [DossierMedicalController::class, 'destroyFichierMedical'])->name('dossier-medical.fichier.destroy');
+        Route::delete('/dossier-medical/habitude', [DossierMedicalController::class, 'destroyHabitudeVie'])->name('dossier-medical.habitude.destroy');
 
-// Routes CRUD pour les patients
-Route::post('/patients', [PatientController::class, 'store'])->name('patients.store');
-Route::put('/patients/{patient}', [PatientController::class, 'update'])->name('patients.update');
-Route::delete('/patients/{patient}', [PatientController::class, 'destroy'])->name('patients.destroy');
-Route::get('/patients/{patient}', [PatientController::class, 'show'])->name('patients.show');
-Route::get('/patients/{patient}/edit', [PatientController::class, 'edit'])->name('patients.edit');
-Route::get('/patients/create', [PatientController::class, 'create'])->name('patients.create');
+        Route::put('/dossier-medical/consultation', [DossierMedicalController::class, 'updateConsultation'])->name('dossier-medical.consultation.update');
+        Route::put('/dossier-medical/examen', [DossierMedicalController::class, 'updateExamenBiologique'])->name('dossier-medical.examen.update');
+        Route::put('/dossier-medical/imagerie', [DossierMedicalController::class, 'updateImagerieMedicale'])->name('dossier-medical.imagerie.update');
+        Route::put('/dossier-medical/vaccination', [DossierMedicalController::class, 'updateVaccination'])->name('dossier-medical.vaccination.update');
+        Route::put('/dossier-medical/habitude', [DossierMedicalController::class, 'updateHabitudeVie'])->name('dossier-medical.habitude.update');
+        Route::put('/dossier-medical/fichier', [DossierMedicalController::class, 'updateFichierMedical'])->name('dossier-medical.fichier.update');
+    });
 
 
 
@@ -126,3 +140,12 @@ Route::post('/ordonnance/store', [OrdonnanceController::class, 'store'])->name('
 Route::resource('users', UserController::class);
 Route::resource('factures', FactureController::class);
 Route::resource('paiements', PaiementController::class);
+    // CRUD généraux (rendezvous, patients, factures, paiements)
+    Route::resource('rendezvous', RendezvousController::class)->except(['index']);
+    Route::resource('patients', PatientController::class)->except(['index']);
+    Route::resource('factures', FactureController::class)->except(['index']);
+    Route::resource('paiements', PaiementController::class)->except(['index']);
+
+    // Gestion des utilisateurs, admin uniquement
+    Route::resource('users', UserController::class)->middleware('role:admin');
+});
