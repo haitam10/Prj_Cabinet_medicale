@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -41,31 +42,41 @@
                     <i class="fas fa-home mr-3 text-cordes-accent group-hover:text-white"></i>
                     Dashboard
                 </a>
+
                 <a href="{{ route('secretaire.rendezvous') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-calendar-check mr-3 text-white"></i>
                     Rendez-vous
                 </a>
+
                 <a href="{{ route('secretaire.patients') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-user-injured mr-3 text-gray-400 group-hover:text-white"></i>
                     Patients
                 </a>
+
                 <a href="{{ route('secretaire.factures') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-file-invoice-dollar mr-3 text-gray-400 group-hover:text-white"></i>
                     Factures
                 </a>
+
                 <a href="{{ route('secretaire.paiements') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-credit-card mr-3 text-gray-400 group-hover:text-white"></i>
                     Paiements
                 </a>
+
                 @if (Auth::check() && Auth::user()->role === 'medecin')
                     <a href="{{ route('secretaire.dossier-medical') }}"
-                    class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
+                        class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
                         <i class="fas fa-file-medical mr-3 text-white"></i>
                         Dossier Médical
+                    </a>
+                    <a href="{{ route('secretaire.calendrier') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-calendar-alt mr-3 text-gray-400 group-hover:text-white"></i>
+                        Calendrier
                     </a>
                 @endif
             </div>
@@ -182,7 +193,8 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Date de consultation</label>
-                                <input type="date" name="date_consultation" required value="{{ $today }}" readonly
+                                <input type="date" name="date_consultation" required value="{{ $today }}"
+                                    readonly
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
                             </div>
                             <div class="md:col-span-2">
@@ -241,15 +253,18 @@
                                             @endif
                                         </div>
                                         <div class="flex items-center space-x-2 ml-4">
-                                            <button onclick="editConsultation({{ $consultation->id }}, '{{ \Carbon\Carbon::parse($consultation->date_consultation)->format('Y-m-d') }}', '{{ addslashes($consultation->motif) }}', '{{ addslashes($consultation->symptomes) }}', '{{ addslashes($consultation->diagnostic) }}', '{{ addslashes($consultation->traitement) }}', {{ $consultation->medecin_id }})"
+                                            <button
+                                                onclick="editConsultation({{ $consultation->id }}, '{{ \Carbon\Carbon::parse($consultation->date_consultation)->format('Y-m-d') }}', '{{ addslashes($consultation->motif) }}', '{{ addslashes($consultation->symptomes) }}', '{{ addslashes($consultation->diagnostic) }}', '{{ addslashes($consultation->traitement) }}', {{ $consultation->medecin_id }})"
                                                 class="text-blue-600 hover:text-blue-800">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <form action="{{ route('secretaire.dossier-medical.consultation.destroy') }}"
+                                            <form
+                                                action="{{ route('secretaire.dossier-medical.consultation.destroy') }}"
                                                 method="POST" class="inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <input type="hidden" name="id" value="{{ $consultation->id }}">
+                                                <input type="hidden" name="id"
+                                                    value="{{ $consultation->id }}">
                                                 <button type="submit" class="text-red-600 hover:text-red-800"
                                                     onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette consultation ?')">
                                                     <i class="fas fa-trash"></i>
@@ -271,56 +286,65 @@
                         <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
                             <div class="p-6">
                                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Modifier la Consultation</h3>
-                                <form action="{{ route('secretaire.dossier-medical.consultation.update') }}" method="POST">
+                                <form action="{{ route('secretaire.dossier-medical.consultation.update') }}"
+                                    method="POST">
                                     @csrf
                                     @method('PUT')
                                     <input type="hidden" name="id" id="edit_consultation_id">
                                     <input type="hidden" name="patient_id" value="{{ $selectedPatient->id }}">
-                                                                        
+
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Médecin</label>
                                             @if ($isCurrentUserMedecin)
                                                 <input type="text" value="{{ $currentUser->nom }}" readonly
                                                     class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600">
-                                                <input type="hidden" name="medecin_id" value="{{ $currentUser->id }}">
+                                                <input type="hidden" name="medecin_id"
+                                                    value="{{ $currentUser->id }}">
                                             @else
                                                 <select name="medecin_id" id="edit_consultation_medecin_id" required
                                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
                                                     <option value="">-- Sélectionner un médecin --</option>
                                                     @foreach ($medecins as $medecin)
-                                                        <option value="{{ $medecin->id }}">{{ $medecin->nom }}</option>
+                                                        <option value="{{ $medecin->id }}">{{ $medecin->nom }}
+                                                        </option>
                                                     @endforeach
                                                 </select>
                                             @endif
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Date de consultation</label>
-                                            <input type="date" name="date_consultation" id="edit_consultation_date" required max="{{ $today }}"
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Date de
+                                                consultation</label>
+                                            <input type="date" name="date_consultation"
+                                                id="edit_consultation_date" required max="{{ $today }}"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
                                         </div>
                                         <div class="md:col-span-2">
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Motif</label>
-                                            <input type="text" name="motif" id="edit_consultation_motif" required
+                                            <input type="text" name="motif" id="edit_consultation_motif"
+                                                required
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Symptômes</label>
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 mb-1">Symptômes</label>
                                             <textarea name="symptomes" id="edit_consultation_symptomes" rows="3"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"></textarea>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Diagnostic</label>
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 mb-1">Diagnostic</label>
                                             <textarea name="diagnostic" id="edit_consultation_diagnostic" rows="3"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"></textarea>
                                         </div>
                                         <div class="md:col-span-2">
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Traitement</label>
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 mb-1">Traitement</label>
                                             <textarea name="traitement" id="edit_consultation_traitement" rows="3"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"></textarea>
                                         </div>
                                     </div>
-                                                                        
+
                                     <div class="flex justify-end space-x-3 mt-6">
                                         <button type="button" onclick="closeEditConsultationModal()"
                                             class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
@@ -400,7 +424,8 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Date de début</label>
-                                <input type="date" name="date_debut" max="{{ $today }}" id="date_debut_add"
+                                <input type="date" name="date_debut" max="{{ $today }}"
+                                    id="date_debut_add"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"
                                     onchange="updateDateFinMin('date_debut_add', 'date_fin_add')">
                                 <p class="text-xs text-gray-500 mt-1">Ne peut pas dépasser aujourd'hui</p>
@@ -469,7 +494,8 @@
                                             @endif
                                         </div>
                                         <div class="flex items-center space-x-2 ml-4">
-                                            <button onclick="editHabitude({{ $habitude->id }}, '{{ $habitude->type }}', '{{ addslashes($habitude->description) }}', '{{ $habitude->frequence }}', '{{ $habitude->quantite }}', '{{ \Carbon\Carbon::parse($habitude->date_debut)->format('Y-m-d') ?? '' }}', '{{ \Carbon\Carbon::parse($habitude->date_fin)->format('Y-m-d') ?? '' }}', '{{ addslashes($habitude->commentaire) }}', {{ $habitude->medecin_id }})"
+                                            <button
+                                                onclick="editHabitude({{ $habitude->id }}, '{{ $habitude->type }}', '{{ addslashes($habitude->description) }}', '{{ $habitude->frequence }}', '{{ $habitude->quantite }}', '{{ \Carbon\Carbon::parse($habitude->date_debut)->format('Y-m-d') ?? '' }}', '{{ \Carbon\Carbon::parse($habitude->date_fin)->format('Y-m-d') ?? '' }}', '{{ addslashes($habitude->commentaire) }}', {{ $habitude->medecin_id }})"
                                                 class="text-blue-600 hover:text-blue-800">
                                                 <i class="fas fa-edit"></i>
                                             </button>
@@ -499,25 +525,30 @@
                         <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
                             <div class="p-6">
                                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Modifier l'Habitude de Vie</h3>
-                                <form action="{{ route('secretaire.dossier-medical.habitude.update') }}" method="POST">
+                                <form action="{{ route('secretaire.dossier-medical.habitude.update') }}"
+                                    method="POST">
                                     @csrf
                                     @method('PUT')
                                     <input type="hidden" name="id" id="edit_habitude_id">
                                     <input type="hidden" name="patient_id" value="{{ $selectedPatient->id }}">
-                                                                        
+
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Médecin</label>
-                                            <input type="text" value="{{ $currentUser->nom ?? 'Médecin' }}" readonly
+                                            <input type="text" value="{{ $currentUser->nom ?? 'Médecin' }}"
+                                                readonly
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600">
                                             @if ($isCurrentUserMedecin)
-                                                <input type="hidden" name="medecin_id" value="{{ $currentUser->id }}">
+                                                <input type="hidden" name="medecin_id"
+                                                    value="{{ $currentUser->id }}">
                                             @else
-                                                <input type="hidden" name="medecin_id" id="edit_habitude_medecin_id">
+                                                <input type="hidden" name="medecin_id"
+                                                    id="edit_habitude_medecin_id">
                                             @endif
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Type d'habitude</label>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Type
+                                                d'habitude</label>
                                             <select name="type" id="edit_habitude_type" required
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
                                                 <option value="">-- Sélectionner --</option>
@@ -532,7 +563,8 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Fréquence</label>
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 mb-1">Fréquence</label>
                                             <select name="frequence" id="edit_habitude_frequence"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
                                                 <option value="">-- Sélectionner --</option>
@@ -544,37 +576,45 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Quantité</label>
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 mb-1">Quantité</label>
                                             <input type="text" name="quantite" id="edit_habitude_quantite"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"
                                                 placeholder="Ex: 10 cigarettes/jour, 2 verres/semaine">
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Date de début</label>
-                                            <input type="date" name="date_debut" id="edit_habitude_date_debut" max="{{ $today }}"
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Date de
+                                                début</label>
+                                            <input type="date" name="date_debut" id="edit_habitude_date_debut"
+                                                max="{{ $today }}"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"
                                                 onchange="updateDateFinMin('edit_habitude_date_debut', 'edit_habitude_date_fin')">
                                             <p class="text-xs text-gray-500 mt-1">Ne peut pas dépasser aujourd'hui</p>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Date de fin</label>
-                                            <input type="date" name="date_fin" id="edit_habitude_date_fin" max="{{ $today }}"
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Date de
+                                                fin</label>
+                                            <input type="date" name="date_fin" id="edit_habitude_date_fin"
+                                                max="{{ $today }}"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
-                                            <p class="text-xs text-gray-500 mt-1">Doit être postérieure à la date de début</p>
+                                            <p class="text-xs text-gray-500 mt-1">Doit être postérieure à la date de
+                                                début</p>
                                         </div>
                                         <div class="md:col-span-2">
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 mb-1">Description</label>
                                             <textarea name="description" id="edit_habitude_description" required rows="3"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"
                                                 placeholder="Décrivez l'habitude en détail"></textarea>
                                         </div>
                                         <div class="md:col-span-2">
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Commentaire</label>
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 mb-1">Commentaire</label>
                                             <textarea name="commentaire" id="edit_habitude_commentaire" rows="2"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"></textarea>
                                         </div>
                                     </div>
-                                                                        
+
                                     <div class="flex justify-end space-x-3 mt-6">
                                         <button type="button" onclick="closeEditHabitudeModal()"
                                             class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
@@ -621,7 +661,8 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Date d'examen</label>
-                                <input type="date" name="date_examen" required value="{{ $today }}" readonly
+                                <input type="date" name="date_examen" required value="{{ $today }}"
+                                    readonly
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
                             </div>
                             <div>
@@ -684,7 +725,8 @@
                                             @endif
                                         </div>
                                         <div class="flex items-center space-x-2 ml-4">
-                                            <button onclick="editExamen({{ $examen->id }}, '{{ $examen->type }}', '{{ $examen->resultat }}', '{{ $examen->unite }}', '{{ $examen->valeurs_reference }}', '{{ \Carbon\Carbon::parse($examen->date_examen)->format('Y-m-d') }}', '{{ addslashes($examen->commentaire) }}', {{ $examen->medecin_id }})"
+                                            <button
+                                                onclick="editExamen({{ $examen->id }}, '{{ $examen->type }}', '{{ $examen->resultat }}', '{{ $examen->unite }}', '{{ $examen->valeurs_reference }}', '{{ \Carbon\Carbon::parse($examen->date_examen)->format('Y-m-d') }}', '{{ addslashes($examen->commentaire) }}', {{ $examen->medecin_id }})"
                                                 class="text-blue-600 hover:text-blue-800">
                                                 <i class="fas fa-edit"></i>
                                             </button>
@@ -714,36 +756,42 @@
                         <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
                             <div class="p-6">
                                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Modifier l'Examen Biologique</h3>
-                                <form action="{{ route('secretaire.dossier-medical.examen.update') }}" method="POST">
+                                <form action="{{ route('secretaire.dossier-medical.examen.update') }}"
+                                    method="POST">
                                     @csrf
                                     @method('PUT')
                                     <input type="hidden" name="id" id="edit_examen_id">
                                     <input type="hidden" name="patient_id" value="{{ $selectedPatient->id }}">
-                                                                        
+
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Médecin</label>
                                             @if ($isCurrentUserMedecin)
                                                 <input type="text" value="{{ $currentUser->nom }}" readonly
                                                     class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600">
-                                                <input type="hidden" name="medecin_id" value="{{ $currentUser->id }}">
+                                                <input type="hidden" name="medecin_id"
+                                                    value="{{ $currentUser->id }}">
                                             @else
                                                 <select name="medecin_id" id="edit_examen_medecin_id" required
                                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
                                                     <option value="">-- Sélectionner un médecin --</option>
                                                     @foreach ($medecins as $medecin)
-                                                        <option value="{{ $medecin->id }}">{{ $medecin->nom }}</option>
+                                                        <option value="{{ $medecin->id }}">{{ $medecin->nom }}
+                                                        </option>
                                                     @endforeach
                                                 </select>
                                             @endif
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Date d'examen</label>
-                                            <input type="date" name="date_examen" id="edit_examen_date" required max="{{ $today }}"
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Date
+                                                d'examen</label>
+                                            <input type="date" name="date_examen" id="edit_examen_date" required
+                                                max="{{ $today }}"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Type d'examen</label>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Type
+                                                d'examen</label>
                                             <input type="text" name="type" id="edit_examen_type" required
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"
                                                 placeholder="Ex: Glycémie, NFS, etc.">
@@ -755,22 +803,26 @@
                                                 placeholder="Ex: g/L, mg/dL">
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Résultat</label>
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 mb-1">Résultat</label>
                                             <input type="text" name="resultat" id="edit_examen_resultat" required
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Valeurs de référence</label>
-                                            <input type="text" name="valeurs_reference" id="edit_examen_valeurs_reference"
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Valeurs de
+                                                référence</label>
+                                            <input type="text" name="valeurs_reference"
+                                                id="edit_examen_valeurs_reference"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
                                         </div>
                                         <div class="md:col-span-2">
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Commentaire</label>
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 mb-1">Commentaire</label>
                                             <textarea name="commentaire" id="edit_examen_commentaire" rows="3"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"></textarea>
                                         </div>
                                     </div>
-                                                                        
+
                                     <div class="flex justify-end space-x-3 mt-6">
                                         <button type="button" onclick="closeEditExamenModal()"
                                             class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
@@ -817,7 +869,8 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Date d'examen</label>
-                                <input type="date" name="date_examen" required value="{{ $today }}" readonly
+                                <input type="date" name="date_examen" required value="{{ $today }}"
+                                    readonly
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
                             </div>
                             <div>
@@ -897,7 +950,8 @@
                                             @endif
                                         </div>
                                         <div class="flex items-center space-x-2 ml-4">
-                                            <button onclick="editImagerie({{ $imagerie->id }}, '{{ $imagerie->type }}', '{{ $imagerie->zone_examinee }}', '{{ addslashes($imagerie->resultat) }}', '{{ \Carbon\Carbon::parse($imagerie->date_examen)->format('Y-m-d') }}', '{{ addslashes($imagerie->commentaire) }}', {{ $imagerie->medecin_id }})"
+                                            <button
+                                                onclick="editImagerie({{ $imagerie->id }}, '{{ $imagerie->type }}', '{{ $imagerie->zone_examinee }}', '{{ addslashes($imagerie->resultat) }}', '{{ \Carbon\Carbon::parse($imagerie->date_examen)->format('Y-m-d') }}', '{{ addslashes($imagerie->commentaire) }}', {{ $imagerie->medecin_id }})"
                                                 class="text-blue-600 hover:text-blue-800">
                                                 <i class="fas fa-edit"></i>
                                             </button>
@@ -927,36 +981,42 @@
                         <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
                             <div class="p-6">
                                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Modifier l'Imagerie Médicale</h3>
-                                <form action="{{ route('secretaire.dossier-medical.imagerie.update') }}" method="POST">
+                                <form action="{{ route('secretaire.dossier-medical.imagerie.update') }}"
+                                    method="POST">
                                     @csrf
                                     @method('PUT')
                                     <input type="hidden" name="id" id="edit_imagerie_id">
                                     <input type="hidden" name="patient_id" value="{{ $selectedPatient->id }}">
-                                                                        
+
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Médecin</label>
                                             @if ($isCurrentUserMedecin)
                                                 <input type="text" value="{{ $currentUser->nom }}" readonly
                                                     class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600">
-                                                <input type="hidden" name="medecin_id" value="{{ $currentUser->id }}">
+                                                <input type="hidden" name="medecin_id"
+                                                    value="{{ $currentUser->id }}">
                                             @else
                                                 <select name="medecin_id" id="edit_imagerie_medecin_id" required
                                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
                                                     <option value="">-- Sélectionner un médecin --</option>
                                                     @foreach ($medecins as $medecin)
-                                                        <option value="{{ $medecin->id }}">{{ $medecin->nom }}</option>
+                                                        <option value="{{ $medecin->id }}">{{ $medecin->nom }}
+                                                        </option>
                                                     @endforeach
                                                 </select>
                                             @endif
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Date d'examen</label>
-                                            <input type="date" name="date_examen" id="edit_imagerie_date" required max="{{ $today }}"
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Date
+                                                d'examen</label>
+                                            <input type="date" name="date_examen" id="edit_imagerie_date" required
+                                                max="{{ $today }}"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Type d'imagerie</label>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Type
+                                                d'imagerie</label>
                                             <select name="type" id="edit_imagerie_type" required
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
                                                 <option value="">-- Sélectionner --</option>
@@ -976,7 +1036,8 @@
                                                 <option value="Échographie abdominale">Échographie abdominale</option>
                                                 <option value="Échographie pelvienne">Échographie pelvienne</option>
                                                 <option value="Échographie cardiaque">Échographie cardiaque</option>
-                                                <option value="Échographie obstétricale">Échographie obstétricale</option>
+                                                <option value="Échographie obstétricale">Échographie obstétricale
+                                                </option>
                                                 <option value="Mammographie">Mammographie</option>
                                                 <option value="Scintigraphie">Scintigraphie</option>
                                                 <option value="Fibroscopie">Fibroscopie</option>
@@ -988,23 +1049,27 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Zone examinée</label>
-                                            <input type="text" name="zone_examinee" id="edit_imagerie_zone" required
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Zone
+                                                examinée</label>
+                                            <input type="text" name="zone_examinee" id="edit_imagerie_zone"
+                                                required
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"
                                                 placeholder="Ex: Thorax, Abdomen, etc.">
                                         </div>
                                         <div class="md:col-span-2">
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Résultat</label>
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 mb-1">Résultat</label>
                                             <textarea name="resultat" id="edit_imagerie_resultat" required rows="4"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"></textarea>
                                         </div>
                                         <div class="md:col-span-2">
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Commentaire</label>
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 mb-1">Commentaire</label>
                                             <textarea name="commentaire" id="edit_imagerie_commentaire" rows="3"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"></textarea>
                                         </div>
                                     </div>
-                                                                        
+
                                     <div class="flex justify-end space-x-3 mt-6">
                                         <button type="button" onclick="closeEditImagerieModal()"
                                             class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
@@ -1057,7 +1122,8 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Date de vaccination</label>
-                                <input type="date" name="date_vaccination" required value="{{ $today }}" readonly
+                                <input type="date" name="date_vaccination" required value="{{ $today }}"
+                                    readonly
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
                             </div>
                             <div>
@@ -1102,15 +1168,18 @@
                                             @endif
                                         </div>
                                         <div class="flex items-center space-x-2 ml-4">
-                                            <button onclick="editVaccination({{ $vaccination->id }}, '{{ $vaccination->nom }}', '{{ \Carbon\Carbon::parse($vaccination->date_vaccination)->format('Y-m-d') }}', '{{ \Carbon\Carbon::parse($vaccination->date_rappel)->format('Y-m-d') ?? '' }}', '{{ addslashes($vaccination->commentaire) }}', {{ $vaccination->medecin_id }})"
+                                            <button
+                                                onclick="editVaccination({{ $vaccination->id }}, '{{ $vaccination->nom }}', '{{ \Carbon\Carbon::parse($vaccination->date_vaccination)->format('Y-m-d') }}', '{{ \Carbon\Carbon::parse($vaccination->date_rappel)->format('Y-m-d') ?? '' }}', '{{ addslashes($vaccination->commentaire) }}', {{ $vaccination->medecin_id }})"
                                                 class="text-blue-600 hover:text-blue-800">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <form action="{{ route('secretaire.dossier-medical.vaccination.destroy') }}"
+                                            <form
+                                                action="{{ route('secretaire.dossier-medical.vaccination.destroy') }}"
                                                 method="POST" class="inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <input type="hidden" name="id" value="{{ $vaccination->id }}">
+                                                <input type="hidden" name="id"
+                                                    value="{{ $vaccination->id }}">
                                                 <button type="submit" class="text-red-600 hover:text-red-800"
                                                     onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette vaccination ?')">
                                                     <i class="fas fa-trash"></i>
@@ -1132,52 +1201,61 @@
                         <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
                             <div class="p-6">
                                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Modifier la Vaccination</h3>
-                                <form action="{{ route('secretaire.dossier-medical.vaccination.update') }}" method="POST">
+                                <form action="{{ route('secretaire.dossier-medical.vaccination.update') }}"
+                                    method="POST">
                                     @csrf
                                     @method('PUT')
                                     <input type="hidden" name="id" id="edit_vaccination_id">
                                     <input type="hidden" name="patient_id" value="{{ $selectedPatient->id }}">
-                                                                        
+
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Médecin</label>
                                             @if ($isCurrentUserMedecin)
                                                 <input type="text" value="{{ $currentUser->nom }}" readonly
                                                     class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600">
-                                                <input type="hidden" name="medecin_id" value="{{ $currentUser->id }}">
+                                                <input type="hidden" name="medecin_id"
+                                                    value="{{ $currentUser->id }}">
                                             @else
                                                 <select name="medecin_id" id="edit_vaccination_medecin_id" required
                                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
                                                     <option value="">-- Sélectionner un médecin --</option>
                                                     @foreach ($medecins as $medecin)
-                                                        <option value="{{ $medecin->id }}">{{ $medecin->nom }}</option>
+                                                        <option value="{{ $medecin->id }}">{{ $medecin->nom }}
+                                                        </option>
                                                     @endforeach
                                                 </select>
                                             @endif
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Nom du vaccin</label>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Nom du
+                                                vaccin</label>
                                             <input type="text" name="nom" id="edit_vaccination_nom" required
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"
                                                 placeholder="Ex: COVID-19, Grippe, etc.">
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Date de vaccination</label>
-                                            <input type="date" name="date_vaccination" id="edit_vaccination_date" required max="{{ $today }}"
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Date de
+                                                vaccination</label>
+                                            <input type="date" name="date_vaccination" id="edit_vaccination_date"
+                                                required max="{{ $today }}"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Date de rappel</label>
-                                            <input type="date" name="date_rappel" id="edit_vaccination_date_rappel"
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Date de
+                                                rappel</label>
+                                            <input type="date" name="date_rappel"
+                                                id="edit_vaccination_date_rappel"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
                                         </div>
                                         <div class="md:col-span-2">
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Commentaire</label>
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 mb-1">Commentaire</label>
                                             <textarea name="commentaire" id="edit_vaccination_commentaire" rows="3"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"></textarea>
                                         </div>
                                     </div>
-                                                                        
+
                                     <div class="flex justify-end space-x-3 mt-6">
                                         <button type="button" onclick="closeEditVaccinationModal()"
                                             class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
@@ -1301,7 +1379,8 @@
                                                 class="text-cordes-blue hover:text-cordes-dark">
                                                 <i class="fas fa-download"></i>
                                             </a>
-                                            <button onclick="editFichier({{ $fichier->id }}, '{{ addslashes($fichier->nom) }}', '{{ $fichier->type }}', '{{ addslashes($fichier->commentaire) }}', {{ $fichier->medecin_id }})"
+                                            <button
+                                                onclick="editFichier({{ $fichier->id }}, '{{ addslashes($fichier->nom) }}', '{{ $fichier->type }}', '{{ addslashes($fichier->commentaire) }}', {{ $fichier->medecin_id }})"
                                                 class="text-blue-600 hover:text-blue-800">
                                                 <i class="fas fa-edit"></i>
                                             </button>
@@ -1331,32 +1410,35 @@
                         <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
                             <div class="p-6">
                                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Modifier le Fichier Médical</h3>
-                                <form action="{{ route('secretaire.dossier-medical.fichier.update') }}" method="POST"
-                                    enctype="multipart/form-data">
+                                <form action="{{ route('secretaire.dossier-medical.fichier.update') }}"
+                                    method="POST" enctype="multipart/form-data">
                                     @csrf
                                     @method('PUT')
                                     <input type="hidden" name="id" id="edit_fichier_id">
                                     <input type="hidden" name="patient_id" value="{{ $selectedPatient->id }}">
-                                                                        
+
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Médecin</label>
                                             @if ($isCurrentUserMedecin)
                                                 <input type="text" value="{{ $currentUser->nom }}" readonly
                                                     class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600">
-                                                <input type="hidden" name="medecin_id" value="{{ $currentUser->id }}">
+                                                <input type="hidden" name="medecin_id"
+                                                    value="{{ $currentUser->id }}">
                                             @else
                                                 <select name="medecin_id" id="edit_fichier_medecin_id" required
                                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
                                                     <option value="">-- Sélectionner un médecin --</option>
                                                     @foreach ($medecins as $medecin)
-                                                        <option value="{{ $medecin->id }}">{{ $medecin->nom }}</option>
+                                                        <option value="{{ $medecin->id }}">{{ $medecin->nom }}
+                                                        </option>
                                                     @endforeach
                                                 </select>
                                             @endif
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Type de fichier</label>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Type de
+                                                fichier</label>
                                             <select name="type" id="edit_fichier_type" required
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
                                                 <option value="">-- Sélectionner --</option>
@@ -1367,10 +1449,13 @@
                                                 <option value="Certificat d'aptitude">Certificat d'aptitude</option>
                                                 <option value="Certificat de décès">Certificat de décès</option>
                                                 <option value="Compte-rendu">Compte-rendu</option>
-                                                <option value="Compte-rendu opératoire">Compte-rendu opératoire</option>
-                                                <option value="Compte-rendu d'hospitalisation">Compte-rendu d'hospitalisation</option>
+                                                <option value="Compte-rendu opératoire">Compte-rendu opératoire
+                                                </option>
+                                                <option value="Compte-rendu d'hospitalisation">Compte-rendu
+                                                    d'hospitalisation</option>
                                                 <option value="Résultat d'examen">Résultat d'examen</option>
-                                                <option value="Résultat de laboratoire">Résultat de laboratoire</option>
+                                                <option value="Résultat de laboratoire">Résultat de laboratoire
+                                                </option>
                                                 <option value="Résultat d'imagerie">Résultat d'imagerie</option>
                                                 <option value="Rapport médical">Rapport médical</option>
                                                 <option value="Lettre de liaison">Lettre de liaison</option>
@@ -1380,24 +1465,29 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Nom du fichier</label>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Nom du
+                                                fichier</label>
                                             <input type="text" name="nom" id="edit_fichier_nom" required
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Fichier (laisser vide pour conserver l'actuel)</label>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Fichier
+                                                (laisser vide pour conserver l'actuel)</label>
                                             <input type="file" name="fichier"
                                                 accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.bmp,.tiff,.txt,.rtf,.xls,.xlsx,.ppt,.pptx"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
-                                            <p class="text-xs text-gray-500 mt-1">Formats acceptés: PDF, DOC, DOCX, JPG, JPEG, PNG, GIF, BMP, TIFF, TXT, RTF, XLS, XLSX, PPT, PPTX (Max: 10MB)</p>
+                                            <p class="text-xs text-gray-500 mt-1">Formats acceptés: PDF, DOC, DOCX,
+                                                JPG, JPEG, PNG, GIF, BMP, TIFF, TXT, RTF, XLS, XLSX, PPT, PPTX (Max:
+                                                10MB)</p>
                                         </div>
                                         <div class="md:col-span-2">
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Commentaire</label>
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 mb-1">Commentaire</label>
                                             <textarea name="commentaire" id="edit_fichier_commentaire" rows="3"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"></textarea>
                                         </div>
                                     </div>
-                                                                        
+
                                     <div class="flex justify-end space-x-3 mt-6">
                                         <button type="button" onclick="closeEditFichierModal()"
                                             class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
@@ -1421,7 +1511,7 @@
         // Auto-hide des messages après 5 secondes
         document.addEventListener('DOMContentLoaded', function() {
             const successMessage = document.querySelector('.bg-green-100');
-            const errorMessage = document.querySelector('.bg-red-100');                        
+            const errorMessage = document.querySelector('.bg-red-100');
             if (successMessage) {
                 setTimeout(() => {
                     successMessage.style.transition = 'opacity 0.5s ease-out';
@@ -1430,7 +1520,7 @@
                         successMessage.remove();
                     }, 500);
                 }, 5000);
-            }                        
+            }
             if (errorMessage) {
                 setTimeout(() => {
                     errorMessage.style.transition = 'opacity 0.5s ease-out';
@@ -1465,6 +1555,7 @@
                 document.getElementById('edit_consultation_medecin_id').value = medecin_id;
             @endif
         }
+
         function closeEditConsultationModal() {
             document.getElementById('editConsultationModal').classList.add('hidden');
             document.getElementById('editConsultationModal').querySelector('form').reset();
@@ -1490,6 +1581,7 @@
                 updateDateFinMin('edit_habitude_date_debut', 'edit_habitude_date_fin');
             }
         }
+
         function closeEditHabitudeModal() {
             document.getElementById('editHabitudeModal').classList.add('hidden');
             document.getElementById('editHabitudeModal').querySelector('form').reset();
@@ -1508,6 +1600,7 @@
                 document.getElementById('edit_examen_medecin_id').value = medecin_id;
             @endif
         }
+
         function closeEditExamenModal() {
             document.getElementById('editExamenModal').classList.add('hidden');
             document.getElementById('editExamenModal').querySelector('form').reset();
@@ -1525,6 +1618,7 @@
                 document.getElementById('edit_imagerie_medecin_id').value = medecin_id;
             @endif
         }
+
         function closeEditImagerieModal() {
             document.getElementById('editImagerieModal').classList.add('hidden');
             document.getElementById('editImagerieModal').querySelector('form').reset();
@@ -1541,6 +1635,7 @@
                 document.getElementById('edit_vaccination_medecin_id').value = medecin_id;
             @endif
         }
+
         function closeEditVaccinationModal() {
             document.getElementById('editVaccinationModal').classList.add('hidden');
             document.getElementById('editVaccinationModal').querySelector('form').reset();
@@ -1556,6 +1651,7 @@
                 document.getElementById('edit_fichier_medecin_id').value = medecin_id;
             @endif
         }
+
         function closeEditFichierModal() {
             document.getElementById('editFichierModal').classList.add('hidden');
             document.getElementById('editFichierModal').querySelector('form').reset();
@@ -1565,7 +1661,7 @@
         function updateDateFinMin(dateDebutId, dateFinId) {
             const dateDebut = document.getElementById(dateDebutId);
             const dateFin = document.getElementById(dateFinId);
-            
+
             if (dateDebut.value) {
                 dateFin.min = dateDebut.value;
                 // Si la date de fin est antérieure à la nouvelle date de début, la réinitialiser
@@ -1577,13 +1673,30 @@
 
         // Fermer les modals en cliquant à l'extérieur et réinitialiser le formulaire
         document.addEventListener('click', function(event) {
-            const modals = [
-                { id: 'editConsultationModal', closeFunc: closeEditConsultationModal },
-                { id: 'editHabitudeModal', closeFunc: closeEditHabitudeModal },
-                { id: 'editExamenModal', closeFunc: closeEditExamenModal },
-                { id: 'editImagerieModal', closeFunc: closeEditImagerieModal },
-                { id: 'editVaccinationModal', closeFunc: closeEditVaccinationModal },
-                { id: 'editFichierModal', closeFunc: closeEditFichierModal }
+            const modals = [{
+                    id: 'editConsultationModal',
+                    closeFunc: closeEditConsultationModal
+                },
+                {
+                    id: 'editHabitudeModal',
+                    closeFunc: closeEditHabitudeModal
+                },
+                {
+                    id: 'editExamenModal',
+                    closeFunc: closeEditExamenModal
+                },
+                {
+                    id: 'editImagerieModal',
+                    closeFunc: closeEditImagerieModal
+                },
+                {
+                    id: 'editVaccinationModal',
+                    closeFunc: closeEditVaccinationModal
+                },
+                {
+                    id: 'editFichierModal',
+                    closeFunc: closeEditFichierModal
+                }
             ];
             modals.forEach(modalInfo => {
                 const modal = document.getElementById(modalInfo.id);
@@ -1594,4 +1707,5 @@
         });
     </script>
 </body>
+
 </html>

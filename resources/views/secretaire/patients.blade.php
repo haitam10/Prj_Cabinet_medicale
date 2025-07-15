@@ -35,7 +35,6 @@
                 <span class="text-white text-xl font-bold">C-M</span>
             </div>
         </div>
-
         <nav class="mt-8 px-4">
             <div class="space-y-2">
                 <a href="{{ route('secretaire.dashboard') }}"
@@ -51,8 +50,8 @@
                 </a>
 
                 <a href="{{ route('secretaire.patients') }}"
-                    class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group"> <i
-                        class="fas fa-user-injured mr-3 text-gray-400 group-hover:text-white"></i>
+                    class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
+                    <i class="fas fa-user-injured mr-3 text-gray-400 group-hover:text-white"></i>
                     Patients
                 </a>
 
@@ -73,6 +72,11 @@
                         class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                         <i class="fas fa-file-medical mr-3 text-white"></i>
                         Dossier Médical
+                    </a>
+                    <a href="{{ route('secretaire.calendrier') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-calendar-alt mr-3 text-gray-400 group-hover:text-white"></i>
+                        Calendrier
                     </a>
                 @endif
             </div>

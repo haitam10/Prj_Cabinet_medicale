@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -24,9 +25,10 @@
     <style>
         /* Styles pour l'impression */
         @media print {
-            body > *:not(#printArea) {
+            body>*:not(#printArea) {
                 display: none !important;
             }
+
             #printArea {
                 display: block !important;
                 width: 100%;
@@ -36,28 +38,38 @@
                 font-family: Arial, sans-serif;
                 color: #333;
             }
-            #printArea h1, #printArea h2, #printArea h3 {
+
+            #printArea h1,
+            #printArea h2,
+            #printArea h3 {
                 color: #000;
             }
+
             #printArea table {
                 width: 100%;
                 border-collapse: collapse;
                 margin-top: 20px;
             }
-            #printArea th, #printArea td {
+
+            #printArea th,
+            #printArea td {
                 border: 1px solid #ddd;
                 padding: 8px;
                 text-align: left;
             }
+
             #printArea th {
                 background-color: #f2f2f2;
             }
+
             #printArea .text-right {
                 text-align: right;
             }
+
             #printArea .text-center {
                 text-align: center;
             }
+
             /* Masquer les éléments avec la classe no-print */
             .no-print {
                 display: none !important;
@@ -65,6 +77,7 @@
         }
     </style>
 </head>
+
 <body class="bg-gray-100 min-h-screen">
     <!-- SIDEBAR -->
     <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50 no-print">
@@ -81,28 +94,44 @@
                 <a href="{{ route('secretaire.dashboard') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-home mr-3 text-cordes-accent group-hover:text-white"></i>
-                    Dashboard</a>
+                    Dashboard
+                </a>
+
                 <a href="{{ route('secretaire.rendezvous') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-calendar-check mr-3 text-white"></i>
-                    Rendez-vous</a>
+                    Rendez-vous
+                </a>
+
                 <a href="{{ route('secretaire.patients') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-user-injured mr-3 text-gray-400 group-hover:text-white"></i>
-                    Patients</a>
+                    Patients
+                </a>
+
                 <a href="{{ route('secretaire.factures') }}"
                     class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
                     <i class="fas fa-file-invoice-dollar mr-3 text-gray-400 group-hover:text-white"></i>
-                    Factures</a>
+                    Factures
+                </a>
+
                 <a href="{{ route('secretaire.paiements') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-credit-card mr-3 text-gray-400 group-hover:text-white"></i>
-                    Paiements</a>
+                    Paiements
+                </a>
+
                 @if (Auth::check() && Auth::user()->role === 'medecin')
                     <a href="{{ route('secretaire.dossier-medical') }}"
                         class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                         <i class="fas fa-file-medical mr-3 text-white"></i>
-                        Dossier Médical</a>
+                        Dossier Médical
+                    </a>
+                    <a href="{{ route('secretaire.calendrier') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-calendar-alt mr-3 text-gray-400 group-hover:text-white"></i>
+                        Calendrier
+                    </a>
                 @endif
             </div>
         </nav>
@@ -209,7 +238,8 @@
                                 Date</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Créée le</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider no-print">
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider no-print">
                                 Actions</th>
                         </tr>
                     </thead>
@@ -287,7 +317,8 @@
     </div>
 
     <!-- MODAL AJOUTER FACTURE -->
-    <div id="addModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden no-print">
+    <div id="addModal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden no-print">
         <div class="bg-white w-full max-w-lg rounded-lg shadow-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-semibold text-gray-800">Ajouter une nouvelle facture</h2>
@@ -376,7 +407,8 @@
     </div>
 
     <!-- MODAL MODIFIER FACTURE -->
-    <div id="editModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden no-print">
+    <div id="editModal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden no-print">
         <div class="bg-white w-full max-w-lg rounded-lg shadow-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-semibold text-gray-800">Modifier la facture</h2>
@@ -798,4 +830,5 @@
         });
     </script>
 </body>
+
 </html>
