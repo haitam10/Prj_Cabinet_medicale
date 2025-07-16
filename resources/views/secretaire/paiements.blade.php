@@ -66,7 +66,7 @@
                 </a>
 
                 <a href="{{ route('secretaire.factures') }}"
-                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-file-invoice-dollar mr-3 text-gray-400 group-hover:text-white"></i>
                     Factures
                 </a>
@@ -89,6 +89,11 @@
                         Calendrier
                     </a>
                 @endif
+                <a href="{{ route('secretaire.profile') }}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-user mr-3 text-cordes-accent"></i>
+                    Mon Profil
+                </a>
             </div>
         </nav>
 

@@ -42,6 +42,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/rendezvous', [RendezvousController::class, 'index'])->name('rendezvous');
         Route::get('/paiements', [PaiementController::class, 'index'])->name('paiements');
         Route::get('/docs', [DocumentController::class, 'index'])->name('docs');
+        // Gestion prfl, 
+        Route::get('/profile', [UserController::class, 'profile'])->name('profile');
+        Route::put('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
     });
 
     // Routes dossier médical et calendrier accessibles UNIQUEMENT au médecin
@@ -72,11 +75,13 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/dossier-medical/fichier', [DossierMedicalController::class, 'updateFichierMedical'])->name('dossier-medical.fichier.update');
     });
 
-    // CRUD généraux (rendezvous, patients, factures, paiements)
+    // CRUD 
     Route::resource('rendezvous', RendezvousController::class)->except(['index']);
     Route::resource('patients', PatientController::class)->except(['index']);
     Route::resource('factures', FactureController::class)->except(['index']);
     Route::resource('paiements', PaiementController::class)->except(['index']);
+
+
 
     // Gestion des utilisateurs, admin uniquement
     Route::resource('users', UserController::class)->middleware('role:admin');

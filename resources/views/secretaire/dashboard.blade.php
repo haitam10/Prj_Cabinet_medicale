@@ -84,6 +84,11 @@
                         Calendrier
                     </a>
                 @endif
+                <a href="{{ route('secretaire.profile') }}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-user mr-3 text-cordes-accent"></i>
+                    Mon Profil
+                </a>
             </div>
         </nav>
 
@@ -207,7 +212,8 @@
                     <form action="{{ route('rendezvous.store') }}" method="POST" class="space-y-4">
                         @csrf
                         <div>
-                            <label for="patient_id" class="block text-sm font-medium text-gray-700 mb-1">Patient</label>
+                            <label for="patient_id"
+                                class="block text-sm font-medium text-gray-700 mb-1">Patient</label>
                             <select name="patient_id" id="patient_id" required
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                                 <option value="">Sélectionnez un patient</option>

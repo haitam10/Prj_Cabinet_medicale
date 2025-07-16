@@ -79,6 +79,11 @@
                         Calendrier
                     </a>
                 @endif
+                <a href="{{ route('secretaire.profile') }}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-user mr-3 text-cordes-accent"></i>
+                    Mon Profil
+                </a>
             </div>
         </nav>
         <!-- Section utilisateur avec bouton de déconnexion -->
@@ -192,7 +197,8 @@
                                 @endif
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Date de consultation</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Date de
+                                    consultation</label>
                                 <input type="date" name="date_consultation" required value="{{ $today }}"
                                     readonly
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
