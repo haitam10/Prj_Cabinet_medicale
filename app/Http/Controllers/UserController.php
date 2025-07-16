@@ -163,7 +163,7 @@ class UserController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        return view('users.profile', compact('user'));
+        return view('secretaire.profile', compact('user'));
     }
 
     /**
@@ -199,6 +199,6 @@ class UserController extends Controller
 
         $user->update($data);
 
-        return redirect()->route('profile')->with('success', 'Profil mis à jour avec succès !');
+        return redirect()->route('secretaire.profile')->with('success', 'Profil mis à jour avec succès !');
     }
 }
