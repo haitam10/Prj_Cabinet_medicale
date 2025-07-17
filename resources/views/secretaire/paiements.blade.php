@@ -89,6 +89,7 @@
                         Calendrier
                     </a>
                 @endif
+
                 <a href="{{ route('secretaire.profile') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-user mr-3 text-cordes-accent"></i>
@@ -119,8 +120,8 @@
                 </form>
             </div>
         </div>
-
     </div>
+
     <!-- CONTENU PRINCIPAL -->
     <div class="ml-64">
         <header class="bg-white shadow-sm border-b border-gray-200">
@@ -280,10 +281,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span
-                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                        @if ($paiement->statut === 'paye') bg-green-100 text-green-800 
-                                        @elseif($paiement->statut === 'en_attente') bg-yellow-100 text-yellow-800 
-                                        @else bg-red-100 text-red-800 @endif">
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @if ($paiement->statut === 'paye') bg-green-100 text-green-800 @elseif($paiement->statut === 'en_attente') bg-yellow-100 text-yellow-800 @else bg-red-100 text-red-800 @endif">
                                         @switch($paiement->statut)
                                             @case('paye')
                                                 <i class="fas fa-check mr-1"></i>Payé
@@ -308,17 +306,33 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex space-x-2">
                                         <button onclick="showPaiement({{ $paiement->id }})"
-                                            class="text-blue-600 hover:text-blue-800 transition-colors p-1 rounded hover:bg-blue-50">
+                                            class="text-blue-600 hover:text-blue-800 transition-colors p-1 rounded hover:bg-blue-50"
+                                            title="Voir les détails">
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <button onclick="editPaiement({{ $paiement->id }})"
-                                            class="text-yellow-600 hover:text-yellow-800 transition-colors p-1 rounded hover:bg-yellow-50">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button onclick="deletePaiement({{ $paiement->id }})"
-                                            class="text-red-600 hover:text-red-800 transition-colors p-1 rounded hover:bg-red-50">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+
+                                        @if ($paiement->statut !== 'paye')
+                                            <button onclick="editPaiement({{ $paiement->id }})"
+                                                class="text-yellow-600 hover:text-yellow-800 transition-colors p-1 rounded hover:bg-yellow-50"
+                                                title="Modifier le paiement">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button onclick="deletePaiement({{ $paiement->id }})"
+                                                class="text-red-600 hover:text-red-800 transition-colors p-1 rounded hover:bg-red-50"
+                                                title="Supprimer le paiement">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        @else
+                                            <span class="text-gray-400 p-1 rounded"
+                                                title="Paiement payé - Non modifiable">
+                                                <i class="fas fa-lock"></i>
+                                            </span>
+                                            <button onclick="deletePaiement({{ $paiement->id }})"
+                                                class="text-red-600 hover:text-red-800 transition-colors p-1 rounded hover:bg-red-50"
+                                                title="Supprimer le paiement">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -333,6 +347,7 @@
                             @endforelse
                         </tbody>
                     </table>
+
                     @if ($paiements->hasPages())
                         <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
                             {{ $paiements->links() }}
@@ -353,6 +368,7 @@
                         <i class="fas fa-times text-lg"></i>
                     </button>
                 </div>
+
                 <form method="POST" action="{{ route('paiements.store') }}" class="space-y-4">
                     @csrf
                     <div>
@@ -370,12 +386,13 @@
                             @endforeach
                         </select>
                     </div>
+
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label for="montant" class="block text-sm font-medium text-gray-700 mb-1">
                                 Montant (DH) <span class="text-red-500">*</span>
                             </label>
-                            <input type="number" id="montant" name="montant" step="0.01" min="0" required
+                            <input type="number" id="montant" name="montant" step="0.01" min="0" required 
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                         </div>
                         <div>
@@ -387,6 +404,7 @@
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent bg-gray-50">
                         </div>
                     </div>
+
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label for="mode_paiement" class="block text-sm font-medium text-gray-700 mb-1">
@@ -415,6 +433,7 @@
                             </select>
                         </div>
                     </div>
+
                     <div class="flex justify-end space-x-3 pt-4">
                         <button type="button" onclick="closeModal('createPaiementModal')"
                             class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
@@ -440,6 +459,7 @@
                         <i class="fas fa-times text-lg"></i>
                     </button>
                 </div>
+
                 <form id="editPaiementForm" method="POST" class="space-y-4">
                     @csrf
                     @method('PUT')
@@ -459,6 +479,7 @@
                         </select>
                         <input type="hidden" name="facture_id" id="hidden_edit_facture_id">
                     </div>
+
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label for="edit_montant" class="block text-sm font-medium text-gray-700 mb-1">
@@ -476,6 +497,7 @@
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent bg-gray-50">
                         </div>
                     </div>
+
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label for="edit_mode_paiement" class="block text-sm font-medium text-gray-700 mb-1">
@@ -504,6 +526,7 @@
                             </select>
                         </div>
                     </div>
+
                     <div class="flex justify-end space-x-3 pt-4">
                         <button type="button" onclick="closeModal('editPaiementModal')"
                             class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
@@ -529,6 +552,7 @@
                         <i class="fas fa-times text-lg"></i>
                     </button>
                 </div>
+
                 <div class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
@@ -540,6 +564,7 @@
                             <p class="text-sm text-gray-900" id="show_cin"></p>
                         </div>
                     </div>
+
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Montant:</label>
@@ -550,6 +575,7 @@
                             <p class="text-sm text-gray-900" id="show_date"></p>
                         </div>
                     </div>
+
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Mode de Paiement:</label>
@@ -560,6 +586,7 @@
                             <p class="text-sm text-gray-900" id="show_statut"></p>
                         </div>
                     </div>
+
                     <div class="flex justify-end pt-4">
                         <button onclick="closeModal('showPaiementModal')"
                             class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
@@ -642,7 +669,6 @@
                             'fr-FR');
                         document.getElementById('show_mode').innerHTML = getModeIcon(data.mode_paiement);
                         document.getElementById('show_statut').innerHTML = getStatutBadge(data.statut);
-
                         openModal('showPaiementModal');
                     })
                     .catch(error => {
@@ -661,6 +687,12 @@
                     })
                     .then(response => response.json())
                     .then(data => {
+                        // Vérifier si le paiement est payé
+                        if (data.statut === 'paye') {
+                            alert('Impossible de modifier un paiement payé.');
+                            return;
+                        }
+
                         document.getElementById('editPaiementForm').action = `/paiements/${id}`;
                         document.getElementById('edit_facture_id').value = data.facture_id;
                         document.getElementById('hidden_edit_facture_id').value = data.facture_id;
@@ -668,7 +700,6 @@
                         document.getElementById('edit_date_paiement').value = data.date_paiement;
                         document.getElementById('edit_mode_paiement').value = data.mode_paiement;
                         document.getElementById('edit_statut').value = data.statut;
-
                         openModal('editPaiementModal');
                     })
                     .catch(error => {

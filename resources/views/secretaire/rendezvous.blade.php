@@ -485,6 +485,78 @@
         let hasValidationErrors = false;
         let hasSessionError = false;
 
+        // Fonction pour obtenir la date et l'heure actuelles
+        function getCurrentDateTime() {
+            const now = new Date();
+            return {
+                date: now.toISOString().split('T')[0],
+                time: now.toTimeString().substring(0, 5)
+            };
+        }
+
+        // Fonction pour valider la date et l'heure
+        function validateDateTime(dateInput, timeInput) {
+            const selectedDate = dateInput.value;
+            const selectedTime = timeInput.value;
+            const currentDateTime = getCurrentDateTime();
+
+            if (!selectedDate || !selectedTime) {
+                return {
+                    valid: false,
+                    message: 'Veuillez sélectionner une date et une heure.'
+                };
+            }
+
+            // Créer des objets Date pour la comparaison
+            const selectedDateTime = new Date(selectedDate + 'T' + selectedTime);
+            const currentDateTimeObj = new Date();
+
+            if (selectedDateTime <= currentDateTimeObj) {
+                return {
+                    valid: false,
+                    message: 'La date et l\'heure du rendez-vous doivent être postérieures à maintenant.'
+                };
+            }
+
+            return {
+                valid: true
+            };
+        }
+
+        // Fonction pour afficher les erreurs de validation
+        function showValidationError(message) {
+            const existingError = document.getElementById('datetime-error');
+            if (existingError) {
+                existingError.remove();
+            }
+
+            const errorDiv = document.createElement('div');
+            errorDiv.id = 'datetime-error';
+            errorDiv.className = 'p-3 bg-red-100 border border-red-400 text-red-700 rounded mb-4';
+            errorDiv.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                <span>${message}</span>
+            </div>
+        `;
+
+            const form = document.getElementById('addForm');
+            form.insertBefore(errorDiv, form.firstChild);
+
+            // Faire défiler vers l'erreur
+            errorDiv.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+
+            // Supprimer l'erreur après 5 secondes
+            setTimeout(() => {
+                if (errorDiv && errorDiv.parentNode) {
+                    errorDiv.remove();
+                }
+            }, 5000);
+        }
+
         // Fonction pour fermer un message spécifique
         function closeMessage(messageId) {
             const message = document.getElementById(messageId);
@@ -508,10 +580,10 @@
             const messageContainer = document.getElementById('messages-container');
             const messageDiv = document.createElement('div');
             messageDiv.className = `temp-message p-4 rounded-lg border transition-all duration-500 opacity-0 transform translate-y-2 ${
-                type === 'success' 
+type === 'success' 
                     ? 'bg-green-100 text-green-800 border-green-200' 
                     : 'bg-red-100 text-red-800 border-red-200'
-            }`;
+}`;
 
             messageDiv.innerHTML = `
                 <div class="flex items-start">
@@ -534,6 +606,12 @@
                 messageDiv.style.transform = 'translateY(0)';
             });
 
+            // Scroll vers le message
+            messageDiv.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+
             // Auto-fermeture après 5 secondes
             setTimeout(() => {
                 if (messageDiv.parentNode) {
@@ -551,8 +629,15 @@
         // Fonction pour l'auto-fermeture des messages
         function setupAutoCloseMessages() {
             const messages = document.querySelectorAll('.alert-message');
-            console.log('Messages trouvés:', messages.length);
             messages.forEach(message => {
+                // Scroll vers le message si c'est un message d'erreur
+                if (message.classList.contains('bg-red-100')) {
+                    message.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                }
+
                 setTimeout(() => {
                     if (message.parentNode) {
                         message.style.opacity = '0';
@@ -563,7 +648,7 @@
                             }
                         }, 300);
                     }
-                }, 8000); // 8 secondes pour les laisser lisibles
+                }, 8000);
             });
         }
 
@@ -605,6 +690,12 @@
         // Fonctions pour les modales
         function openAddModal() {
             document.getElementById('addModal').classList.remove('hidden');
+            // Supprimer les erreurs précédentes
+            const existingError = document.getElementById('datetime-error');
+            if (existingError) {
+                existingError.remove();
+            }
+
             // Scroll vers le haut pour voir les messages
             window.scrollTo({
                 top: 0,
@@ -614,6 +705,11 @@
 
         function closeAddModal() {
             document.getElementById('addModal').classList.add('hidden');
+            // Supprimer les erreurs de validation
+            const existingError = document.getElementById('datetime-error');
+            if (existingError) {
+                existingError.remove();
+            }
         }
 
         function openEditModal(rdv) {
@@ -664,28 +760,90 @@
             }
         }
 
+        // Validation en temps réel pour les champs de date et heure
+        function setupDateTimeValidation() {
+            const dateInput = document.getElementById('date');
+            const timeInput = document.getElementById('heure');
+            const editDateInput = document.getElementById('edit_date');
+            const editTimeInput = document.getElementById('edit_heure');
+
+            // Fonction pour valider en temps réel
+            function validateRealTime(dateField, timeField) {
+                const validation = validateDateTime(dateField, timeField);
+                if (!validation.valid && dateField.value && timeField.value) {
+                    dateField.setCustomValidity(validation.message);
+                    timeField.setCustomValidity(validation.message);
+                } else {
+                    dateField.setCustomValidity('');
+                    timeField.setCustomValidity('');
+                }
+            }
+
+            // Événements pour le modal d'ajout
+            if (dateInput && timeInput) {
+                dateInput.addEventListener('change', () => validateRealTime(dateInput, timeInput));
+                timeInput.addEventListener('change', () => validateRealTime(dateInput, timeInput));
+            }
+
+            // Événements pour le modal d'édition
+            if (editDateInput && editTimeInput) {
+                editDateInput.addEventListener('change', () => validateRealTime(editDateInput, editTimeInput));
+                editTimeInput.addEventListener('change', () => validateRealTime(editDateInput, editTimeInput));
+            }
+        }
+
         // Initialisation au chargement
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM chargé');
-            console.log('Session success:', @json(session('success')));
-            console.log('Session error:', @json(session('error')));
-            console.log('Validation errors:', @json($errors->any()));
 
             // Configuration de l'auto-fermeture des messages
             setupAutoCloseMessages();
+
+            // Configuration de la validation date/heure
+            setupDateTimeValidation();
 
             // Événements de filtrage
             document.getElementById('searchInput').addEventListener('input', filterRendezVous);
             document.getElementById('statutFilter').addEventListener('change', filterRendezVous);
             document.getElementById('dateFilter').addEventListener('change', filterRendezVous);
 
+            // Validation du formulaire d'ajout
+            const addForm = document.getElementById('addForm');
+            if (addForm) {
+                addForm.addEventListener('submit', function(e) {
+                    const dateInput = document.getElementById('date');
+                    const timeInput = document.getElementById('heure');
+                    const validation = validateDateTime(dateInput, timeInput);
+
+                    if (!validation.valid) {
+                        e.preventDefault();
+                        showValidationError(validation.message);
+                        return false;
+                    }
+                });
+            }
+
+            // Validation du formulaire d'édition
+            const editForm = document.getElementById('editForm');
+            if (editForm) {
+                editForm.addEventListener('submit', function(e) {
+                    const dateInput = document.getElementById('edit_date');
+                    const timeInput = document.getElementById('edit_heure');
+                    const validation = validateDateTime(dateInput, timeInput);
+
+                    if (!validation.valid) {
+                        e.preventDefault();
+                        showValidationError(validation.message);
+                        return false;
+                    }
+                });
+            }
+
             // Vérifier s'il y a des erreurs pour rouvrir le modal
             @if ($errors->any() && old('_token'))
-                console.log('Erreurs de validation détectées - ouverture du modal');
                 hasValidationErrors = true;
                 setTimeout(() => {
                     openAddModal();
-                    // Scroll vers le haut pour voir les messages
                     window.scrollTo({
                         top: 0,
                         behavior: 'smooth'
@@ -694,11 +852,9 @@
             @endif
 
             @if (session('error') && old('_token'))
-                console.log('Erreur de session détectée - ouverture du modal');
                 hasSessionError = true;
                 setTimeout(() => {
                     openAddModal();
-                    // Scroll vers le haut pour voir les messages
                     window.scrollTo({
                         top: 0,
                         behavior: 'smooth'
@@ -707,7 +863,6 @@
             @endif
 
             @if (session('success'))
-                console.log('Message de succès détecté');
                 // Scroll vers le haut pour voir le message de succès
                 window.scrollTo({
                     top: 0,
@@ -736,14 +891,6 @@
                 closeEditModal();
             }
         });
-
-        // Empêcher la fermeture du modal s'il y a des erreurs
-        const addForm = document.getElementById('addForm');
-        if (addForm) {
-            addForm.addEventListener('submit', function(e) {
-                console.log('Formulaire soumis');
-            });
-        }
     </script>
 </body>
 
