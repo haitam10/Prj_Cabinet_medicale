@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Mon Profil - Cabinet Médical</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDgc-1iIqCKAz2yAM6chdi7bnX68fUWZ2k&libraries=places&callback=initMap" async defer></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script>
@@ -167,7 +167,7 @@
                     @csrf
                     <div class="flex items-center space-x-3" onclick="document.getElementById('logout-form').submit();">
                         <img src="https://cdn-icons-png.flaticon.com/512/17003/17003310.png" alt="User"
-                            class="w-10 h-10 rounded-full">
+                            class="w-10 h-10 rounded-full object-cover">
                         <div>
                             <p class="text-white text-sm font-medium">{{ Auth::user()->nom ?? 'Utilisateur' }}</p>
                             <p class="text-gray-400 text-xs">{{ ucfirst(Auth::user()->role ?? '') }} — <span
@@ -180,7 +180,7 @@
     </div>
 
     <!-- CONTENU PRINCIPAL -->
-    <div class="ml-64">
+    <div class="ml-64 min-h-screen">
         <header class="bg-white shadow-sm border-b border-gray-200">
             <div class="px-6 py-4 flex items-center justify-between">
                 <div>
@@ -190,18 +190,20 @@
             </div>
         </header>
 
-        <main class="p-6">
+        <main class="p-6 max-w-7xl mx-auto">
             @if (session('success'))
                 <div id="successMessage"
-                    class="mb-4 p-4 bg-green-100 text-green-800 rounded-lg border border-green-200 transition-opacity duration-500">
-                    <i class="fas fa-check-circle mr-2"></i>{{ session('success') }}
+                    class="mb-4 p-4 bg-green-100 text-green-800 rounded-lg border border-green-200 transition-opacity duration-500 flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <span>{{ session('success') }}</span>
                 </div>
             @endif
 
             @if (session('error'))
                 <div id="errorMessage"
-                    class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 transition-opacity duration-500">
-                    <i class="fas fa-exclamation-circle mr-2"></i>{{ session('error') }}
+                    class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 transition-opacity duration-500 flex items-center">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    <span>{{ session('error') }}</span>
                 </div>
             @endif
 
@@ -223,30 +225,30 @@
 
             <!-- Informations rapides -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div class="info-card">
+                <div class="info-card bg-white rounded-lg p-4 shadow">
                     <div class="flex items-center space-x-3">
                         <i class="fas fa-envelope text-cordes-blue text-xl"></i>
                         <div>
                             <p class="text-sm text-gray-600">Email</p>
-                            <p class="font-semibold text-gray-900">{{ $user->email }}</p>
+                            <p class="font-semibold text-gray-900 break-words">{{ $user->email }}</p>
                         </div>
                     </div>
                 </div>
-                <div class="info-card">
+                <div class="info-card bg-white rounded-lg p-4 shadow">
                     <div class="flex items-center space-x-3">
                         <i class="fas fa-phone text-cordes-blue text-xl"></i>
                         <div>
                             <p class="text-sm text-gray-600">Téléphone</p>
-                            <p class="font-semibold text-gray-900">{{ $user->telephone ?: 'Non renseigné' }}</p>
+                            <p class="font-semibold text-gray-900 break-words">{{ $user->telephone ?: 'Non renseigné' }}</p>
                         </div>
                     </div>
                 </div>
-                <div class="info-card">
+                <div class="info-card bg-white rounded-lg p-4 shadow">
                     <div class="flex items-center space-x-3">
                         <i class="fas fa-id-card text-cordes-blue text-xl"></i>
                         <div>
                             <p class="text-sm text-gray-600">CIN</p>
-                            <p class="font-semibold text-gray-900">{{ $user->cin }}</p>
+                            <p class="font-semibold text-gray-900 break-words">{{ $user->cin }}</p>
                         </div>
                     </div>
                 </div>
@@ -259,7 +261,7 @@
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Informations personnelles -->
-                    <div class="form-section">
+                    <div class="form-section bg-white rounded-lg p-6 shadow">
                         <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
                             <i class="fas fa-user mr-2 text-cordes-blue"></i>
                             Informations personnelles
@@ -267,42 +269,42 @@
                         
                         <div class="space-y-4">
                             <div>
-                                <label class="form-label" for="cin">CIN *</label>
+                                <label class="form-label block mb-1 font-medium" for="cin">CIN *</label>
                                 <input type="text" id="cin" name="cin" value="{{ old('cin', $user->cin) }}" 
-                                       class="form-input" required>
+                                       class="form-input w-full rounded border-gray-300 focus:ring focus:ring-cordes-blue" required>
                                 @error('cin')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
 
                             <div>
-                                <label class="form-label" for="nom">Nom complet *</label>
+                                <label class="form-label block mb-1 font-medium" for="nom">Nom complet *</label>
                                 <input type="text" id="nom" name="nom" value="{{ old('nom', $user->nom) }}" 
-                                       class="form-input" required>
+                                       class="form-input w-full rounded border-gray-300 focus:ring focus:ring-cordes-blue" required>
                                 @error('nom')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
 
                             <div>
-                                <label class="form-label" for="email">Email *</label>
+                                <label class="form-label block mb-1 font-medium" for="email">Email *</label>
                                 <input type="email" id="email" name="email" value="{{ old('email', $user->email) }}" 
-                                       class="form-input" required>
+                                       class="form-input w-full rounded border-gray-300 focus:ring focus:ring-cordes-blue" required>
                                 @error('email')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
 
                             <div>
-                                <label class="form-label" for="role">Rôle</label>
+                                <label class="form-label block mb-1 font-medium" for="role">Rôle</label>
                                 <input type="text" id="role" name="role" value="{{ ucfirst($user->role) }}" 
-                                       class="form-input readonly-input" readonly>
+                                       class="form-input w-full rounded border-gray-300 bg-gray-100 cursor-not-allowed" readonly>
                                 <p class="text-sm text-gray-500 mt-1">Le rôle ne peut pas être modifié</p>
                             </div>
 
                             <div>
-                                <label class="form-label" for="statut">Statut *</label>
-                                <select id="statut" name="statut" class="form-input" required>
+                                <label class="form-label block mb-1 font-medium" for="statut">Statut *</label>
+                                <select id="statut" name="statut" class="form-input w-full rounded border-gray-300 focus:ring focus:ring-cordes-blue" required>
                                     <option value="actif" {{ old('statut', $user->statut) == 'actif' ? 'selected' : '' }}>Actif</option>
                                     <option value="inactif" {{ old('statut', $user->statut) == 'inactif' ? 'selected' : '' }}>Inactif</option>
                                     <option value="suspendu" {{ old('statut', $user->statut) == 'suspendu' ? 'selected' : '' }}>Suspendu</option>
@@ -315,7 +317,7 @@
                     </div>
 
                     <!-- Informations complémentaires -->
-                    <div class="form-section">
+                    <div class="form-section bg-white rounded-lg p-6 shadow">
                         <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
                             <i class="fas fa-info-circle mr-2 text-cordes-blue"></i>
                             Informations complémentaires
@@ -323,18 +325,18 @@
                         
                         <div class="space-y-4">
                             <div>
-                                <label class="form-label" for="date_naissance">Date de naissance</label>
+                                <label class="form-label block mb-1 font-medium" for="date_naissance">Date de naissance</label>
                                 <input type="date" id="date_naissance" name="date_naissance" 
                                        value="{{ old('date_naissance', $user->date_naissance ? $user->date_naissance->format('Y-m-d') : '') }}" 
-                                       class="form-input">
+                                       class="form-input w-full rounded border-gray-300 focus:ring focus:ring-cordes-blue">
                                 @error('date_naissance')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
 
                             <div>
-                                <label class="form-label" for="sexe">Sexe</label>
-                                <select id="sexe" name="sexe" class="form-input">
+                                <label class="form-label block mb-1 font-medium" for="sexe">Sexe</label>
+                                <select id="sexe" name="sexe" class="form-input w-full rounded border-gray-300 focus:ring focus:ring-cordes-blue">
                                     <option value="">Sélectionnez</option>
                                     <option value="homme" {{ old('sexe', $user->sexe) == 'homme' ? 'selected' : '' }}>Homme</option>
                                     <option value="femme" {{ old('sexe', $user->sexe) == 'femme' ? 'selected' : '' }}>Femme</option>
@@ -344,37 +346,45 @@
                                 @enderror
                             </div>
 
-                            <div>
-                                <label class="form-label" for="telephone">Téléphone</label>
-                                <input type="tel" id="telephone" name="telephone" value="{{ old('telephone', $user->telephone) }}" 
-                                       class="form-input">
-                                @error('telephone')
-                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                                @enderror
-                            </div>
 
                             <div>
-                                <label class="form-label" for="adresse">Adresse</label>
-                                <textarea id="adresse" name="adresse" rows="3" class="form-input">{{ old('adresse', $user->adresse) }}</textarea>
+                                <label class="form-label block mb-1 font-medium" for="adresse">Adresse</label>
+                                <input type="text" id="adresse" name="adresse" 
+                                    value="{{ old('adresse', $user->adresse) }}" 
+                                    class="form-input w-full rounded border-gray-300 focus:ring focus:ring-cordes-blue"
+                                    placeholder="Commencez à taper votre adresse...">
                                 @error('adresse')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                 @enderror
+
+                                <input type="hidden" id="latitude" name="latitude" value="{{ old('latitude', $user->latitude ?? '') }}">
+                                <input type="hidden" id="longitude" name="longitude" value="{{ old('longitude', $user->longitude ?? '') }}">
+
+                                <div id="map" style="height: 300px; margin-top: 0.5rem; border-radius: 0.5rem; border: 1px solid #d1d5db;"></div>
                             </div>
+                                                        <div>
+                                <!-- BOUTON POUR LOCALISER -->
+                                <button type="button" id="btnLocateMe" class="mb-2 px-4 py-2 bg-cordes-blue text-white rounded hover:bg-cordes-blue-dark transition">
+                                    <i class="fas fa-map-marker-alt mr-2"></i>
+                                    Localiser ma position
+                                </button>
+                            </div>
+
 
                             @if($user->role === 'medecin')
                                 <div>
-                                    <label class="form-label" for="specialite">Spécialité</label>
+                                    <label class="form-label block mb-1 font-medium" for="specialite">Spécialité</label>
                                     <input type="text" id="specialite" name="specialite" value="{{ old('specialite', $user->specialite) }}" 
-                                           class="form-input">
+                                           class="form-input w-full rounded border-gray-300 focus:ring focus:ring-cordes-blue">
                                     @error('specialite')
                                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                     @enderror
                                 </div>
 
                                 <div>
-                                    <label class="form-label" for="numero_adeli">Numéro ADELI</label>
+                                    <label class="form-label block mb-1 font-medium" for="numero_adeli">Numéro ADELI</label>
                                     <input type="text" id="numero_adeli" name="numero_adeli" value="{{ old('numero_adeli', $user->numero_adeli) }}" 
-                                           class="form-input">
+                                           class="form-input w-full rounded border-gray-300 focus:ring focus:ring-cordes-blue">
                                     @error('numero_adeli')
                                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                     @enderror
@@ -385,7 +395,7 @@
                 </div>
 
                 <!-- Changement de mot de passe -->
-                <div class="form-section">
+                <div class="form-section bg-white rounded-lg p-6 shadow mt-6">
                     <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
                         <i class="fas fa-lock mr-2 text-cordes-blue"></i>
                         Changer le mot de passe
@@ -393,28 +403,28 @@
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="form-label" for="password">Nouveau mot de passe</label>
-                            <input type="password" id="password" name="password" class="form-input">
+                            <label class="form-label block mb-1 font-medium" for="password">Nouveau mot de passe</label>
+                            <input type="password" id="password" name="password" class="form-input w-full rounded border-gray-300 focus:ring focus:ring-cordes-blue">
                             @error('password')
                                 <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                             @enderror
                         </div>
                         
                         <div>
-                            <label class="form-label" for="password_confirmation">Confirmer le mot de passe</label>
-                            <input type="password" id="password_confirmation" name="password_confirmation" class="form-input">
+                            <label class="form-label block mb-1 font-medium" for="password_confirmation">Confirmer le mot de passe</label>
+                            <input type="password" id="password_confirmation" name="password_confirmation" class="form-input w-full rounded border-gray-300 focus:ring focus:ring-cordes-blue">
                         </div>
                     </div>
                     
-                    <p class="text-sm text-gray-500 mt-2">
+                    <p class="text-sm text-gray-500 mt-2 flex items-center">
                         <i class="fas fa-info-circle mr-1"></i>
                         Laissez vide si vous ne souhaitez pas changer le mot de passe
                     </p>
                 </div>
 
                 <!-- Bouton de sauvegarde -->
-                <div class="flex justify-end">
-                    <button type="submit" class="btn-primary">
+                <div class="flex justify-end mt-6">
+                    <button type="submit" class="btn-primary inline-flex items-center px-4 py-2 bg-cordes-blue text-white rounded hover:bg-cordes-blue-dark transition">
                         <i class="fas fa-save mr-2"></i>
                         Enregistrer les modifications
                     </button>
@@ -438,6 +448,117 @@
                 });
             }, 5000);
         });
+
+        // Gestion du bouton Localiser ma position
+        document.addEventListener('DOMContentLoaded', function () {
+            const btnLocate = document.getElementById('btnLocateMe');
+            if (btnLocate) {
+                btnLocate.addEventListener('click', () => {
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(position => {
+                            const lat = position.coords.latitude;
+                            const lng = position.coords.longitude;
+
+                            // Mettre à jour les inputs cachés
+                            document.getElementById('latitude').value = lat;
+                            document.getElementById('longitude').value = lng;
+
+                            // Mettre à jour la carte et le marqueur
+                            const pos = new google.maps.LatLng(lat, lng);
+                            map.setCenter(pos);
+                            map.setZoom(15);
+                            marker.setPosition(pos);
+
+                            // Récupérer l'adresse inverse
+                            const geocoder = new google.maps.Geocoder();
+                            geocoder.geocode({ location: pos }, (results, status) => {
+                                if (status === 'OK' && results[0]) {
+                                    document.getElementById('adresse').value = results[0].formatted_address;
+                                }
+                            });
+                        }, error => {
+                            alert('Impossible de récupérer votre position : ' + error.message);
+                        });
+                    } else {
+                        alert('La géolocalisation n\'est pas supportée par votre navigateur.');
+                    }
+                });
+            }
+        });
+    </script>
+
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDgc-1iIqCKAz2yAM6chdi7bnX68fUWZ2k&libraries=places&callback=initMap"
+      async
+      defer>
+    </script>
+
+    <script>
+      let map;
+      let marker;
+      let autocomplete;
+
+      function initMap() {
+        const latInput = document.getElementById('latitude');
+        const lngInput = document.getElementById('longitude');
+        const adresseInput = document.getElementById('adresse');
+
+        const lat = parseFloat(latInput.value) || 33.5731;      // Coordonnée par défaut (Casablanca)
+        const lng = parseFloat(lngInput.value) || -7.5898;
+
+        const initialPosition = { lat, lng };
+
+        // Initialiser la carte
+        map = new google.maps.Map(document.getElementById('map'), {
+          center: initialPosition,
+          zoom: 13,
+        });
+
+        // Marqueur draggable
+        marker = new google.maps.Marker({
+          position: initialPosition,
+          map: map,
+          draggable: true,
+        });
+
+        // Autocomplete Google Places sur le champ adresse
+        autocomplete = new google.maps.places.Autocomplete(adresseInput, {
+          types: ['geocode'],
+        });
+
+        // Quand l'utilisateur sélectionne une adresse
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace();
+          if (!place.geometry) {
+            return;
+          }
+          const location = place.geometry.location;
+
+          // Mettre à jour la carte et le marqueur
+          map.setCenter(location);
+          map.setZoom(15);
+          marker.setPosition(location);
+
+          // Mettre à jour les inputs cachés
+          latInput.value = location.lat();
+          lngInput.value = location.lng();
+        });
+
+        // Quand l'utilisateur déplace le marqueur manuellement
+        marker.addListener('dragend', () => {
+          const pos = marker.getPosition();
+          latInput.value = pos.lat();
+          lngInput.value = pos.lng();
+
+          // Optionnel : récupérer adresse inverse
+          const geocoder = new google.maps.Geocoder();
+          geocoder.geocode({ location: pos }, (results, status) => {
+            if (status === 'OK' && results[0]) {
+              adresseInput.value = results[0].formatted_address;
+            }
+          });
+        });
+      }
     </script>
 </body>
 </html>

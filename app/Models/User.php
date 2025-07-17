@@ -30,6 +30,8 @@ class User extends Authenticatable
         'adresse',
         'specialite',
         'numero_adeli',
+        'latitude',
+        'longitude',
     ];
 
     /**
@@ -51,7 +53,6 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'date_naissance' => 'date',
-
     ];
 
     // Relations

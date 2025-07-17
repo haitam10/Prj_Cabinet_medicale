@@ -185,12 +185,15 @@ class UserController extends Controller
             'adresse' => 'nullable|string|max:500',
             'specialite' => 'nullable|string|max:255',
             'numero_adeli' => 'nullable|string|max:50',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $data = $request->only([
             'cin', 'nom', 'email', 'statut', 'date_naissance',
-            'sexe', 'telephone', 'adresse', 'specialite', 'numero_adeli'
+            'sexe', 'telephone', 'adresse', 'specialite', 'numero_adeli',
+            'latitude', 'longitude',
         ]);
 
         if ($request->filled('password')) {
