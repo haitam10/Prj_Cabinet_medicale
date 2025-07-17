@@ -501,19 +501,16 @@
         let availableTemplates = [];
 
         function openPrintModal(docData) {
-            console.log('Opening print modal for document:', docData);
             
             // First fetch the complete document data
             fetch(`/api/certificat/${docData.id}/data`)
                 .then(response => {
-                    console.log('Document data response status:', response.status);
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     return response.json();
                 })
                 .then(fullDocData => {
-                    console.log('Document data received:', fullDocData);
                     
                     // Validate document data structure
                     if (!fullDocData || !fullDocData.patient || !fullDocData.medecin || !fullDocData.certificat) {
@@ -526,14 +523,12 @@
                     return fetch(`/papier/template/certificat`);
                 })
                 .then(response => {
-                    console.log('Templates response status:', response.status);
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     return response.json();
                 })
                 .then(templates => {
-                    console.log('Templates received:', templates);
                     availableTemplates = templates || [];
                     
                     // Populate the template dropdown
@@ -582,10 +577,8 @@
 
         function proceedWithSelectedTemplate() {
             console.log('Proceeding with selected template');
-            console.log('pendingPrintDocument:', pendingPrintDocument);
             
             const selectedTemplateId = document.getElementById('templateSelect').value;
-            console.log('Selected template ID:', selectedTemplateId);
 
             if (!selectedTemplateId) {
                 alert('Veuillez sélectionner un modèle.');
@@ -613,7 +606,6 @@
                 return;
             }
 
-            console.log('Selected template:', selectedTemplate);
 
             // Attach template to document
             pendingPrintDocument.template = selectedTemplate;
@@ -624,7 +616,6 @@
         }
 
         function printCurrentDocument() {
-            console.log('Printing current document:', currentDocument);
             
             if (!currentDocument) {
                 alert("Aucun document valide à imprimer.");
@@ -641,7 +632,6 @@
         }
 
         function printCertificat(data) {
-            console.log('printCertificat called with data:', data);
             
             if (!data) {
                 console.error("Invalid document data:", data);
@@ -662,7 +652,6 @@
                 data.template = defaultTemplate;
             }
 
-            console.log('Using template:', data.template);
 
             // Helper function to decode Unicode escape sequences and HTML entities
             function decodeHtmlAndUnicode(str) {
@@ -895,7 +884,6 @@
                     </html>
                 `;
 
-            console.log('Generated HTML for printing');
             
             const printFrame = document.getElementById('printFrame');
             

@@ -513,7 +513,6 @@
         }
 
        function printOrdonnance(data) {
-    console.log(data); // For debugging purposes
 
     const template = data.template || {};
 
