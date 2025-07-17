@@ -14,8 +14,11 @@ class OrdonDoc extends Model
     protected $fillable = [
         'id_docteur',
         'logo_file_path',
+        'file_path',
+        'nom_cabinet',
         'addr_cabinet',
         'tel_cabinet',
+        'desc_cabinet',
         'descOrdonn',
         'isSelected',
     ];

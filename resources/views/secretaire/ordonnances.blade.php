@@ -24,27 +24,21 @@
         };
     </script>
     <style>
+        /* ONLY print styles - NO template styles in main page */
         @media print {
             body * {
                 visibility: hidden;
             }
-            #printContent, #printContent * {
+            #printFrame {
                 visibility: visible;
-            }
-            #printContent {
                 position: absolute;
                 left: 0;
                 top: 0;
                 width: 100%;
-                background: white;
-                page-break-after: avoid;
+                height: 100%;
             }
             .no-print {
                 display: none !important;
-            }
-            @page {
-                size: A4;
-                margin: 1cm;
             }
         }
     </style>
@@ -391,104 +385,18 @@
         </div>
     </div>
 
-    <!-- PRINT CONTENT (Hidden) - DEFAULT ORDONNANCE TEMPLATE -->
-    <div id="printContent" class="hidden print:block">
-        <div class="max-w-4xl mx-auto p-8 bg-white min-h-screen" style="font-family: 'Times New Roman', serif;">
-            <!-- Header -->
-            <div class="text-center mb-8">
-                <div class="flex items-center justify-center mb-4">
-                    <!-- Medical Symbol -->
-                    <div class="mr-8">
-                        <svg width="60" height="60" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M50 10C30 10 15 25 15 45C15 65 30 80 50 80C70 80 85 65 85 45C85 25 70 10 50 10Z" stroke="black" stroke-width="2" fill="none"/>
-                            <path d="M35 35L65 65M65 35L35 65" stroke="black" stroke-width="2"/>
-                            <path d="M50 20L50 70M30 50L70 50" stroke="black" stroke-width="3"/>
-                        </svg>
-                    </div>
-                    <div class="text-left">
-                        <h1 class="text-xl font-bold mb-2">Bureau médical</h1>
-                        <div class="text-sm">
-                            <p class="font-semibold">DR. <span id="printDoctorName">_________________</span></p>
-                            <p class="font-semibold">MÉDECIN - CHIRURGIEN</p>
-                            <p class="text-xs mt-1">MÉDECINE GÉNÉRALE, PÉDIATRIE, MALADIES RESPIRATOIRES ET CUTANÉES</p>
-                            <p class="text-xs">CHIRURGIE VÉNÉRIENNE, MAJEURE ET MINEURE</p>
-                            <p class="text-xs mt-1">Adresse.: <span id="printAddress">_________________</span> Tél.: <span id="printPhone">_________________</span></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- HIDDEN IFRAME FOR PRINTING - NO TEMPLATE INCLUSION -->
+    <iframe id="printFrame" style="display: none;"></iframe>
 
-            <!-- Date -->
-            <div class="text-right mb-8">
-                <p class="font-semibold">BONNE FOI, <span id="printDate"></span></p>
-            </div>
-
-            <!-- Title -->
-            <div class="text-center mb-8">
-                <h2 class="text-2xl font-bold tracking-wider">ORDONNANCE MÉDICALE</h2>
-            </div>
-
-            <!-- Doctor Info -->
-            <div class="mb-6">
-                <p class="font-semibold">YO, <span id="printDoctorNameFull">_________________________</span></p>
-                <p class="font-semibold">MÉDECIN CHIRURGIEN</p>
-            </div>
-
-            <!-- Patient Info -->
-            <div class="mb-6">
-                <p><strong>Patient:</strong> <span id="printPatientInfo"></span></p>
-                <p><strong>Date:</strong> <span id="printDocumentDate"></span></p>
-            </div>
-
-            <!-- Prescription Box -->
-            <div class="border-2 border-black p-6 mb-6 min-h-[200px]">
-                <div class="text-lg font-bold mb-4">Prescription:</div>
-                <div id="printMedicaments" class="whitespace-pre-line text-base leading-relaxed"></div>
-            </div>
-
-            <!-- Instructions -->
-            <div class="bg-gray-100 p-4 mb-6 border-l-4 border-blue-500">
-                <strong>Instructions:</strong>
-                <div id="printInstructions" class="mt-2"></div>
-                <div class="mt-4">
-                    <strong>Durée du traitement:</strong> <span id="printDureeTraitement"></span>
-                </div>
-            </div>
-
-            <!-- Closing -->
-            <div class="text-center mb-12">
-                <p class="italic">Je vous prie d'agréer, Monsieur le Président, l'expression de mes</p>
-                <p class="italic">sentiments distingués,</p>
-            </div>
-
-            <!-- Signature -->
-            <div class="text-center">
-                <div class="inline-block">
-                    <div class="border-b-2 border-black w-48 mb-2"></div>
-                    <p class="font-semibold">DR.</p>
-                    <p class="font-semibold">Chirurgien</p>
-                </div>
-            </div>
-        </div>
-    </div>  
-    @if(session('print_document'))
-            <script>
-                let currentDocument = null;
-
-                @if(session('print_certificat'))
-                    currentDocument = @json(session('print_certificat'));
-                @elseif(session('print_ordonnance'))
-                    currentDocument = @json(session('print_ordonnance'));
-                @endif
-
-                if (currentDocument) {
-                    preparePrintContent();
-                    setTimeout(() => {
-                        window.print();
-                    }, 500);
-                }
-            </script>
-        @endif
+    <!-- AUTO PRINT SCRIPT -->
+    @if(session('print_document') && session('print_ordonnance'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const printData = @json(session('print_ordonnance'));
+                printOrdonnance(printData);
+            });
+        </script>
+    @endif
 
     <script>
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -534,16 +442,43 @@
         }
 
         function openViewModal(docData) {
-            currentDocument = docData;
-            
-            document.getElementById('patientInfo').textContent = `${docData.patient_cin || ''} - ${docData.patient_nom || ''}`;
-            document.getElementById('medecinInfo').textContent = `Dr. ${docData.medecin_nom || ''}`;
-            document.getElementById('documentDate').textContent = docData.date ? new Date(docData.date).toLocaleDateString('fr-FR') : '';
-            document.getElementById('instructions').textContent = docData.instructions || 'Non spécifié';
-            document.getElementById('medicaments').textContent = docData.medicaments || 'Non spécifié';
-            document.getElementById('dureeTraitement').textContent = docData.duree_traitement || 'Non spécifié';
-            
-            document.getElementById('viewModal').classList.remove('hidden');
+            // Fetch the complete data from the new API endpoint to ensure template info is available
+            fetch(`/api/ordonnance/${docData.id}/data`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(fullDocData => {
+                    currentDocument = fullDocData; // Store the full data for viewing and printing
+                    
+                    document.getElementById('patientInfo').textContent =
+                        `${fullDocData.patient.cin || ''} - ${fullDocData.patient.nom || ''} ${fullDocData.patient.prenom || ''}`;
+
+                    document.getElementById('medecinInfo').textContent =
+                        `Dr. ${fullDocData.medecin.nom || ''} ${fullDocData.medecin.prenom || ''}`;
+
+                    document.getElementById('documentDate').textContent =
+                        fullDocData.ordonnance.date_ordonnance
+                            ? new Date(fullDocData.ordonnance.date_ordonnance).toLocaleDateString('fr-FR')
+                            : '';
+
+                    document.getElementById('instructions').textContent =
+                        fullDocData.ordonnance.instructions || 'Non spécifié';
+
+                    document.getElementById('medicaments').textContent =
+                        fullDocData.ordonnance.medicaments || 'Non spécifié';
+
+                    document.getElementById('dureeTraitement').textContent =
+                        fullDocData.ordonnance.duree_traitement || 'Non spécifié';
+
+                    document.getElementById('viewModal').classList.remove('hidden');
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération des données de l\'ordonnance pour visualisation:', error);
+                    alert('Erreur lors de la récupération des données de l\'ordonnance pour visualisation.');
+                });
         }
 
         function closeViewModal() {
@@ -552,37 +487,274 @@
         }
 
         function openPrintModal(docData) {
-            currentDocument = docData;
-            preparePrintContent();
-            window.print();
+            // docData from the table might not have the full template info.
+            // Fetch the complete data from the new API endpoint.
+            fetch(`/api/ordonnance/${docData.id}/data`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(fullDocData => {
+                    currentDocument = fullDocData; // Store the full data
+                    printOrdonnance(fullDocData);
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération des données de l\'ordonnance pour impression:', error);
+                    alert('Erreur lors de la récupération des données de l\'ordonnance pour impression.');
+                });
         }
 
         function printCurrentDocument() {
             if (currentDocument) {
-                preparePrintContent();
-                window.print();
+                printOrdonnance(currentDocument);
             }
         }
 
-        function preparePrintContent() {
-            if (!currentDocument) return;
-            
-            // Fill the default template with data
-            document.getElementById('printDoctorName').textContent = currentDocument.medecin_nom || 'Hamza';
-            document.getElementById('printDoctorNameFull').textContent = `Dr. ${currentDocument.medecin_nom || 'Hamza'}`;
-            document.getElementById('printAddress').textContent = '123 Rue Médicale, Casablanca';
-            document.getElementById('printPhone').textContent = '0522-123456';
-            document.getElementById('printDate').textContent = new Date(currentDocument.date).toLocaleDateString('fr-FR', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-            }).toUpperCase();
-            document.getElementById('printPatientInfo').textContent = `${currentDocument.patient_cin || ''} - ${currentDocument.patient_nom || ''}`;
-            document.getElementById('printDocumentDate').textContent = currentDocument.date ? new Date(currentDocument.date).toLocaleDateString('fr-FR') : '';
-            document.getElementById('printMedicaments').textContent = currentDocument.medicaments || 'Non spécifié';
-            document.getElementById('printInstructions').textContent = currentDocument.instructions || 'Non spécifié';
-            document.getElementById('printDureeTraitement').textContent = currentDocument.duree_traitement || 'Non spécifié';
-        }
+       function printOrdonnance(data) {
+    console.log(data); // For debugging purposes
+
+    const template = data.template || {};
+
+    let prescriptionDate = null;
+    if (data.date) {
+        prescriptionDate = new Date(data.date);
+    } else if (data.ordonnance && data.ordonnance.date_ordonnance) {
+         prescriptionDate = new Date(data.ordonnance.date_ordonnance);
+    } else {
+        prescriptionDate = new Date(); // Fallback to current date
+    }
+
+    const ordonnanceHTML = `
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Ordonnance Médicale</title>
+            <style>
+                @page {
+                    size: A4;
+                    margin: 0;
+                }
+
+                body {
+                    font-family: 'Times New Roman', serif;
+                    margin: 0;
+                    padding: 0;
+                    display: flex;
+                    flex-direction: column;
+                    min-height: 100vh;
+                    background-color: #fff;
+                    color: #000;
+                    font-size: 11pt;
+                }
+
+                .container {
+                    width: 21cm; /* A4 width */
+                    height: 29.7cm; /* A4 height */
+                    margin: 0 auto;
+                    padding: 2.5cm 2.5cm 1.5cm 2.5cm;
+                    box-sizing: border-box;
+                    position: relative;
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .header {
+                    display: flex;
+                    justify-content: space-between; /* Distribute space between items */
+                    align-items: center; /* Vertically center items */
+                    margin-bottom: 5px;
+                    padding-bottom: 10px;
+                    /* Removed position: relative as logo will be within a flex item */
+                }
+
+                .doctor-info {
+                    font-size: 10pt;
+                    line-height: 1.4;
+                    width: 25%; /* Set width to 30% */
+                    text-align: left; /* Center the text */
+                }
+                .cabinet-info {
+                    font-size: 10pt;
+                    line-height: 1.3;
+                    width: 25%;
+                    text-align: center; /* Center the text */
+                }
+                /* Removed explicit text-align for doctor-info and cabinet-info as it's now in the combined rule */
+
+                .doctor-info strong, .cabinet-info strong {
+                    font-size: 12pt;
+                }
+
+                .logo-container {
+                    width: 50%; /* 40% width for the logo container */
+                }
+
+                .caduceus-icon {
+                    width: 80%; /* Bigger */
+                    height: 80%; /* Bigger */
+                    opacity: 0.8;
+                    /* Removed absolute positioning to work with flexbox */
+                    /* Removed left, transform, top */
+                    display: block; /* Ensures image respects text-align center */
+                    margin: 0 auto; /* Centers the image if it's smaller than its container */
+                }
+                
+                .caduceus-large {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 400px; /* Much Bigger */
+                    height: 400px; /* Much Bigger */
+                    opacity: 0.06; /* Slightly more faint for a watermark effect */
+                    z-index: 0;
+                }
+
+                .divider {
+                    border-bottom: 1px solid #000;
+                    margin: 15px 0 30px 0;
+                }
+
+                .title {
+                    text-align: center;
+                    font-size: 14pt;
+                    font-weight: bold;
+                    margin: 20px 0 40px 0;
+                    text-decoration: underline;
+                }
+
+                .date-location {
+                    text-align: right;
+                    margin-top: 20px;
+                    margin-bottom: 30px;
+                    font-size: 11pt;
+                }
+
+                .date-input-line {
+                    display: inline-block;
+                    width: 25px;
+                    /* Removed border-bottom */
+                    text-align: center;
+                    vertical-align: bottom;
+                    line-height: 1.2;
+                    height: 1.2em;
+                }
+
+                .patient-name-line {
+                    margin-top: 15px;
+                    margin-bottom: 40px;
+                    font-size: 11pt;
+                }
+                .patient-name-input-line {
+                    display: inline-block;
+                    width: 250px;
+                    /* Removed border-bottom */
+                    padding-left: 5px;
+                    vertical-align: bottom;
+                    line-height: 1.2;
+                    height: 1.2em;
+                }
+
+                .content-area {
+                    flex-grow: 1;
+                    position: relative;
+                    z-index: 1;
+                    padding-top: 0px;
+                    min-height: 150px;
+                }
+                .prescription-text {
+                    margin-top: 10px;
+                    min-height: 150px;
+                    line-height: 1.6;
+                    font-size: 11pt;
+                    white-space: pre-line;
+                }
+
+                .footer {
+                    border-top: 1px solid #000;
+                    padding-top: 10px;
+                    margin-top: auto;
+                    text-align: center;
+                    font-size: 9pt;
+                    line-height: 1.3;
+                    color: #000;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <div class="doctor-info">
+                        <strong>Dr. ${data.medecin.nom || 'Nom & Prénom'}</strong><br>
+                        Médecin ${data.medecin.specialite || 'Générale'}<br>
+                        Tél : ${data.medecin.telephone || '0522 000 000'}<br>
+                        ${data.medecin.email || 'Adressemail@gmail.com'}
+                    </div>
+                    <div class="logo-container"> ${data.template.logo_file_path ?
+                            `<img src="${window.location.origin}/storage/${data.template.logo_file_path}" alt="Caduceus" class="caduceus-icon">` :
+                            `<img src="${window.location.origin}/public/uploads/cm_logo_default.png" alt="Caduceus" class="caduceus-icon">`
+                        }
+                    </div>
+                    
+                    <div class="cabinet-info">
+                        <strong>${data.cabinet.nom_cabinet || 'Cabinet Nom'}</strong><br>
+                        Adresse : ${data.cabinet.addr_cabinet || 'Votre Adresse'}<br>
+                        ${data.cabinet.descr_cabinet || ''}<br>
+                        Tél : ${data.cabinet.tel_cabinet || '0522 000 000'}
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="title">
+                    ORDONNANCE MEDICALE
+                </div>
+
+                <div class="date-location">
+                    Fait à : Salé Le
+                    <span class="date-input-line">${prescriptionDate.getDate().toString().padStart(2, '0')}</span> /
+                    <span class="date-input-line">${(prescriptionDate.getMonth() + 1).toString().padStart(2, '0')}</span> /
+                    <span class="date-input-line">${prescriptionDate.getFullYear().toString()}</span>
+                </div>
+
+                <div class="patient-name-line">
+                    Nom & Prénom : <span class="patient-name-input-line">${data.patient.nom || ''}</span>
+                </div>
+
+                <div class="content-area">
+                    ${template.logo_file_path ?
+                        `<img src="${window.location.origin}/storage/${template.logo_file_path}"  alt="Caduceus Large" class="caduceus-large">` :
+                        `<img src="${window.location.origin}/public/uploads/cm_logo_default.png" alt="Caduceus Large" class="caduceus-large">`
+                    }
+                    <div class="prescription-text">
+                        ${data.ordonnance.medicaments || ''}<br>
+                        ${data.ordonnance.instructions || ''}<br>
+                        Pendant <strong>${data.ordonnance.duree_traitement || ''}</strong>
+                    </div>
+                </div>
+
+                <div class="footer">
+                    Adresse: ${data.cabinet.addr_cabinet || '123, Avenue adresse , ville'} - Tél: ${data.cabinet.tel_cabinet || '0522 000 000 - 0522 000 000'}<br>
+                    ${data.medecin.email || 'Adressemail@gmail.com'}
+                </div>
+            </div>
+        </body>
+        </html>
+    `;
+
+    const printFrame = document.getElementById('printFrame');
+    printFrame.contentDocument.open();
+    printFrame.contentDocument.write(ordonnanceHTML);
+    printFrame.contentDocument.close();
+
+    setTimeout(() => {
+        printFrame.contentWindow.print();
+    }, 500);
+}   
 
         // FIXED Search and Filter Functions
         function setupSearchAndFilter() {

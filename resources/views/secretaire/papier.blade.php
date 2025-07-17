@@ -122,43 +122,40 @@
             @endif
 
             <div class="bg-white rounded-lg shadow-sm p-6">
-                {{-- <form action="{{ route('papier.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8"> --}}
-                    <form action="#" method="POST" enctype="multipart/form-data" class="space-y-8">
-
+                <form action="{{ route('papier.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
                     @csrf
                     
                     <!-- Title -->
                     <div class="text-center">
-                        {{-- <h2 class="text-3xl font-bold text-gray-900 mb-2">Configuration du Cabinet</h2> --}}
+                        <h2 class="text-3xl font-bold text-gray-900 mb-2">Configuration du Cabinet</h2>
                         <div class="w-24 h-1 bg-cordes-blue mx-auto rounded"></div>
                     </div>
 
-                    <!-- Doctor Info Section -->
+                    <!-- Cabinet Info Section -->
                     <div class="space-y-6">
                         <h3 class="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">
-                            <i class="fas fa-user-md mr-2 text-cordes-blue"></i>Informations Docteur
+                            <i class="fas fa-hospital mr-2 text-cordes-blue"></i>Informations Cabinet
                         </h3>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Adresse</label>
-                                <input type="text" name="adresse" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none" placeholder="Adresse du cabinet...">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nom du Cabinet</label>
+                                <input type="text" name="nom_cabinet" value="{{ $cabinetInfo->nom_cabinet ?? '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none" placeholder="Nom du cabinet...">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Adresse du Cabinet</label>
+                                <input type="text" name="addr_cabinet" value="{{ $cabinetInfo->addr_cabinet ?? '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none" placeholder="Adresse du cabinet...">
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Téléphone</label>
-                                <input type="tel" name="telephone" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none" placeholder="+212 6XX XXX XXX">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Téléphone du Cabinet</label>
+                                <input type="tel" name="tel_cabinet" value="{{ $cabinetInfo->tel_cabinet ?? '' }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none" placeholder="+212 6XX XXX XXX">
+                            </div>
+                             <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Description du Cabinet</label>
+                                <textarea name="desc_cabinet" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none" placeholder="Une brève description du cabinet...">{{ $cabinetInfo->descr_cabinet ?? '' }}</textarea>
                             </div>
                             
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                                <input type="email" name="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none" placeholder="cabinet@example.com">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Logo</label>
-                                <input type="file" name="logo" accept="image/*" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
-                            </div>
                         </div>
                     </div>
 
@@ -168,13 +165,11 @@
                             <h3 class="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">
                                 <i class="fas fa-file-medical mr-2 text-green-600"></i>Certificats
                             </h3>
+                            <button type="button" onclick="openCreateModal('certificat')" class="px-4 py-2 bg-cordes-blue text-white rounded-lg hover:bg-cordes-dark transition-colors">
+                                <i class="fas fa-plus mr-2"></i>Ajouter Certificat
+                            </button>
                         </div>
                         
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Template Certificat</label>
-                            <input type="file" name="certificat_template" accept=".pdf,.doc,.docx" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
-                        </div>
-
                         <div class="bg-gray-50 p-4 rounded-lg">
                             <div class="overflow-x-auto">
                                 <table class="min-w-full divide-y divide-gray-200">
@@ -182,24 +177,41 @@
                                         <tr>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">N°</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sélectionner</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-200">
-                                        <tr>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">1</td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Certificat EX 1</td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <input type="checkbox" name="certificat_examples[]" value="ex1" class="h-4 w-4 text-cordes-blue focus:ring-cordes-accent border-gray-300 rounded">
+                                        @php $certifIndex = 1; @endphp
+                                        
+                                        @forelse($certifModels as $certif)
+                                        <tr class="{{ $certif->is_default ? 'bg-blue-50' : '' }}">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $certifIndex++ }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                               
+                                                {{ $certif->model_nom }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                                <button type="button" onclick="openViewModal('certificat', {{ $certif->id }})" 
+                                                        class="text-green-600 hover:text-green-900">
+                                                    <i class="fas fa-eye"></i> 
+                                                </button>
+                                                <button type="button" onclick="openEditModal('certificat', {{ $certif->id }})" 
+                                                        class="text-blue-600 hover:text-blue-900">
+                                                    <i class="fas fa-edit"></i> 
+                                                </button>
+                                                <button type="button" onclick="deleteTemplate('certificat', {{ $certif->id }})" 
+                                                        class="text-red-600 hover:text-red-900">
+                                                    <i class="fas fa-trash"></i> 
+                                                </button>
                                             </td>
                                         </tr>
+                                        @empty
                                         <tr>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2</td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Certificat EX 2</td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <input type="checkbox" name="certificat_examples[]" value="ex2" class="h-4 w-4 text-cordes-blue focus:ring-cordes-accent border-gray-300 rounded">
+                                            <td colspan="3" class="px-6 py-4 text-center text-gray-500">
+                                                Aucun certificat trouvé
                                             </td>
                                         </tr>
+                                        @endforelse
                                     </tbody>
                                 </table>
                             </div>
@@ -212,13 +224,11 @@
                             <h3 class="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">
                                 <i class="fas fa-prescription-bottle-medical mr-2 text-blue-600"></i>Ordonnances
                             </h3>
+                            <button type="button" onclick="openCreateModal('ordonnance')" class="px-4 py-2 bg-cordes-blue text-white rounded-lg hover:bg-cordes-dark transition-colors">
+                                <i class="fas fa-plus mr-2"></i>Ajouter Ordonnance
+                            </button>
                         </div>
                         
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Template Ordonnance</label>
-                            <input type="file" name="ordonnance_template" accept=".pdf,.doc,.docx" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
-                        </div>
-
                         <div class="bg-gray-50 p-4 rounded-lg">
                             <div class="overflow-x-auto">
                                 <table class="min-w-full divide-y divide-gray-200">
@@ -226,37 +236,54 @@
                                         <tr>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">N°</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sélectionner</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-200">
-                                        <tr>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">1</td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Ordonnance EX 1</td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <input type="checkbox" name="ordonnance_examples[]" value="ex1" class="h-4 w-4 text-cordes-blue focus:ring-cordes-accent border-gray-300 rounded">
+                                        @php $ordonnIndex = 1; @endphp
+                                        
+                                        @forelse($ordonnModels as $ordonn)
+                                        <tr class="{{ $ordonn->is_default ? 'bg-blue-50' : '' }}">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $ordonnIndex++ }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                
+                                                {{ $ordonn->model_nom }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                                <button type="button" onclick="openViewModal('ordonnance', {{ $ordonn->id }})" 
+                                                        class="text-green-600 hover:text-green-900">
+                                                    <i class="fas fa-eye"></i> 
+                                                </button>
+                                                <button type="button" onclick="openEditModal('ordonnance', {{ $ordonn->id }})" 
+                                                        class="text-blue-600 hover:text-blue-900">
+                                                    <i class="fas fa-edit"></i> 
+                                                </button>
+                                                <button type="button" onclick="deleteTemplate('ordonnance', {{ $ordonn->id }})" 
+                                                        class="text-red-600 hover:text-red-900">
+                                                    <i class="fas fa-trash"></i> 
+                                                </button>
                                             </td>
                                         </tr>
+                                        @empty
                                         <tr>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2</td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Ordonnance EX 2</td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <input type="checkbox" name="ordonnance_examples[]" value="ex2" class="h-4 w-4 text-cordes-blue focus:ring-cordes-accent border-gray-300 rounded">
+                                            <td colspan="3" class="px-6 py-4 text-center text-gray-500">
+                                                Aucune ordonnance trouvée
                                             </td>
                                         </tr>
+                                        @endforelse
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Action Buttons -->
+                    <!-- Action Buttons for Cabinet Info -->
                     <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
                         <button type="button" onclick="resetForm()" class="px-6 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
                             <i class="fas fa-times mr-2"></i>Annuler
                         </button>
                         <button type="submit" class="px-6 py-2 bg-cordes-blue text-white rounded-lg hover:bg-cordes-dark transition-colors">
-                            <i class="fas fa-save mr-2"></i>Enregistrer
+                            <i class="fas fa-save mr-2"></i>Enregistrer les informations du cabinet
                         </button>
                     </div>
                 </form>
@@ -264,7 +291,188 @@
         </main>
     </div>
 
+    <!-- Create Template Modal -->
+    <div id="createModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-2xl w-full">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 id="createModalTitle" class="text-xl font-semibold">Ajouter Nouveau Template</h3>
+                        <button onclick="closeCreateModal()" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <form id="createTemplateForm" enctype="multipart/form-data">
+                        @csrf
+                        <input type="hidden" id="createTemplateType" name="template_type">
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nom du Template</label>
+                                <input type="text" name="name" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Logo</label>
+                                <input type="file" name="logo_path" accept="image/*"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Description d'en-tête</label>
+                                <textarea name="header_description" rows="3"
+                                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Description du Corps</label>
+                                <textarea name="body_description" rows="5"
+                                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Description de Pied</label>
+                                <textarea name="footer_description" rows="3"
+                                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none"></textarea>
+                            </div>
+                            
+                        </div>
+                        
+                        <div class="flex justify-end mt-6 space-x-2">
+                            <button type="button" onclick="closeCreateModal()" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
+                                Annuler
+                            </button>
+                            <button type="submit" class="px-4 py-2 bg-cordes-blue text-white rounded hover:bg-cordes-dark">
+                                <i class="fas fa-plus mr-2"></i>Ajouter
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Template Modal -->
+    <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-2xl w-full">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 id="editModalTitle" class="text-xl font-semibold">Modifier Template</h3>
+                        <button onclick="closeEditModal()" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <form id="editTemplateForm" enctype="multipart/form-data">
+                        @csrf
+                        <input type="hidden" id="editTemplateId" name="id">
+                        <input type="hidden" id="editTemplateType" name="template_type">
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nom du Template</label>
+                                <input type="text" id="editName" name="name" required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Logo</label>
+                                <input type="file" id="editLogoInput" name="logo_path" accept="image/*" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
+                                <div id="currentLogo" class="mt-2"></div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Description d'en-tête</label>
+                                <textarea id="editHeaderDesc" name="header_description" rows="3"
+                                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Description du Corps</label>
+                                <textarea id="editBodyDesc" name="body_description" rows="5"
+                                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Description de Pied</label>
+                                <textarea id="editFooterDesc" name="footer_description" rows="3"
+                                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none"></textarea>
+                            </div>
+                            
+                        </div>
+                        
+                        <div class="flex justify-end mt-6 space-x-2">
+                            <button type="button" onclick="closeEditModal()" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
+                                Annuler
+                            </button>
+                            <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                                <i class="fas fa-save mr-2"></i>Enregistrer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Template Modal -->
+    <div id="viewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-2xl w-full">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 id="viewModalTitle" class="text-xl font-semibold">Détails du Template</h3>
+                        <button onclick="closeViewModal()" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nom du Template</label>
+                            <p id="viewName" class="p-2 border border-gray-200 rounded-lg bg-gray-50"></p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Logo</label>
+                            <div id="viewLogo" class="p-2 border border-gray-200 rounded-lg bg-gray-50"></div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Description d'en-tête</label>
+                            <p id="viewHeaderDesc" class="p-2 border border-gray-200 rounded-lg bg-gray-50 whitespace-pre-wrap"></p>
+                        </div>
+                        <div id="viewPatientSection" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 mb-2"></label>
+                            <p id="viewPatientName" class="p-2 border border-gray-200 rounded-lg bg-gray-50 whitespace-pre-wrap"></p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Description du Corps</label>
+                            <p id="viewBodyDesc" class="p-2 border border-gray-200 rounded-lg bg-gray-50 whitespace-pre-wrap"></p>
+                        </div>
+                        
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Description de Pied</label>
+                            <p id="viewFooterDesc" class="p-2 border border-gray-200 rounded-lg bg-gray-50 whitespace-pre-wrap"></p>
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="flex justify-end mt-6">
+                        <button type="button" onclick="closeViewModal()" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
+                            Fermer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <script>
+        // Set up CSRF token for all AJAX requests
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
+        // Auto-hide success/error messages
         function autoHideMessages() {
             const messages = [
                 document.getElementById('successMessage'),
@@ -296,9 +504,242 @@
         }
 
         function resetForm() {
-            if (confirm('Êtes-vous sûr de vouloir réinitialiser le formulaire ?')) {
-                document.querySelector('form').reset();
+            if (confirm('Êtes-vous sûr de vouloir réinitialiser les informations du cabinet ?')) {
+                // This only resets the cabinet info form fields
+                document.querySelector('form[action="{{ route('papier.store') }}"]').reset();
             }
+        }
+
+        // --- Delete Template Function ---
+        function deleteTemplate(type, id) {
+            if (confirm(`Êtes-vous sûr de vouloir supprimer ce template de ${type} ?`)) {
+                $.ajax({
+                    url: `/papier/delete-template/${type}/${id}`, // Correctly passes type and ID as URL segments
+                    method: 'DELETE',
+                    success: function(response) {
+                        if (response.success) {
+                            showMessage(response.message, 'success');
+                            setTimeout(() => {
+                                location.reload();
+                            }, 1000);
+                        } else {
+                             showMessage(response.message || 'Erreur lors de la suppression', 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                         let errorMessage = 'Erreur lors de la suppression';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        showMessage(errorMessage, 'error');
+                    }
+                });
+            }
+        }
+
+        // --- Create Template Modal Functions ---
+        function openCreateModal(type) {
+            const modal = document.getElementById('createModal');
+            const title = document.getElementById('createModalTitle');
+            const templateType = document.getElementById('createTemplateType');
+            const form = document.getElementById('createTemplateForm');
+            
+            form.reset(); // Clear previous data
+            title.textContent = `Ajouter Nouveau Template ${type === 'certificat' ? 'Certificat' : 'Ordonnance'}`;
+            templateType.value = type;
+            modal.classList.remove('hidden'); // Show the modal
+        }
+
+        function closeCreateModal() {
+            document.getElementById('createModal').classList.add('hidden');
+        }
+
+        document.getElementById('createTemplateForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            // template_type is already in formData from the hidden input
+            
+            $.ajax({
+                url: "{{ route('papier.createTemplate') }}", // Correct route helper usage
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        closeCreateModal();
+                        showMessage('Template ajouté avec succès', 'success');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+                    }
+                },
+                error: function(xhr) {
+                    let errorMessage = 'Erreur lors de l\'ajout du template';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        // Display validation errors
+                        errorMessage = Object.values(xhr.responseJSON.errors).map(err => err.join(', ')).join('<br>');
+                    }
+                    showMessage(errorMessage, 'error');
+                }
+            });
+        });
+
+
+        // --- Edit Template Modal Functions ---
+        function openEditModal(type, id) {
+            const modal = document.getElementById('editModal');
+            const title = document.getElementById('editModalTitle');
+            const templateId = document.getElementById('editTemplateId');
+            const templateType = document.getElementById('editTemplateType');
+            const currentLogoDiv = document.getElementById('currentLogo');
+            
+            title.textContent = `Modifier Template ${type === 'certificat' ? 'Certificat' : 'Ordonnance'}`;
+            templateId.value = id;
+            templateType.value = type;
+            
+            // Clear previous logo display
+            currentLogoDiv.innerHTML = ''; 
+
+            // Load template data
+            $.ajax({
+                url: `/papier/get-template/${type}/${id}`, // Correctly passes type and ID as URL segments
+                method: 'GET',
+                success: function(template) {
+                    document.getElementById('editName').value = template.model_nom || ''; 
+                    document.getElementById('editHeaderDesc').value = template.descr_head || '';
+                    document.getElementById('editBodyDesc').value = template.descr_body || '';
+                    document.getElementById('editFooterDesc').value = template.descr_footer || '';
+                    
+                    // Show current logo if exists
+                    if (template.logo_file_path) { 
+                        // IMPORTANT FIX: Use asset('storage/') for files stored via Storage::disk('public')
+                        currentLogoDiv.innerHTML = `<p class="text-sm text-gray-500">Logo actuel:</p><img src="{{ asset('storage/') }}/${template.logo_file_path}" alt="Logo actuel" class="h-16 w-16 object-contain border rounded">`;
+                    } else {
+                        currentLogoDiv.innerHTML = '<p class="text-sm text-gray-500">Aucun logo actuel</p>';
+                    }
+                    
+                    modal.classList.remove('hidden'); // Show the modal
+                },
+                error: function(xhr) {
+                    let errorMessage = 'Erreur lors du chargement du template';
+                    if (xhr.status === 404) {
+                        errorMessage = 'Template non trouvé ou non autorisé.';
+                    } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
+                    showMessage(errorMessage, 'error');
+                }
+            });
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+        }
+
+        document.getElementById('editTemplateForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            // id and template_type are already in formData from hidden inputs
+            
+            $.ajax({
+                url: "{{ route('papier.updateTemplate') }}", // Correct route helper usage
+                method: 'POST', // Use POST for FormData
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        closeEditModal();
+                        showMessage('Template mis à jour avec succès', 'success');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+                    }
+                },
+                error: function(xhr) {
+                    let errorMessage = 'Erreur lors de la mise à jour du template';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        // Display validation errors
+                        errorMessage = Object.values(xhr.responseJSON.errors).map(err => err.join(', ')).join('<br>');
+                    }
+                    showMessage(errorMessage, 'error');
+                }
+            });
+        });
+
+        // --- View Template Modal Functions ---
+       function openViewModal(type, id) {
+            const modal = document.getElementById('viewModal');
+            const title = document.getElementById('viewModalTitle');
+            const viewLogoDiv = document.getElementById('viewLogo');
+            const viewPatientSection = document.getElementById('viewPatientSection');
+
+            title.textContent = `Détails du Template ${type === 'certificat' ? 'Certificat' : 'Ordonnance'}`;
+            viewLogoDiv.innerHTML = ''; // Clear previous logo/text
+
+            // Show/hide patient section based on type
+            if (type === 'certificat') {
+                viewPatientSection.classList.remove('hidden');
+            } else {
+                viewPatientSection.classList.add('hidden');
+            }
+
+            $.ajax({
+                url: `/papier/get-template/${type}/${id}`,
+                method: 'GET',
+                success: function(template) {
+                    document.getElementById('viewName').textContent = template.model_nom || 'N/A';
+                    document.getElementById('viewHeaderDesc').textContent = template.descr_head || 'N/A';
+                    document.getElementById('viewBodyDesc').textContent = template.descr_body || 'N/A';
+                    document.getElementById('viewFooterDesc').textContent = template.descr_footer || 'N/A';
+
+                    // Optional: clear or set patient name if needed
+                    document.getElementById('viewPatientName').textContent = 'Mme/Mr Nom Patient';
+
+                    if (template.logo_file_path) {
+                        viewLogoDiv.innerHTML = `<img src="{{ asset('storage') }}/${template.logo_file_path}" alt="Logo actuel" class="h-16 w-16 object-contain border rounded">`;
+                    } else {
+                        viewLogoDiv.innerHTML = '<p class="text-sm text-gray-500">Aucun logo</p>';
+                    }
+
+                    modal.classList.remove('hidden');
+                },
+                error: function() {
+                    showMessage('Erreur lors du chargement des détails du template', 'error');
+                }
+            });
+        }
+
+        function closeViewModal() {
+            document.getElementById('viewModal').classList.add('hidden');
+        }
+
+        function showMessage(message, type) {
+            const alertClass = type === 'success' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-red-100 text-red-800 border-red-200';
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `mb-4 p-4 ${alertClass} rounded-lg border transition-opacity duration-500`;
+            messageDiv.innerHTML = `<i class=\"fas ${icon} mr-2\"></i>${message}` + 
+                                   `<button type="button" class="float-right text-current opacity-70 hover:opacity-100 transition-opacity ml-2" onclick="this.parentElement.style.opacity='0'; setTimeout(()=>this.parentElement.remove(),500);">` +
+                                   `<i class="fas fa-times"></i></button>`; // Added close button directly
+            
+            const main = document.querySelector('main');
+            main.insertBefore(messageDiv, main.firstChild);
+            
+            setTimeout(() => {
+                messageDiv.style.opacity = '0';
+                setTimeout(() => {
+                    messageDiv.remove();
+                }, 500);
+            }, 3000);
         }
 
         document.addEventListener('DOMContentLoaded', function() {

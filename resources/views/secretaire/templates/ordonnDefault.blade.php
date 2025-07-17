@@ -5,172 +5,161 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ordonnance Médicale</title>
     <style>
-        @page { size: A4; margin: 5cm; }
-
-        html, body {
-            padding: 0;
+        @page {
+            size: A4;
             margin: 0;
         }
 
         body {
-            font-family: 'Times New Roman', serif;
-            line-height: 1.6;
-            padding: 20px;
-            width: 700px;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #fff;
+            color: #000;
+        }
+
+        .container {
+            width: 21cm; /* A4 width */
+            height: 29.7cm; /* A4 height */
             margin: 0 auto;
-            background: white;
+            padding: 2cm; /* Adjust padding to match the image's margins */
+            box-sizing: border-box;
+            position: relative;
+            display: flex;
+            flex-direction: column;
         }
 
         .header {
             display: flex;
-            align-items: center;
-            justify-content: center;
+            justify-content: space-between;
+            align-items: flex-start;
             margin-bottom: 30px;
-            gap: 20px;
+            padding-bottom: 10px;
         }
 
-        .logo {
-            max-height: 220px;
-            max-width: 220px;
-            object-fit: contain;
+        .doctor-info, .cabinet-info {
+            font-size: 14px;
+            line-height: 1.6;
         }
 
-        .cabinet-info {
+        .doctor-info {
             text-align: left;
         }
 
-        .cabinet-info h1 {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        .cabinet-info p {
-            margin: 2px 0;
-            font-size: 12px;
-        }
-
-        .date-section {
+        .cabinet-info {
             text-align: right;
-            margin-bottom: 30px;
-            font-weight: bold;
         }
 
-        .document-title {
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            letter-spacing: 2px;
-            margin-bottom: 30px;
+        .doctor-info strong, .cabinet-info strong {
+            font-size: 16px;
         }
 
-        .prescription-box {
-            border: 2px solid #000;
-            padding: 20px;
+        .caduceus-icon {
+            width: 70px;
+            height: 70px;
+            opacity: 0.7; /* Adjust opacity to match the faded look in the image */
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 50px; /* Adjust vertical position */
+        }
+        
+        .caduceus-large {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px; /* Larger size */
+            height: 300px;
+            opacity: 0.1; /* Very faint */
+            z-index: 0; /* Behind other content */
+        }
+
+
+        .divider {
+            border-bottom: 1px solid #000;
             margin: 20px 0;
-            min-height: 200px;
-            background: #fff;
         }
 
-        .prescription-title {
+        .title {
+            text-align: center;
             font-size: 18px;
             font-weight: bold;
-            margin-bottom: 15px;
+            margin: 40px 0;
+            text-decoration: underline;
         }
 
-        .instructions-section {
-            margin: 20px 0;
-            padding: 15px;
-            background: #f9f9f9;
-            border-left: 4px solid #007bff;
+        .date-location {
+            text-align: right;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            font-size: 14px;
         }
 
-        .signature-section {
+        .doctor-name-signature {
+            margin-top: 30px;
+            font-size: 14px;
+        }
+
+        .content-area {
+            flex-grow: 1;
+            position: relative; /* For positioning the large caduceus */
+            z-index: 1; /* To keep content above the background caduceus */
+        }
+
+        .footer {
+            border-top: 1px solid #000;
+            padding-top: 10px;
+            margin-top: auto; /* Pushes the footer to the bottom */
             text-align: center;
-            margin-top: 50px;
-        }
-
-        .signature-line {
-            border-bottom: 2px solid #000;
-            width: 200px;
-            margin: 0 auto 10px;
-        }
-
-        .closing-remark {
-            text-align: center;
-            margin: 30px 0;
-            font-style: italic;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #000;
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <div class="header">
-        @if($template->logo_file_path)
-            <img src="{{ asset('uploads/' . $template->logo_file_path) }}" alt="Logo" class="logo">
-        @endif
-        <div class="cabinet-info">
-            <h1>{{ $template->nom_cabinet ?? 'Cabinet Médical' }}</h1>
-            @if($template->addr_cabinet)
-                <p>{{ $template->addr_cabinet }}</p>
-            @endif
-            @if($template->tel_cabinet)
-                <p>Tél: {{ $template->tel_cabinet }}</p>
-            @endif
-            @if($template->desc_cabinet)
-                <p>{{ $template->desc_cabinet }}</p>
-            @endif
+    <div class="container">
+        <div class="header">
+            <div class="doctor-info">
+                <strong>Dr. Nom & Prénom</strong><br>
+                Médecin Générale<br>
+                Tél : 0522 000 000<br>
+                Adressemail@gmail.com
+            </div>
+            <img src="Prj_Cabinet_medicale/public/uploads/stEGnvZqsBzaB3HmR7oLucCIdTlu3N1WZZmle0SK.png" alt="Caduceus" class="caduceus-icon">
+            <div class="cabinet-info">
+                <strong>Cabinet Nom</strong><br>
+                Adresse :Votre Adresse<br>
+                ici<br>
+                Tél : 0522 000 000
+            </div>
         </div>
-    </div>
 
-    <!-- Date -->
-    <div class="date-section">
-        Fait à bonne foi,
-        {{ \Carbon\Carbon::createFromFormat('d/m/Y', $date)->locale('fr')->translatedFormat('d F Y') }}
-    </div>
+        <div class="divider"></div>
 
-    <!-- Title -->
-    <div class="document-title">
-        ORDONNANCE MÉDICALE
-    </div>
-
-    <!-- Patient Info -->
-    <div style="margin-bottom: 20px;">
-        <p><strong>Patient:</strong> {{ $patient_cin ?? '' }} - {{ $patient_nom ?? '' }}</p>
-        <p><strong>Date:</strong> {{ $date }}</p>
-    </div>
-
-    <!-- Prescription Box -->
-    <div class="prescription-box">
-        <div class="prescription-title">Prescription:</div>
-        <div style="white-space: pre-line; font-size: 16px; line-height: 1.8;">
-            {{ $medicaments }}
+        <div class="title">
+            Ordonnance Médicale
         </div>
-    </div>
 
-    <!-- Instructions -->
-    <div class="instructions-section">
-        <strong>Instructions:</strong>
-        <div style="margin-top: 10px;">
-            {!! nl2br(e($instructions)) !!}
+        <div class="date-location">
+            Fait à : ................................ Le ...... / ...... / ..........
         </div>
-        <div style="margin-top: 15px;">
-            <strong>Durée du traitement:</strong> {{ $duree }} jours
+
+        <div class="doctor-name-signature">
+            Nom & Prénom : ......................................................
         </div>
-    </div>
 
-    <!-- Closing -->
-    <div class="closing-remark">
-        <p>Je vous prie d'agréer Madame/Monsieur, l'expression de mes</p>
-        <p>sentiments distingués,</p>
-    </div>
+        <div class="content-area">
+            <img src="http://localhost/Prj_Cabinet_medicale/storage/app/public/uploads/HfJbohux6MBvPDLA6K1gVBtV8mUiofUSrhOLPo9" alt="Caduceus Large" class="caduceus-large">
+            </div>
 
-    <!-- Signature -->
-    <div class="signature-section">
-        <p>Fait le {{ $date }}</p>
-        <div style="margin-top: 50px;">
-            <strong>Dr. {{ $medecin_nom }}</strong><br>
-            <em>Signature et cachet</em>
+        <div class="footer">
+            Adresse : 123, Avenue adresse , ville - Tél : 0522 000 000 - 0522 000 000<br>
+            Adressemail@gmail.com
         </div>
     </div>
 </body>

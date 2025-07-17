@@ -14,6 +14,8 @@ class CertifDoc extends Model
     protected $fillable = [
         'id_docteur',
         'logo_file_path',
+        'file_path',
+        'logo_file_path',
         'nom_cabinet',
         'addr_cabinet',
         'tel_cabinet',

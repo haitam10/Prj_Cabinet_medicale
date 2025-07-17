@@ -119,11 +119,30 @@ Route::get('/patients/{patient}/edit', [PatientController::class, 'edit'])->name
 Route::get('/patients/create', [PatientController::class, 'create'])->name('patients.create');
 
 
+Route::get('/certificat/{id}', [CertificatController::class, 'show']);
 
+Route::get('/api/certificat/{id}/data', [CertificatController::class, 'getCertificatData']);
 Route::post('/certificat/store', [CertificatController::class, 'store'])->name('certificat.store');
+
 Route::post('/ordonnance/store', [OrdonnanceController::class, 'store'])->name('ordonnance.store');
+Route::get('/ordonnance/print/{id}', [OrdonnanceController::class, 'printOrdonnance'])->name('ordonnance.print');
+Route::get('/api/ordonnance/{id}/data', [OrdonnanceController::class, 'getOrdonnanceData']);
+
+
+// Add these routes to your existing routes
+Route::post('/papier/update-selection', [PapierController::class, 'updateSelection'])->name('papier.updateSelection');
+Route::delete('/papier/delete-template', [PapierController::class, 'deleteTemplate'])->name('papier.deleteTemplate');
+Route::get('/papier/get-template/{type}/{id}', [PapierController::class, 'getTemplate'])->name('papier.getTemplate');
+
+Route::post('/papier/store', [PapierController::class, 'store'])->name('papier.store');
+Route::post('/papier/createTemplate', [PapierController::class, 'createTemplate'])->name('papier.createTemplate');
+Route::post('/papier/updateTemplate', [PapierController::class, 'updateTemplate'])->name('papier.updateTemplate');
+Route::delete('papier/delete-template/{type}/{id}', [PapierController::class, 'deleteTemplate']);
+Route::get('papier/template/{type}', [PapierController::class, 'getTemplates']);
 
 // Routes resource pour les autres entités
 Route::resource('users', UserController::class);
 Route::resource('factures', FactureController::class);
 Route::resource('paiements', PaiementController::class);
+
+Route::get('/certificat/{id}', [CertificatController::class, 'getCertifTemplate']);

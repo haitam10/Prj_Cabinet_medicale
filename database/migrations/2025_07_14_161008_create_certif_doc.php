@@ -15,6 +15,7 @@ return new class extends Migration
         $table->id();
         $table->unsignedBigInteger('id_docteur');
         $table->string('logo_file_path')->nullable();
+        $table->string('file_path')->nullable();
         $table->string('nom_cabinet')->nullable();
         $table->string('addr_cabinet')->nullable();   // 🆕 Address
         $table->string('tel_cabinet')->nullable();    // 🆕 Phone number
@@ -35,3 +36,5 @@ return new class extends Migration
         Schema::dropIfExists('certif_doc');
     }
 };
+
+       
