@@ -41,68 +41,83 @@
                 <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
                     <i class="fas fa-cube text-cordes-blue text-lg"></i>
                 </div>
-                <span class="text-white text-xl font-bold">Espace Secrétaire</span>
+                <span class="text-white text-xl font-bold">C-M</span>
             </div>
         </div>
+
         <nav class="mt-8 px-4">
             <div class="space-y-2">
                 <a href="{{ route('secretaire.dashboard') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-home mr-3 text-cordes-accent group-hover:text-white"></i>
                     Dashboard
                 </a>
+
                 <a href="{{ route('secretaire.rendezvous') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-calendar-check mr-3 text-gray-400 group-hover:text-white"></i>
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-calendar-check mr-3 text-white"></i>
                     Rendez-vous
                 </a>
+
                 <a href="{{ route('secretaire.patients') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-user-injured mr-3 text-gray-400 group-hover:text-white"></i>
                     Patients
                 </a>
+
                 <a href="{{ route('secretaire.factures') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-file-invoice-dollar mr-3 text-gray-400 group-hover:text-white"></i>
                     Factures
                 </a>
+
                 <a href="{{ route('secretaire.paiements') }}"
                     class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
                     <i class="fas fa-credit-card mr-3 text-gray-400 group-hover:text-white"></i>
                     Paiements
                 </a>
-                <a href="{{ route('secretaire.certificats') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-file-medical mr-3 text-white"></i>
-                    Certificats
-                </a>
-                <a href="{{ route('secretaire.ordonnances') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-prescription-bottle-medical mr-3 text-gray-400 group-hover:text-white"></i>
-                    Ordonnances
-                </a>
-                <a href="{{ route('secretaire.remarques') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-sticky-note mr-3 text-gray-400 group-hover:text-white"></i>
-                    Remarques
-                </a>
-                <a href="{{ route('secretaire.papier') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-cog mr-3 text-gray-400 group-hover:text-white"></i>
-                    Papier
+
+                @if (Auth::check() && Auth::user()->role === 'medecin')
+                    <a href="{{ route('secretaire.dossier-medical') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-file-medical mr-3 text-white"></i>
+                        Dossier Médical
+                    </a>
+                    <a href="{{ route('secretaire.calendrier') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-calendar-alt mr-3 text-gray-400 group-hover:text-white"></i>
+                        Calendrier
+                    </a>
+                @endif
+
+                <a href="{{ route('secretaire.profile') }}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-user mr-3 text-cordes-accent"></i>
+                    Mon Profil
                 </a>
             </div>
         </nav>
+
+        <!-- Section utilisateur avec bouton de déconnexion -->
         <div class="absolute bottom-4 left-4 right-4">
-            <div class="bg-gray-800 rounded-lg p-4">
-                <div class="flex items-center space-x-3">
-                    <img src="https://cdn-icons-png.flaticon.com/512/17003/17003310.png" alt="Secrétaire"
-                        class="w-10 h-10 rounded-full" />
-                    <div>
-                        <p class="text-white text-sm font-medium">Secrétaire</p>
-                        <p class="text-gray-400 text-xs">Connecté</p>
+            <div
+                class="bg-gray-800 rounded-lg p-4 group cursor-pointer hover:bg-red-600 transition-colors duration-200">
+                <form method="POST" action="{{ route('logout') }}" id="logout-form">
+                    @csrf
+                    <div class="flex items-center space-x-3" onclick="document.getElementById('logout-form').submit();">
+                        <img src="https://cdn-icons-png.flaticon.com/512/17003/17003310.png" alt="User"
+                            class="w-10 h-10 rounded-full">
+                        <div>
+                            <p class="text-white text-sm font-medium">
+                                {{ Auth::user()->nom ?? 'Utilisateur' }}
+                            </p>
+                            <p class="text-gray-400 text-xs">
+                                {{ ucfirst(Auth::user()->role ?? '') }} — <span class="text-red-400">Se
+                                    déconnecter</span>
+                            </p>
+                        </div>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
     </div>
@@ -266,10 +281,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span
-                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                        @if ($paiement->statut === 'paye') bg-green-100 text-green-800 
-                                        @elseif($paiement->statut === 'en_attente') bg-yellow-100 text-yellow-800 
-                                        @else bg-red-100 text-red-800 @endif">
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @if ($paiement->statut === 'paye') bg-green-100 text-green-800 @elseif($paiement->statut === 'en_attente') bg-yellow-100 text-yellow-800 @else bg-red-100 text-red-800 @endif">
                                         @switch($paiement->statut)
                                             @case('paye')
                                                 <i class="fas fa-check mr-1"></i>Payé
@@ -294,17 +306,33 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex space-x-2">
                                         <button onclick="showPaiement({{ $paiement->id }})"
-                                            class="text-blue-600 hover:text-blue-800 transition-colors p-1 rounded hover:bg-blue-50">
+                                            class="text-blue-600 hover:text-blue-800 transition-colors p-1 rounded hover:bg-blue-50"
+                                            title="Voir les détails">
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <button onclick="editPaiement({{ $paiement->id }})"
-                                            class="text-yellow-600 hover:text-yellow-800 transition-colors p-1 rounded hover:bg-yellow-50">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button onclick="deletePaiement({{ $paiement->id }})"
-                                            class="text-red-600 hover:text-red-800 transition-colors p-1 rounded hover:bg-red-50">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+
+                                        @if ($paiement->statut !== 'paye')
+                                            <button onclick="editPaiement({{ $paiement->id }})"
+                                                class="text-yellow-600 hover:text-yellow-800 transition-colors p-1 rounded hover:bg-yellow-50"
+                                                title="Modifier le paiement">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button onclick="deletePaiement({{ $paiement->id }})"
+                                                class="text-red-600 hover:text-red-800 transition-colors p-1 rounded hover:bg-red-50"
+                                                title="Supprimer le paiement">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        @else
+                                            <span class="text-gray-400 p-1 rounded"
+                                                title="Paiement payé - Non modifiable">
+                                                <i class="fas fa-lock"></i>
+                                            </span>
+                                            <button onclick="deletePaiement({{ $paiement->id }})"
+                                                class="text-red-600 hover:text-red-800 transition-colors p-1 rounded hover:bg-red-50"
+                                                title="Supprimer le paiement">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -350,7 +378,7 @@
                             <option value="">Sélectionner une facture</option>
                             @foreach ($factures ?? [] as $facture)
                                 <option value="{{ $facture->id }}" data-montant="{{ $facture->montant }}">
-                                    Facture #{{ $facture->id }} - {{ $facture->patient->nom ?? 'N/A' }}
+                                    Facture - {{ $facture->patient->nom ?? 'N/A' }}
                                     {{ $facture->patient->prenom ?? '' }} ({{ number_format($facture->montant, 2) }} DH)
                                 </option>
                             @endforeach
@@ -361,7 +389,7 @@
                             <label for="montant" class="block text-sm font-medium text-gray-700 mb-1">
                                 Montant (DH) <span class="text-red-500">*</span>
                             </label>
-                            <input type="number" id="montant" name="montant" step="0.01" min="0" required
+                            <input type="number" id="montant" name="montant" step="0.01" min="0" required 
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                         </div>
                         <div>
@@ -628,7 +656,6 @@
                             'fr-FR');
                         document.getElementById('show_mode').innerHTML = getModeIcon(data.mode_paiement);
                         document.getElementById('show_statut').innerHTML = getStatutBadge(data.statut);
-
                         openModal('showPaiementModal');
                     })
                     .catch(error => {
@@ -647,6 +674,12 @@
                     })
                     .then(response => response.json())
                     .then(data => {
+                        // Vérifier si le paiement est payé
+                        if (data.statut === 'paye') {
+                            alert('Impossible de modifier un paiement payé.');
+                            return;
+                        }
+
                         document.getElementById('editPaiementForm').action = `/paiements/${id}`;
                         document.getElementById('edit_facture_id').value = data.facture_id;
                         document.getElementById('hidden_edit_facture_id').value = data.facture_id;
@@ -654,7 +687,6 @@
                         document.getElementById('edit_date_paiement').value = data.date_paiement;
                         document.getElementById('edit_mode_paiement').value = data.mode_paiement;
                         document.getElementById('edit_statut').value = data.statut;
-
                         openModal('editPaiementModal');
                     })
                     .catch(error => {

@@ -32,68 +32,82 @@
                 <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
                     <i class="fas fa-cube text-cordes-blue text-lg"></i>
                 </div>
-                <span class="text-white text-xl font-bold">Espace Secrétaire</span>
+                <span class="text-white text-xl font-bold">C-M</span>
             </div>
         </div>
-          <nav class="mt-8 px-4">
+
+        <nav class="mt-8 px-4">
             <div class="space-y-2">
                 <a href="{{ route('secretaire.dashboard') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-home mr-3 text-cordes-accent group-hover:text-white"></i>
                     Dashboard
                 </a>
+
                 <a href="{{ route('secretaire.rendezvous') }}"
                     class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
                     <i class="fas fa-calendar-check mr-3 text-gray-400 group-hover:text-white"></i>
                     Rendez-vous
                 </a>
+
                 <a href="{{ route('secretaire.patients') }}"
                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-user-injured mr-3 text-gray-400 group-hover:text-white"></i>
                     Patients
                 </a>
+
                 <a href="{{ route('secretaire.factures') }}"
                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-file-invoice-dollar mr-3 text-gray-400 group-hover:text-white"></i>
                     Factures
                 </a>
+
                 <a href="{{ route('secretaire.paiements') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-credit-card mr-3 text-gray-400 group-hover:text-white"></i>
                     Paiements
                 </a>
-                <a href="{{ route('secretaire.certificats') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-file-medical mr-3 text-white"></i>
-                    Certificats
-                </a>
-                <a href="{{ route('secretaire.ordonnances') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-prescription-bottle-medical mr-3 text-gray-400 group-hover:text-white"></i>
-                    Ordonnances
-                </a>
-                <a href="{{ route('secretaire.remarques') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-sticky-note mr-3 text-gray-400 group-hover:text-white"></i>
-                    Remarques
-                </a>
-                <a href="{{ route('secretaire.papier') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-cog mr-3 text-gray-400 group-hover:text-white"></i>
-                    Papier
+
+                @if (Auth::check() && Auth::user()->role === 'medecin')
+                    <a href="{{ route('secretaire.dossier-medical') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-file-medical mr-3 text-white"></i>
+                        Dossier Médical
+                    </a>
+                    <a href="{{ route('secretaire.calendrier') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-calendar-alt mr-3 text-gray-400 group-hover:text-white"></i>
+                        Calendrier
+                    </a>
+                @endif
+                <a href="{{ route('secretaire.profile') }}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-user mr-3 text-cordes-accent"></i>
+                    Mon Profil
                 </a>
             </div>
         </nav>
+
+        <!-- Section utilisateur avec bouton de déconnexion -->
         <div class="absolute bottom-4 left-4 right-4">
-            <div class="bg-gray-800 rounded-lg p-4">
-                <div class="flex items-center space-x-3">
-                    <img src="https://cdn-icons-png.flaticon.com/512/17003/17003310.png" alt="Secrétaire"
-                        class="w-10 h-10 rounded-full" />
-                    <div>
-                        <p class="text-white text-sm font-medium">Secrétaire</p>
-                        <p class="text-gray-400 text-xs">Connecté</p>
+            <div
+                class="bg-gray-800 rounded-lg p-4 group cursor-pointer hover:bg-red-600 transition-colors duration-200">
+                <form method="POST" action="{{ route('logout') }}" id="logout-form">
+                    @csrf
+                    <div class="flex items-center space-x-3" onclick="document.getElementById('logout-form').submit();">
+                        <img src="https://cdn-icons-png.flaticon.com/512/17003/17003310.png" alt="User"
+                            class="w-10 h-10 rounded-full">
+                        <div>
+                            <p class="text-white text-sm font-medium">
+                                {{ Auth::user()->nom ?? 'Utilisateur' }}
+                            </p>
+                            <p class="text-gray-400 text-xs">
+                                {{ ucfirst(Auth::user()->role ?? '') }} — <span class="text-red-400">Se
+                                    déconnecter</span>
+                            </p>
+                        </div>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
     </div>
@@ -112,29 +126,74 @@
             </div>
         </header>
         <main class="p-6">
-            @if (session('success'))
-                <div id="successMessage"
-                    class="mb-4 p-4 bg-green-100 text-green-800 rounded-lg border border-green-200 transition-opacity duration-500">
-                    <i class="fas fa-check-circle mr-2"></i>{{ session('success') }}
-                </div>
-            @endif
-            @if (session('error'))
-                <div id="errorMessage"
-                    class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 transition-opacity duration-500">
-                    <i class="fas fa-exclamation-circle mr-2"></i>{{ session('error') }}
-                </div>
-            @endif
-            @if ($errors->any())
-                <div id="validationErrors"
-                    class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 transition-opacity duration-500">
-                    <i class="fas fa-exclamation-circle mr-2"></i>
-                    <ul class="list-disc list-inside">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
+            <!-- ZONE DES MESSAGES - Système amélioré et corrigé -->
+            <div id="messages-container" class="space-y-4 mb-6">
+                <!-- Messages de succès -->
+                @if (session('success'))
+                    <div id="successMessage"
+                        class="alert-message p-4 bg-green-100 text-green-800 rounded-lg border border-green-200 transition-all duration-500 opacity-100 transform translate-y-0">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-check-circle text-green-600 text-lg"></i>
+                            </div>
+                            <div class="ml-3 flex-1">
+                                <p class="font-medium">{{ session('success') }}</p>
+                            </div>
+                            <button onclick="closeMessage('successMessage')"
+                                class="ml-4 text-green-600 hover:text-green-800 transition-colors">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Messages d'erreur -->
+                @if (session('error'))
+                    <div id="errorMessage"
+                        class="alert-message p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 transition-all duration-500 opacity-100 transform translate-y-0">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-circle text-red-600 text-lg"></i>
+                            </div>
+                            <div class="ml-3 flex-1">
+                                <p class="font-medium">{{ session('error') }}</p>
+                            </div>
+                            <button onclick="closeMessage('errorMessage')"
+                                class="ml-4 text-red-600 hover:text-red-800 transition-colors">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Erreurs de validation -->
+                @if ($errors->any())
+                    <div id="validationErrors"
+                        class="alert-message p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 transition-all duration-500 opacity-100 transform translate-y-0">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-triangle text-red-600 text-lg"></i>
+                            </div>
+                            <div class="ml-3 flex-1">
+                                @if ($errors->count() == 1)
+                                    <p class="font-medium">{{ $errors->first() }}</p>
+                                @else
+                                    <p class="font-medium mb-2">Erreurs de validation :</p>
+                                    <ul class="list-disc list-inside space-y-1 text-sm">
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                @endif
+                            </div>
+                            <button onclick="closeMessage('validationErrors')"
+                                class="ml-4 text-red-600 hover:text-red-800 transition-colors">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                @endif
+            </div>
 
             <!-- Filtres et recherche -->
             <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
@@ -155,7 +214,8 @@
                         </select>
                     </div>
                     <div class="relative">
-                        <i class="fas fa-calendar absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <i
+                            class="fas fa-calendar absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                         <input type="date" id="dateFilter"
                             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                     </div>
@@ -166,6 +226,7 @@
                 </div>
             </div>
 
+            <!-- Tableau des rendez-vous -->
             <div class="overflow-x-auto bg-white shadow rounded-xl">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
@@ -207,16 +268,19 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @if ($rdv->statut == 'confirmé')
                                         <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><i
-                                                class="fas fa-check-circle mr-1"></i>Confirmé</span>
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <i class="fas fa-check-circle mr-1"></i>Confirmé
+                                        </span>
                                     @elseif($rdv->statut == 'en attente')
                                         <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><i
-                                                class="fas fa-clock mr-1"></i>En attente</span>
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                            <i class="fas fa-clock mr-1"></i>En attente
+                                        </span>
                                     @else
                                         <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><i
-                                                class="fas fa-times-circle mr-1"></i>Annulé</span>
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            <i class="fas fa-times-circle mr-1"></i>Annulé
+                                        </span>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
@@ -262,7 +326,7 @@
                     <i class="fas fa-times text-lg"></i>
                 </button>
             </div>
-            <form action="{{ route('rendezvous.store') }}" method="POST" class="space-y-4">
+            <form action="{{ route('rendezvous.store') }}" method="POST" class="space-y-4" id="addForm">
                 @csrf
                 <div>
                     <label for="patient_id" class="block text-sm font-medium text-gray-700 mb-1">Patient</label>
@@ -270,7 +334,10 @@
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                         <option value="">Sélectionnez un patient</option>
                         @foreach ($patients as $patient)
-                            <option value="{{ $patient->id }}">{{ $patient->nom }}</option>
+                            <option value="{{ $patient->id }}"
+                                {{ old('patient_id') == $patient->id ? 'selected' : '' }}>
+                                {{ $patient->nom }} {{ $patient->prenom }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -280,7 +347,10 @@
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                         <option value="">Sélectionnez un médecin</option>
                         @foreach ($medecins as $medecin)
-                            <option value="{{ $medecin->id }}">{{ $medecin->nom }} {{ $medecin->prenom }}</option>
+                            <option value="{{ $medecin->id }}"
+                                {{ old('medecin_id') == $medecin->id ? 'selected' : '' }}>
+                                {{ $medecin->nom }} {{ $medecin->prenom }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -288,11 +358,12 @@
                     <div>
                         <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
                         <input type="date" name="date" id="date" required min="{{ date('Y-m-d') }}"
+                            value="{{ old('date') }}"
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
                     </div>
                     <div>
                         <label for="heure" class="block text-sm font-medium text-gray-700 mb-1">Heure</label>
-                        <input type="time" name="heure" id="heure" required
+                        <input type="time" name="heure" id="heure" required value="{{ old('heure') }}"
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
                     </div>
                 </div>
@@ -300,16 +371,17 @@
                     <label for="statut" class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
                     <select name="statut" id="statut" required
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
-                        <option value="en attente">En attente</option>
-                        <option value="confirmé">Confirmé</option>
-                        <option value="annulé">Annulé</option>
+                        <option value="en attente" {{ old('statut') == 'en attente' ? 'selected' : '' }}>En attente
+                        </option>
+                        <option value="confirmé" {{ old('statut') == 'confirmé' ? 'selected' : '' }}>Confirmé</option>
+                        <option value="annulé" {{ old('statut') == 'annulé' ? 'selected' : '' }}>Annulé</option>
                     </select>
                 </div>
                 <div>
                     <label for="motif" class="block text-sm font-medium text-gray-700 mb-1">Motif</label>
                     <textarea name="motif" id="motif" rows="3"
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
-                        placeholder="Décrivez le motif du rendez-vous..."></textarea>
+                        placeholder="Décrivez le motif du rendez-vous...">{{ old('motif') }}</textarea>
                 </div>
                 <div class="flex justify-end space-x-3 pt-4">
                     <button type="button" onclick="closeAddModal()"
@@ -403,71 +475,178 @@
         // Configuration CSRF pour les requêtes AJAX
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-        // Fonction pour masquer automatiquement les messages après 5 secondes
-        function autoHideMessages() {
-            const messages = [
-                document.getElementById('successMessage'),
-                document.getElementById('errorMessage'),
-                document.getElementById('validationErrors')
-            ];
-            messages.forEach(message => {
-                if (message) {
-                    // Ajouter un bouton de fermeture
-                    const closeButton = document.createElement('button');
-                    closeButton.innerHTML = '<i class="fas fa-times"></i>';
-                    closeButton.className =
-                        'float-right text-current opacity-70 hover:opacity-100 transition-opacity ml-2';
-                    closeButton.onclick = () => hideMessage(message);
-                    message.appendChild(closeButton);
+        // Variables globales
+        let hasValidationErrors = false;
+        let hasSessionError = false;
 
-                    // Masquer automatiquement après 5 secondes
-                    setTimeout(() => {
-                        hideMessage(message);
-                    }, 5000);
-                }
-            });
+        // Fonction pour obtenir la date et l'heure actuelles
+        function getCurrentDateTime() {
+            const now = new Date();
+            return {
+                date: now.toISOString().split('T')[0],
+                time: now.toTimeString().substring(0, 5)
+            };
         }
 
-        // Fonction pour masquer un message avec animation
-        function hideMessage(messageElement) {
-            if (messageElement) {
-                messageElement.style.opacity = '0';
+        // Fonction pour valider la date et l'heure
+        function validateDateTime(dateInput, timeInput) {
+            const selectedDate = dateInput.value;
+            const selectedTime = timeInput.value;
+            const currentDateTime = getCurrentDateTime();
+
+            if (!selectedDate || !selectedTime) {
+                return {
+                    valid: false,
+                    message: 'Veuillez sélectionner une date et une heure.'
+                };
+            }
+
+            // Créer des objets Date pour la comparaison
+            const selectedDateTime = new Date(selectedDate + 'T' + selectedTime);
+            const currentDateTimeObj = new Date();
+
+            if (selectedDateTime <= currentDateTimeObj) {
+                return {
+                    valid: false,
+                    message: 'La date et l\'heure du rendez-vous doivent être postérieures à maintenant.'
+                };
+            }
+
+            return {
+                valid: true
+            };
+        }
+
+        // Fonction pour afficher les erreurs de validation
+        function showValidationError(message) {
+            const existingError = document.getElementById('datetime-error');
+            if (existingError) {
+                existingError.remove();
+            }
+
+            const errorDiv = document.createElement('div');
+            errorDiv.id = 'datetime-error';
+            errorDiv.className = 'p-3 bg-red-100 border border-red-400 text-red-700 rounded mb-4';
+            errorDiv.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                <span>${message}</span>
+            </div>
+        `;
+
+            const form = document.getElementById('addForm');
+            form.insertBefore(errorDiv, form.firstChild);
+
+            // Faire défiler vers l'erreur
+            errorDiv.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+
+            // Supprimer l'erreur après 5 secondes
+            setTimeout(() => {
+                if (errorDiv && errorDiv.parentNode) {
+                    errorDiv.remove();
+                }
+            }, 5000);
+        }
+
+        // Fonction pour fermer un message spécifique
+        function closeMessage(messageId) {
+            const message = document.getElementById(messageId);
+            if (message) {
+                message.style.opacity = '0';
+                message.style.transform = 'translateY(-10px)';
                 setTimeout(() => {
-                    messageElement.style.display = 'none';
-                }, 500); // Attendre la fin de l'animation de transition
+                    message.remove();
+                }, 300);
             }
         }
 
-        // Fonction pour afficher un message temporaire (pour les actions AJAX)
-        function showTemporaryMessage(message, type = 'success') {
+        // Fonction pour afficher un message temporaire (AJAX)
+        function showMessage(text, type = 'success') {
             // Supprimer les anciens messages temporaires
             const existingTemp = document.querySelector('.temp-message');
             if (existingTemp) {
                 existingTemp.remove();
             }
 
+            const messageContainer = document.getElementById('messages-container');
             const messageDiv = document.createElement('div');
-            messageDiv.className = `temp-message mb-4 p-4 rounded-lg border transition-opacity duration-500 ${type === 'success'
-                ? 'bg-green-100 text-green-800 border-green-200'
-                : 'bg-red-100 text-red-800 border-red-200'}`;
+            messageDiv.className = `temp-message p-4 rounded-lg border transition-all duration-500 opacity-0 transform translate-y-2 ${
+type === 'success' 
+                    ? 'bg-green-100 text-green-800 border-green-200' 
+                    : 'bg-red-100 text-red-800 border-red-200'
+}`;
+
             messageDiv.innerHTML = `
-                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} mr-2"></i>${message}
-                <button onclick="hideMessage(this.parentElement)" class="float-right text-current opacity-70 hover:opacity-100 transition-opacity ml-2">
-                    <i class="fas fa-times"></i>
-                </button>
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} text-${type === 'success' ? 'green' : 'red'}-600 text-lg"></i>
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <p class="font-medium">${text}</p>
+                    </div>
+                    <button onclick="this.closest('.temp-message').remove()" class="ml-4 text-${type === 'success' ? 'green' : 'red'}-600 hover:text-${type === 'success' ? 'green' : 'red'}-800 transition-colors">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
             `;
+            messageContainer.appendChild(messageDiv);
 
-            // Insérer le message au début du main
-            const main = document.querySelector('main');
-            main.insertBefore(messageDiv, main.firstChild);
+            // Animation d'apparition
+            requestAnimationFrame(() => {
+                messageDiv.style.opacity = '1';
+                messageDiv.style.transform = 'translateY(0)';
+            });
 
-            // Masquer automatiquement après 5 secondes
+            // Scroll vers le message
+            messageDiv.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+
+            // Auto-fermeture après 5 secondes
             setTimeout(() => {
-                hideMessage(messageDiv);
+                if (messageDiv.parentNode) {
+                    messageDiv.style.opacity = '0';
+                    messageDiv.style.transform = 'translateY(-10px)';
+                    setTimeout(() => {
+                        if (messageDiv.parentNode) {
+                            messageDiv.remove();
+                        }
+                    }, 300);
+                }
             }, 5000);
         }
 
-        // Fonction de recherche et filtrage pour les rendez-vous
+        // Fonction pour l'auto-fermeture des messages
+        function setupAutoCloseMessages() {
+            const messages = document.querySelectorAll('.alert-message');
+            messages.forEach(message => {
+                // Scroll vers le message si c'est un message d'erreur
+                if (message.classList.contains('bg-red-100')) {
+                    message.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                }
+
+                setTimeout(() => {
+                    if (message.parentNode) {
+                        message.style.opacity = '0';
+                        message.style.transform = 'translateY(-10px)';
+                        setTimeout(() => {
+                            if (message.parentNode) {
+                                message.remove();
+                            }
+                        }, 300);
+                    }
+                }, 8000);
+            });
+        }
+
+        // Fonction de recherche et filtrage
         function filterRendezVous() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const statutFilter = document.getElementById('statutFilter').value;
@@ -494,104 +673,37 @@
                 }
             });
 
-            // Afficher/masquer le message "aucun rendez-vous"
             if (noRdvRow) {
                 noRdvRow.style.display = visibleCount === 0 ? '' : 'none';
             }
 
-            // Mettre à jour le compteur
-            document.getElementById('rdvCount').textContent = visibleCount + ' rendez-vous' + (visibleCount > 1 ? 's' :
-                '') + ' au total';
+            document.getElementById('rdvCount').textContent =
+                `${visibleCount} rendez-vous${visibleCount !== 1 ? '' : ''} trouvé${visibleCount !== 1 ? 's' : ''}`;
         }
 
-        // Initialiser le masquage automatique au chargement de la page
-        document.addEventListener('DOMContentLoaded', function() {
-            autoHideMessages();
-
-            // Ajouter les événements de filtrage
-            document.getElementById('searchInput').addEventListener('input', filterRendezVous);
-            document.getElementById('statutFilter').addEventListener('change', filterRendezVous);
-            document.getElementById('dateFilter').addEventListener('change', filterRendezVous);
-        });
-
-        // Fonction pour vérifier les conflits d'horaires côté client
-        async function checkScheduleConflict(medecinId, date, heure, excludeId = null) {
-            try {
-                const response = await fetch('/api/check-schedule-conflict', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken,
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        medecin_id: medecinId,
-                        date: date,
-                        heure: heure,
-                        exclude_id: excludeId
-                    })
-                });
-                const data = await response.json();
-                return data;
-            } catch (error) {
-                console.error('Erreur lors de la vérification des conflits:', error);
-                return {
-                    hasConflict: false
-                };
-            }
-        }
-
-        // Fonction pour valider la date et l'heure
-        function validateDateTime(dateValue, timeValue) {
-            const now = new Date();
-            const selectedDateTime = new Date(dateValue + 'T' + timeValue);
-            if (selectedDateTime <= now) {
-                alert('La date et l\'heure du rendez-vous ne peuvent pas être dans le passé.');
-                return false;
-            }
-            return true;
-        }
-
-        // Fonction pour mettre à jour l'heure minimale
-        function updateMinTime(dateInput, timeInput) {
-            const selectedDate = dateInput.value;
-            const today = new Date().toISOString().split('T')[0];
-            if (selectedDate === today) {
-                const now = new Date();
-                const currentTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(
-                    2, '0');
-                timeInput.min = currentTime;
-            } else {
-                timeInput.removeAttribute('min');
-            }
-        }
-
+        // Fonctions pour les modales
         function openAddModal() {
             document.getElementById('addModal').classList.remove('hidden');
-            // Réinitialiser le formulaire
-            document.querySelector('#addModal form').reset();
-            // Configurer les contraintes de date/heure
-            const dateInput = document.getElementById('date');
-            const timeInput = document.getElementById('heure');
-            dateInput.addEventListener('change', function() {
-                updateMinTime(dateInput, timeInput);
-            });
-            // Validation avant soumission
-            document.querySelector('#addModal form').addEventListener('submit', function(e) {
-                const dateValue = dateInput.value;
-                const timeValue = timeInput.value;
-                const medecinId = document.getElementById('medecin_id').value;
-                if (!validateDateTime(dateValue, timeValue)) {
-                    e.preventDefault();
-                    return;
-                }
-                // Vérification des conflits d'horaires (optionnel côté client)
-                // La validation principale se fait côté serveur
+            // Supprimer les erreurs précédentes
+            const existingError = document.getElementById('datetime-error');
+            if (existingError) {
+                existingError.remove();
+            }
+
+            // Scroll vers le haut pour voir les messages
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
             });
         }
 
         function closeAddModal() {
             document.getElementById('addModal').classList.add('hidden');
+            // Supprimer les erreurs de validation
+            const existingError = document.getElementById('datetime-error');
+            if (existingError) {
+                existingError.remove();
+            }
         }
 
         function openEditModal(rdv) {
@@ -600,7 +712,6 @@
             document.getElementById('edit_id').value = rdv.id;
             document.getElementById('edit_patient_id').value = rdv.patient_id;
             document.getElementById('edit_medecin_id').value = rdv.medecin_id;
-            // Traitement de la date et heure
             const dateTime = new Date(rdv.date);
             const datePart = dateTime.toISOString().substring(0, 10);
             const timePart = dateTime.toTimeString().substring(0, 5);
@@ -608,27 +719,6 @@
             document.getElementById('edit_heure').value = timePart;
             document.getElementById('edit_statut').value = rdv.statut;
             document.getElementById('edit_motif').value = rdv.motif || '';
-
-            // Configurer les contraintes de date/heure pour l'édition
-            const editDateInput = document.getElementById('edit_date');
-            const editTimeInput = document.getElementById('edit_heure');
-            editDateInput.addEventListener('change', function() {
-                updateMinTime(editDateInput, editTimeInput);
-            });
-            // Validation avant soumission pour l'édition
-            document.getElementById('editForm').addEventListener('submit', function(e) {
-                const dateValue = editDateInput.value;
-                const timeValue = editTimeInput.value;
-                const medecinId = document.getElementById('edit_medecin_id').value;
-                if (!validateDateTime(dateValue, timeValue)) {
-                    e.preventDefault();
-                    return;
-                }
-                // Vérification des conflits d'horaires (optionnel côté client)
-                // La validation principale se fait côté serveur
-            });
-            // Mettre à jour l'heure minimale immédiatement
-            updateMinTime(editDateInput, editTimeInput);
         }
 
         function closeEditModal() {
@@ -637,7 +727,6 @@
 
         function deleteRendezVous(id) {
             if (confirm('Êtes-vous sûr de vouloir supprimer ce rendez-vous ?')) {
-                // Utiliser fetch pour une suppression AJAX
                 fetch(`{{ url('/rendezvous') }}/${id}`, {
                         method: 'DELETE',
                         headers: {
@@ -649,23 +738,141 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.message) {
-                            showTemporaryMessage(data.message, 'success');
-                            // Recharger la page après un court délai
+                            showMessage(data.message, 'success');
                             setTimeout(() => {
                                 window.location.reload();
-                            }, 1000);
+                            }, 1500);
                         } else if (data.error) {
-                            showTemporaryMessage(data.error, 'error');
+                            showMessage(data.error, 'error');
                         }
                     })
                     .catch(error => {
                         console.error('Erreur:', error);
-                        showTemporaryMessage('Erreur lors de la suppression.', 'error');
+                        showMessage('Erreur lors de la suppression.', 'error');
                     });
             }
         }
 
-        // Fermer les modales en cliquant à l'extérieur
+        // Validation en temps réel pour les champs de date et heure
+        function setupDateTimeValidation() {
+            const dateInput = document.getElementById('date');
+            const timeInput = document.getElementById('heure');
+            const editDateInput = document.getElementById('edit_date');
+            const editTimeInput = document.getElementById('edit_heure');
+
+            // Fonction pour valider en temps réel
+            function validateRealTime(dateField, timeField) {
+                const validation = validateDateTime(dateField, timeField);
+                if (!validation.valid && dateField.value && timeField.value) {
+                    dateField.setCustomValidity(validation.message);
+                    timeField.setCustomValidity(validation.message);
+                } else {
+                    dateField.setCustomValidity('');
+                    timeField.setCustomValidity('');
+                }
+            }
+
+            // Événements pour le modal d'ajout
+            if (dateInput && timeInput) {
+                dateInput.addEventListener('change', () => validateRealTime(dateInput, timeInput));
+                timeInput.addEventListener('change', () => validateRealTime(dateInput, timeInput));
+            }
+
+            // Événements pour le modal d'édition
+            if (editDateInput && editTimeInput) {
+                editDateInput.addEventListener('change', () => validateRealTime(editDateInput, editTimeInput));
+                editTimeInput.addEventListener('change', () => validateRealTime(editDateInput, editTimeInput));
+            }
+        }
+
+        // Initialisation au chargement
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM chargé');
+
+            // Configuration de l'auto-fermeture des messages
+            setupAutoCloseMessages();
+
+            // Configuration de la validation date/heure
+            setupDateTimeValidation();
+
+            // Événements de filtrage
+            document.getElementById('searchInput').addEventListener('input', filterRendezVous);
+            document.getElementById('statutFilter').addEventListener('change', filterRendezVous);
+            document.getElementById('dateFilter').addEventListener('change', filterRendezVous);
+
+            // Validation du formulaire d'ajout
+            const addForm = document.getElementById('addForm');
+            if (addForm) {
+                addForm.addEventListener('submit', function(e) {
+                    const dateInput = document.getElementById('date');
+                    const timeInput = document.getElementById('heure');
+                    const validation = validateDateTime(dateInput, timeInput);
+
+                    if (!validation.valid) {
+                        e.preventDefault();
+                        showValidationError(validation.message);
+                        return false;
+                    }
+                });
+            }
+
+            // Validation du formulaire d'édition
+            const editForm = document.getElementById('editForm');
+            if (editForm) {
+                editForm.addEventListener('submit', function(e) {
+                    const dateInput = document.getElementById('edit_date');
+                    const timeInput = document.getElementById('edit_heure');
+                    const validation = validateDateTime(dateInput, timeInput);
+
+                    if (!validation.valid) {
+                        e.preventDefault();
+                        showValidationError(validation.message);
+                        return false;
+                    }
+                });
+            }
+
+            // Vérifier s'il y a des erreurs pour rouvrir le modal
+            @if ($errors->any() && old('_token'))
+                hasValidationErrors = true;
+                setTimeout(() => {
+                    openAddModal();
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                }, 100);
+            @endif
+
+            @if (session('error') && old('_token'))
+                hasSessionError = true;
+                setTimeout(() => {
+                    openAddModal();
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                }, 100);
+            @endif
+
+            @if (session('success'))
+                // Scroll vers le haut pour voir le message de succès
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            @endif
+        });
+
+        // Fermer les modales avec Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeAddModal();
+                closeEditModal();
+            }
+        });
+
+        // Fermer en cliquant à l'extérieur
         document.getElementById('addModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeAddModal();
@@ -673,14 +880,6 @@
         });
         document.getElementById('editModal').addEventListener('click', function(e) {
             if (e.target === this) {
-                closeEditModal();
-            }
-        });
-
-        // Fermer les modales avec la touche Escape
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeAddModal();
                 closeEditModal();
             }
         });

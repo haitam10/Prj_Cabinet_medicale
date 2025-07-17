@@ -249,7 +249,7 @@
                 </button>
             </div>
             
-            <form action="{{ route('ordonnance.store') }}" method="POST" class="p-6">
+            <form action="{{ route('secretaire.ordonnance.store') }}" method="POST" class="p-6">
                 @csrf
                 <div class="space-y-4">
                     <div>
@@ -441,8 +441,7 @@
             document.getElementById('generateModal').classList.add('hidden');
         }
 
-        function openViewModal(docData) {
-            // Fetch the complete data from the new API endpoint to ensure template info is available
+      function openViewModal(docData) {
             fetch(`/api/ordonnance/${docData.id}/data`)
                 .then(response => {
                     if (!response.ok) {
@@ -452,34 +451,76 @@
                 })
                 .then(fullDocData => {
                     currentDocument = fullDocData; // Store the full data for viewing and printing
+                    console.log(fullDocData);
                     
-                    document.getElementById('patientInfo').textContent =
-                        `${fullDocData.patient.cin || ''} - ${fullDocData.patient.nom || ''} ${fullDocData.patient.prenom || ''}`;
+                    // Null checks for patient, medecin, certificat
+                    if (!fullDocData.patient || !fullDocData.medecin || !fullDocData.certificat) {
+                        alert('Données incomplètes pour cette ordonnance. Veuillez vérifier que le patient, le médecin et le certificat existent.');
+                        return;
+                    }
 
-                    document.getElementById('medecinInfo').textContent =
-                        `Dr. ${fullDocData.medecin.nom || ''} ${fullDocData.medecin.prenom || ''}`;
+                    // Check if 'patientInfo' exists in DOM before setting textContent
+                    const patientInfo = document.getElementById('patientInfo');
+                    if (patientInfo) {
+                        patientInfo.textContent =
+                            `${fullDocData.patient.cin || ''} - ${fullDocData.patient.nom || ''} ${fullDocData.patient.prenom || ''}`.trim();
+                    }
 
-                    document.getElementById('documentDate').textContent =
-                        fullDocData.ordonnance.date_ordonnance
-                            ? new Date(fullDocData.ordonnance.date_ordonnance).toLocaleDateString('fr-FR')
-                            : '';
+                    // Check if 'medecinInfo' exists in DOM before setting textContent
+                    const medecinInfo = document.getElementById('medecinInfo');
+                    if (medecinInfo) {
+                        medecinInfo.textContent =
+                            `Dr. ${fullDocData.medecin.nom || ''} ${fullDocData.medecin.prenom || ''}`.trim();
+                    }
 
-                    document.getElementById('instructions').textContent =
-                        fullDocData.ordonnance.instructions || 'Non spécifié';
+                    // Check if 'documentDate' exists in DOM before setting textContent
+                    const documentDate = document.getElementById('documentDate');
+                    if (documentDate) {
+                        documentDate.textContent =
+                            fullDocData.certificat.date_certificat
+                                ? new Date(fullDocData.certificat.date_certificat).toLocaleDateString('fr-FR')
+                                : 'Date non spécifiée';
+                    }
 
-                    document.getElementById('medicaments').textContent =
-                        fullDocData.ordonnance.medicaments || 'Non spécifié';
+                    // Check if 'instructions' exists in DOM before setting textContent
+                    const instructions = document.getElementById('instructions');
+                    if (instructions) {
+                        instructions.textContent =
+                            fullDocData.certificat.contenu || 'Contenu non spécifié';
+                    }
 
-                    document.getElementById('dureeTraitement').textContent =
-                        fullDocData.ordonnance.duree_traitement || 'Non spécifié';
+                    // Check if 'medicaments' exists in DOM before setting textContent
+                    const medicaments = document.getElementById('medicaments');
+                    if (medicaments) {
+                        medicaments.textContent =
+                            fullDocData.certificat.type || 'Type non spécifié';
+                    }
 
-                    document.getElementById('viewModal').classList.remove('hidden');
+                    // Check if 'dureeTraitement' exists in DOM before setting textContent
+                    const dureeTraitement = document.getElementById('dureeTraitement');
+                    if (dureeTraitement) {
+                        dureeTraitement.textContent =
+                            fullDocData.certificat.duree_traitement ?  fullDocData.certificat.duree_traitement : 'Durée non spécifiée';
+                    }
+
+                    // Check if 'templateInfo' exists in DOM before setting textContent
+                    const templateInfo = document.getElementById('templateInfo');
+                    if (templateInfo) {
+                        templateInfo.textContent =
+                            fullDocData.template.model_nom || 'Modèle non spécifié';
+                    }
+
+                    // Display the Modal
+                    const viewModal = document.getElementById('viewModal');
+                    if (viewModal) {
+                        viewModal.classList.remove('hidden');
+                    }
                 })
                 .catch(error => {
                     console.error('Erreur lors de la récupération des données de l\'ordonnance pour visualisation:', error);
                     alert('Erreur lors de la récupération des données de l\'ordonnance pour visualisation.');
                 });
-        }
+    }
 
         function closeViewModal() {
             document.getElementById('viewModal').classList.add('hidden');
@@ -684,7 +725,7 @@
                 }
             </style>
         </head>
-        <body>
+       <body>
             <div class="container">
                 <div class="header">
                     <div class="doctor-info">
@@ -693,11 +734,12 @@
                         Tél : ${data.medecin.telephone || '0522 000 000'}<br>
                         ${data.medecin.email || 'Adressemail@gmail.com'}
                     </div>
-                    <div class="logo-container"> ${data.template.logo_file_path ?
-                            `<img src="${window.location.origin}/storage/${data.template.logo_file_path}" alt="Caduceus" class="caduceus-icon">` :
-                            `<img src="${window.location.origin}/public/uploads/cm_logo_default.png" alt="Caduceus" class="caduceus-icon">`
-                        }
-                    </div>
+                    <div class="logo-container">
+                                    ${data.template.logo_file_path ?
+                                    `<img src="${window.location.origin}/storage/${data.template.logo_file_path}" alt="Logo" class="caduceus-icon">` :
+                                    `<img src="${window.location.origin}/public/uploads/cm_logo_default.png" alt="Logo" class="caduceus-icon">`
+                                }
+                                </div>
                     
                     <div class="cabinet-info">
                         <strong>${data.cabinet.nom_cabinet || 'Cabinet Nom'}</strong><br>
@@ -710,14 +752,14 @@
                 <div class="divider"></div>
 
                 <div class="title">
-                    ORDONNANCE MEDICALE
+                    ORDONNANCE MÉDICAL
                 </div>
 
                 <div class="date-location">
                     Fait à : Salé Le
-                    <span class="date-input-line">${prescriptionDate.getDate().toString().padStart(2, '0')}</span> /
-                    <span class="date-input-line">${(prescriptionDate.getMonth() + 1).toString().padStart(2, '0')}</span> /
-                    <span class="date-input-line">${prescriptionDate.getFullYear().toString()}</span>
+                    <span class="date-input-line">${new Date(data.certificat.date_certificat).getDate().toString().padStart(2, '0')}</span> /
+                    <span class="date-input-line">${(new Date(data.certificat.date_certificat).getMonth() + 1).toString().padStart(2, '0')}</span> /
+                    <span class="date-input-line">${new Date(data.certificat.date_certificat).getFullYear()}</span>
                 </div>
 
                 <div class="patient-name-line">
@@ -725,23 +767,24 @@
                 </div>
 
                 <div class="content-area">
-                    ${template.logo_file_path ?
-                        `<img src="${window.location.origin}/storage/${template.logo_file_path}"  alt="Caduceus Large" class="caduceus-large">` :
-                        `<img src="${window.location.origin}/public/uploads/cm_logo_default.png" alt="Caduceus Large" class="caduceus-large">`
-                    }
+                    ${data.template.logo_file_path ? 
+                                    `<img src="${window.location.origin}/storage/${data.template.logo_file_path}" alt="Logo Large" class="caduceus-large">` : 
+                                    `<img src="${window.location.origin}/public/uploads/cm_logo_default.png" alt="Logo Large" class="caduceus-large">`
+                                }
                     <div class="prescription-text">
-                        ${data.ordonnance.medicaments || ''}<br>
-                        ${data.ordonnance.instructions || ''}<br>
-                        Pendant <strong>${data.ordonnance.duree_traitement || ''}</strong>
+                        ${data.certificat.contenu || ''}<br>
+                        ${data.certificat.type || ''}<br>
+                        Pendant <strong>${data.certificat.duree_traitement || ''}</strong> jours
                     </div>
                 </div>
 
                 <div class="footer">
-                    Adresse: ${data.cabinet.addr_cabinet || '123, Avenue adresse , ville'} - Tél: ${data.cabinet.tel_cabinet || '0522 000 000 - 0522 000 000'}<br>
+                    Adresse: ${data.cabinet.addr_cabinet || '123, Avenue adresse , ville'} - Tél: ${data.cabinet.tel_cabinet || '0522 000 000'}<br>
                     ${data.medecin.email || 'Adressemail@gmail.com'}
                 </div>
             </div>
         </body>
+
         </html>
     `;
 

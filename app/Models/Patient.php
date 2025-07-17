@@ -15,6 +15,17 @@ class Patient extends Model
         'sexe',
         'date_naissance',
         'contact',
+        'adresse',
+        'email',
+        'telephone_secondaire',
+        'groupe_sanguin',
+        'allergies',
+        'antecedents',
+        'medicaments',
+        'poids',
+        'taille',
+        'profession',
+        'situation_familiale',
     ];
 
     public function rendezvous()

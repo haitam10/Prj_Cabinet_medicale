@@ -43,65 +43,76 @@
          <nav class="mt-8 px-4">
             <div class="space-y-2">
                 <a href="{{ route('secretaire.dashboard') }}"
-                    class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-home mr-3 text-cordes-accent group-hover:text-white"></i>
                     Dashboard
                 </a>
+
                 <a href="{{ route('secretaire.rendezvous') }}"
                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-calendar-check mr-3 text-gray-400 group-hover:text-white"></i>
                     Rendez-vous
-                </a>
+
                 <a href="{{ route('secretaire.patients') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-user-injured mr-3 text-gray-400 group-hover:text-white"></i>
                     Patients
                 </a>
+
                 <a href="{{ route('secretaire.factures') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-file-invoice-dollar mr-3 text-gray-400 group-hover:text-white"></i>
                     Factures
                 </a>
+
                 <a href="{{ route('secretaire.paiements') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-credit-card mr-3 text-gray-400 group-hover:text-white"></i>
                     Paiements
                 </a>
-                <a href="{{ route('secretaire.certificats') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-file-medical mr-3 text-white"></i>
-                    Certificats
-                </a>
-                <a href="{{ route('secretaire.ordonnances') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-prescription-bottle-medical mr-3 text-gray-400 group-hover:text-white"></i>
-                    Ordonnances
-                </a>
-                <a href="{{ route('secretaire.remarques') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-sticky-note mr-3 text-gray-400 group-hover:text-white"></i>
-                    Remarques
-                </a>
-                <a href="{{ route('secretaire.papier') }}"
-                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-cog mr-3 text-gray-400 group-hover:text-white"></i>
-                    Papier
+
+                @if (Auth::check() && Auth::user()->role === 'medecin')
+                    <a href="{{ route('secretaire.dossier-medical') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-file-medical mr-3 text-white"></i>
+                        Dossier Médical
+                    </a>
+                    <a href="{{ route('secretaire.calendrier') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-calendar-alt mr-3 text-gray-400 group-hover:text-white"></i>
+                        Calendrier
+                    </a>
+                @endif
+                <a href="{{ route('secretaire.profile') }}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-user mr-3 text-cordes-accent"></i>
+                    Mon Profil
                 </a>
             </div>
         </nav>
-
+        <!-- Section utilisateur avec bouton de déconnexion -->
         <div class="absolute bottom-4 left-4 right-4">
-            <div class="bg-gray-800 rounded-lg p-4">
-                <div class="flex items-center space-x-3">
-                    <img src="https://cdn-icons-png.flaticon.com/512/17003/17003310.png" alt="Admin"
-                        class="w-10 h-10 rounded-full">
-                    <div>
-                        <p class="text-white text-sm font-medium">John Admin</p>
-                        <p class="text-gray-400 text-xs">Administrator</p>
+            <div
+                class="bg-gray-800 rounded-lg p-4 group cursor-pointer hover:bg-red-600 transition-colors duration-200">
+                <form method="POST" action="{{ route('logout') }}" id="logout-form">
+                    @csrf
+                    <div class="flex items-center space-x-3" onclick="document.getElementById('logout-form').submit();">
+                        <img src="https://cdn-icons-png.flaticon.com/512/17003/17003310.png" alt="User"
+                            class="w-10 h-10 rounded-full">
+                        <div>
+                            <p class="text-white text-sm font-medium">
+                                {{ Auth::user()->nom ?? 'Utilisateur' }}
+                            </p>
+                            <p class="text-gray-400 text-xs">
+                                {{ ucfirst(Auth::user()->role ?? '') }} — <span class="text-red-400">Se
+                                    déconnecter</span>
+                            </p>
+                        </div>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
+
     </div>
 
     <!-- Main Content -->
@@ -196,34 +207,34 @@
                             <i class="fas fa-times text-lg"></i>
                         </button>
                     </div>
-                    <form action="{{ route('rendezvous.store') }}" method="POST" class="space-y-4">
+                    <form action="{{ route('rendezvous.store') }}" method="POST" class="space-y-4" id="addForm">
                         @csrf
                         <div>
-                            <label for="patient_id" class="block text-sm font-medium text-gray-700 mb-1">Patient</label>
+                            <label for="patient_id"
+                                class="block text-sm font-medium text-gray-700 mb-1">Patient</label>
                             <select name="patient_id" id="patient_id" required
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                                 <option value="">Sélectionnez un patient</option>
-                                @isset($patients)
-                                    @foreach ($patients as $patient)
-                                        <option value="{{ $patient->id }}">{{ $patient->nom }} {{ $patient->prenom }}
-                                        </option>
-                                    @endforeach
-                                @endisset
-
+                                @foreach ($patients as $patient)
+                                    <option value="{{ $patient->id }}"
+                                        {{ old('patient_id') == $patient->id ? 'selected' : '' }}>
+                                        {{ $patient->nom }} {{ $patient->prenom }}
+                                    </option>
+                                @endforeach
                             </select>
                         </div>
                         <div>
-                            <label for="medecin_id" class="block text-sm font-medium text-gray-700 mb-1">Médecin</label>
+                            <label for="medecin_id"
+                                class="block text-sm font-medium text-gray-700 mb-1">Médecin</label>
                             <select name="medecin_id" id="medecin_id" required
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                                 <option value="">Sélectionnez un médecin</option>
-                                @isset($medecins)
-                                    @foreach ($medecins as $medecin)
-                                        <option value="{{ $medecin->id }}">{{ $medecin->nom }} {{ $medecin->prenom }}
-                                        </option>
-                                    @endforeach
-                                @endisset
-
+                                @foreach ($medecins as $medecin)
+                                    <option value="{{ $medecin->id }}"
+                                        {{ old('medecin_id') == $medecin->id ? 'selected' : '' }}>
+                                        {{ $medecin->nom }} {{ $medecin->prenom }}
+                                    </option>
+                                @endforeach
                             </select>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
@@ -231,13 +242,14 @@
                                 <label for="date"
                                     class="block text-sm font-medium text-gray-700 mb-1">Date</label>
                                 <input type="date" name="date" id="date" required
-                                    min="{{ date('Y-m-d') }}"
+                                    min="{{ date('Y-m-d') }}" value="{{ old('date') }}"
                                     class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
                             </div>
                             <div>
                                 <label for="heure"
                                     class="block text-sm font-medium text-gray-700 mb-1">Heure</label>
                                 <input type="time" name="heure" id="heure" required
+                                    value="{{ old('heure') }}"
                                     class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
                             </div>
                         </div>
@@ -245,22 +257,23 @@
                             <label for="statut" class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
                             <select name="statut" id="statut" required
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
-                                <option value="en attente">En attente</option>
-                                <option value="confirmé">Confirmé</option>
-                                <option value="annulé">Annulé</option>
+                                <option value="en attente" {{ old('statut') == 'en attente' ? 'selected' : '' }}>En
+                                    attente
+                                </option>
+                                <option value="confirmé" {{ old('statut') == 'confirmé' ? 'selected' : '' }}>Confirmé
+                                </option>
+                                <option value="annulé" {{ old('statut') == 'annulé' ? 'selected' : '' }}>Annulé
+                                </option>
                             </select>
                         </div>
                         <div>
                             <label for="motif" class="block text-sm font-medium text-gray-700 mb-1">Motif</label>
                             <textarea name="motif" id="motif" rows="3"
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
-                                placeholder="Décrivez le motif du rendez-vous..."></textarea>
+                                placeholder="Décrivez le motif du rendez-vous...">{{ old('motif') }}</textarea>
                         </div>
                         <div class="flex justify-end space-x-3 pt-4">
-                            <button type="button" onclick="closeAddModal()"
-                                class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-                                Annuler
-                            </button>
+ 
                             <button type="submit"
                                 class="px-4 py-2 bg-cordes-blue text-white rounded-lg hover:bg-cordes-dark transition-colors">
                                 <i class="fas fa-save mr-2"></i>Enregistrer
@@ -273,65 +286,232 @@
             <!-- MODAL AJOUTER PATIENT -->
             <div id="patientModal"
                 class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
-                <div class="bg-white w-full max-w-lg rounded-lg shadow-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
+                <div class="bg-white w-full max-w-4xl rounded-lg shadow-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-xl font-semibold text-gray-800">Ajouter un nouveau patient</h2>
-                        <button onclick="closePatientModal()"
-                            class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <button onclick="closeAddModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
                             <i class="fas fa-times text-lg"></i>
                         </button>
                     </div>
-                    <form action="{{ route('patients.store') }}" method="POST" class="space-y-4">
+                    <form action="{{ route('patients.store') }}" method="POST" class="space-y-6">
                         @csrf
-                        <div>
-                            <label for="patient_cin" class="block text-sm font-medium text-gray-700 mb-1">CIN
-                                *</label>
-                            <input type="text" name="cin" id="patient_cin" required
-                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
-                                placeholder="Ex: AB123456">
-                        </div>
 
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label for="patient_nom" class="block text-sm font-medium text-gray-700 mb-1">Nom
-                                    *</label>
-                                <input type="text" name="nom" id="patient_nom" required
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                        <!-- Informations de base -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">Informations de base</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div>
+                                    <label for="cin" class="block text-sm font-medium text-gray-700 mb-1">CIN
+                                        *</label>
+                                    <input type="text" name="cin" id="cin" required
+                                        value="{{ old('cin') }}"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent {{ $errors->has('cin') ? 'border-red-500 bg-red-50' : '' }}"
+                                        placeholder="Ex: AB123456" autocomplete="off">
+                                    @if ($errors->has('cin'))
+                                        <p class="mt-1 text-sm text-red-600">{{ $errors->first('cin') }}</p>
+                                    @endif
+                                </div>
+                                <div>
+                                    <label for="nom" class="block text-sm font-medium text-gray-700 mb-1">Nom
+                                        complet
+                                        *</label>
+                                    <input type="text" name="nom" id="nom" required
+                                        value="{{ old('nom') }}"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent {{ $errors->has('nom') ? 'border-red-500 bg-red-50' : '' }}"
+                                        autocomplete="name">
+                                    @if ($errors->has('nom'))
+                                        <p class="mt-1 text-sm text-red-600">{{ $errors->first('nom') }}</p>
+                                    @endif
+                                </div>
+                                <div>
+                                    <label for="sexe" class="block text-sm font-medium text-gray-700 mb-1">Sexe
+                                        *</label>
+                                    <select name="sexe" id="sexe" required
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent {{ $errors->has('sexe') ? 'border-red-500 bg-red-50' : '' }}"
+                                        autocomplete="sex">
+                                        <option value="">Sélectionner</option>
+                                        <option value="homme" {{ old('sexe') == 'homme' ? 'selected' : '' }}>Homme
+                                        </option>
+                                        <option value="femme" {{ old('sexe') == 'femme' ? 'selected' : '' }}>Femme
+                                        </option>
+                                    </select>
+                                    @if ($errors->has('sexe'))
+                                        <p class="mt-1 text-sm text-red-600">{{ $errors->first('sexe') }}</p>
+                                    @endif
+                                </div>
+                                <div>
+                                    <label for="date_naissance"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Date de
+                                        naissance *</label>
+                                    <input type="date" name="date_naissance" id="date_naissance" required
+                                        value="{{ old('date_naissance') }}" max="{{ date('Y-m-d') }}"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent {{ $errors->has('date_naissance') ? 'border-red-500 bg-red-50' : '' }}"
+                                        autocomplete="bday">
+                                    @if ($errors->has('date_naissance'))
+                                        <p class="mt-1 text-sm text-red-600">{{ $errors->first('date_naissance') }}
+                                        </p>
+                                    @endif
+                                </div>
+                                <div>
+                                    <label for="profession"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Profession</label>
+                                    <input type="text" name="profession" id="profession"
+                                        value="{{ old('profession') }}"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
+                                        autocomplete="organization-title">
+                                </div>
+                                <div>
+                                    <label for="situation_familiale"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Situation
+                                        familiale</label>
+                                    <select name="situation_familiale" id="situation_familiale"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
+                                        autocomplete="off">
+                                        <option value="">Sélectionner</option>
+                                        <option value="celibataire"
+                                            {{ old('situation_familiale') == 'celibataire' ? 'selected' : '' }}>
+                                            Célibataire
+                                        </option>
+                                        <option value="marie"
+                                            {{ old('situation_familiale') == 'marie' ? 'selected' : '' }}>
+                                            Marié(e)</option>
+                                        <option value="divorce"
+                                            {{ old('situation_familiale') == 'divorce' ? 'selected' : '' }}>Divorcé(e)
+                                        </option>
+                                        <option value="veuf"
+                                            {{ old('situation_familiale') == 'veuf' ? 'selected' : '' }}>
+                                            Veuf/Veuve</option>
+                                    </select>
+                                </div>
                             </div>
+                        </div>
 
-                            <div>
-                                <label for="patient_sexe" class="block text-sm font-medium text-gray-700 mb-1">Sexe
-                                    *</label>
-                                <select name="sexe" id="patient_sexe" required
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
-                                    <option value="">Sélectionner</option>
-                                    <option value="homme">Homme</option>
-                                    <option value="femme">Femme</option>
-                                </select>
+                        <!-- Informations de contact -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">Informations de contact</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="contact"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Téléphone
+                                        principal *</label>
+                                    <input type="tel" name="contact" id="contact" required
+                                        value="{{ old('contact') }}"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent {{ $errors->has('contact') ? 'border-red-500 bg-red-50' : '' }}"
+                                        placeholder="Ex: 0612345678" autocomplete="tel">
+                                    @if ($errors->has('contact'))
+                                        <p class="mt-1 text-sm text-red-600">{{ $errors->first('contact') }}</p>
+                                    @endif
+                                </div>
+                                <div>
+                                    <label for="telephone_secondaire"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Téléphone
+                                        secondaire</label>
+                                    <input type="tel" name="telephone_secondaire" id="telephone_secondaire"
+                                        value="{{ old('telephone_secondaire') }}"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
+                                        placeholder="Ex: 0612345678" autocomplete="tel">
+                                </div>
+                                <div>
+                                    <label for="email"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                    <input type="email" name="email" id="email" value="{{ old('email') }}"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent {{ $errors->has('email') ? 'border-red-500 bg-red-50' : '' }}"
+                                        placeholder="exemple@email.com" autocomplete="email">
+                                    @if ($errors->has('email'))
+                                        <p class="mt-1 text-sm text-red-600">{{ $errors->first('email') }}</p>
+                                    @endif
+                                </div>
+                                <div>
+                                    <label for="adresse"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+                                    <textarea name="adresse" id="adresse" rows="2"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
+                                        placeholder="Adresse complète" autocomplete="street-address">{{ old('adresse') }}</textarea>
+                                </div>
                             </div>
                         </div>
 
-                        <div>
-                            <label for="patient_date_naissance"
-                                class="block text-sm font-medium text-gray-700 mb-1">Date de naissance *</label>
-                            <input type="date" name="date_naissance" id="patient_date_naissance" required
-                                max="{{ date('Y-m-d') }}"
-                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
-                        </div>
-
-                        <div>
-                            <label for="patient_contact"
-                                class="block text-sm font-medium text-gray-700 mb-1">Contact</label>
-                            <input type="tel" name="contact" id="patient_contact"
-                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
-                                placeholder="Ex: 0612345678">
+                        <!-- Informations médicales -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">Informations médicales</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                                <div>
+                                    <label for="groupe_sanguin"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Groupe
+                                        sanguin</label>
+                                    <select name="groupe_sanguin" id="groupe_sanguin"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
+                                        autocomplete="off">
+                                        <option value="">Sélectionner</option>
+                                        <option value="A+" {{ old('groupe_sanguin') == 'A+' ? 'selected' : '' }}>
+                                            A+
+                                        </option>
+                                        <option value="A-" {{ old('groupe_sanguin') == 'A-' ? 'selected' : '' }}>
+                                            A-
+                                        </option>
+                                        <option value="B+" {{ old('groupe_sanguin') == 'B+' ? 'selected' : '' }}>
+                                            B+
+                                        </option>
+                                        <option value="B-" {{ old('groupe_sanguin') == 'B-' ? 'selected' : '' }}>
+                                            B-
+                                        </option>
+                                        <option value="AB+" {{ old('groupe_sanguin') == 'AB+' ? 'selected' : '' }}>
+                                            AB+
+                                        </option>
+                                        <option value="AB-" {{ old('groupe_sanguin') == 'AB-' ? 'selected' : '' }}>
+                                            AB-
+                                        </option>
+                                        <option value="O+" {{ old('groupe_sanguin') == 'O+' ? 'selected' : '' }}>
+                                            O+
+                                        </option>
+                                        <option value="O-" {{ old('groupe_sanguin') == 'O-' ? 'selected' : '' }}>
+                                            O-
+                                        </option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="poids" class="block text-sm font-medium text-gray-700 mb-1">Poids
+                                        (kg)</label>
+                                    <input type="number" name="poids" id="poids" step="0.1"
+                                        min="0" max="999.99" value="{{ old('poids') }}"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
+                                        placeholder="Ex: 70.5" autocomplete="off">
+                                </div>
+                                <div>
+                                    <label for="taille" class="block text-sm font-medium text-gray-700 mb-1">Taille
+                                        (cm)</label>
+                                    <input type="number" name="taille" id="taille" step="0.1"
+                                        min="0" max="999.99" value="{{ old('taille') }}"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
+                                        placeholder="Ex: 175" autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label for="allergies"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Allergies</label>
+                                    <textarea name="allergies" id="allergies" rows="3"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
+                                        placeholder="Allergies connues..." autocomplete="off">{{ old('allergies') }}</textarea>
+                                </div>
+                                <div>
+                                    <label for="antecedents"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Antécédents</label>
+                                    <textarea name="antecedents" id="antecedents" rows="3"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
+                                        placeholder="Antécédents médicaux..." autocomplete="off">{{ old('antecedents') }}</textarea>
+                                </div>
+                                <div>
+                                    <label for="medicaments"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Médicaments</label>
+                                    <textarea name="medicaments" id="medicaments" rows="3"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
+                                        placeholder="Médicaments actuels..." autocomplete="off">{{ old('medicaments') }}</textarea>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="flex justify-end space-x-3 pt-4">
-                            <button type="button" onclick="closePatientModal()"
-                                class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-                                Annuler
-                            </button>
                             <button type="submit"
                                 class="px-4 py-2 bg-cordes-blue text-white rounded-lg hover:bg-cordes-dark transition-colors">
                                 <i class="fas fa-save mr-2"></i>Enregistrer
@@ -353,71 +533,86 @@
                         </button>
                     </div>
                     {{-- <form action="{{ route('secretaire.factureStore') }}" method="POST" class="space-y-4"> --}}
-                    <form action={{ route('factures.store') }} method="POST" class="space-y-4">
+                    <form action="{{ route('factures.store') }}" method="POST" class="space-y-4">
                         @csrf
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Patient (CNI)</label>
-                            <div class="relative">
-                                <select id="patientSelect" name="patient_id" required
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-accent focus:border-transparent">
-                                    <option value="">Tapez CNI ou nom...</option>
-                                    @foreach ($patients as $patient)
-                                        <option value="{{ $patient->id }}">
-                                            {{ $patient->cin }} | {{ $patient->nom }}
-                                        </option>
-                                    @endforeach
+                            <label for="patient_id" class="block text-sm font-medium text-gray-700 mb-1">Patient
+                                *</label>
+                            <select name="patient_id" id="patient_id" required
+                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                                <option value="">Sélectionner un patient</option>
+                                @foreach ($patients as $patient)
+                                    <option value="{{ $patient->id }}">{{ $patient->nom }} ({{ $patient->cin }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="medecin_id" class="block text-sm font-medium text-gray-700 mb-1">Médecin
+                                *</label>
+                            <select name="medecin_id" id="medecin_id" required
+                                @if (Auth::user()->role === 'medecin') readonly @endif
+                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                                <option value="">Sélectionner un médecin</option>
+                                @foreach ($medecins as $medecin)
+                                    <option value="{{ $medecin->id }}"
+                                        @if (Auth::user()->role === 'medecin' && Auth::id() === $medecin->id) selected @endif>
+                                        {{ $medecin->nom }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="secretaire_id"
+                                class="block text-sm font-medium text-gray-700 mb-1">Secrétaire</label>
+                            <select name="secretaire_id" id="secretaire_id"
+                                @if (Auth::user()->role === 'secretaire') readonly @endif
+                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                                <option value="">Sélectionner un secrétaire</option>
+                                @foreach ($secretaires as $secretaire)
+                                    <option value="{{ $secretaire->id }}"
+                                        @if (Auth::user()->role === 'secretaire' && Auth::id() === $secretaire->id) selected @endif>
+                                        {{ $secretaire->nom }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="montant" class="block text-sm font-medium text-gray-700 mb-1">Montant
+                                    (DH)
+                                    *</label>
+                                <input type="number" name="montant" id="montant" step="0.01" min="0"
+                                    required
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                            </div>
+                            <div>
+                                <label for="statut" class="block text-sm font-medium text-gray-700 mb-1">Statut
+                                    *</label>
+                                <select name="statut" id="statut" required
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                                    <option value="">Sélectionner</option>
+                                    <option value="en_attente">En attente</option>
+                                    <option value="payée">Payée</option>
+                                    <option value="annulée">Annulée</option>
                                 </select>
                             </div>
                         </div>
+
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Médecin</label>
-                            <select name="medecin_id" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
-                                <option value="">Sélectionner un médecin</option>
-                                @foreach ($medecins as $medecin)
-                                    <option value="{{ $medecin->id }}">Dr.{{ $medecin->nom }} | N°
-                                        {{ $medecin->id }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Secrétaire</label>
-                            <select name="secretaire_id" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
-                                <option value="">Sélectionner un secrétaire</option>
-                                @foreach ($secretaires as $secretaire)
-                                    <option value="{{ $secretaire->id }}">Sec.{{ $secretaire->nom }} | N°
-                                        {{ $secretaire->id }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
-                            <input type="date" name="date" id="currentDate"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Montant</label>
-                            <input type="number" name="montant" step="0.01" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
-                        </div>
-                        <div>
-                            <label for="statut" class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
-                            <select name="statut" id="statut" required
+                            <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+                            <input type="date" name="date" id="date" required readonly
+                                value="{{ date('Y-m-d') }}"
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
-                                <option value="en attente">En attente</option>
-                                <option value="payée">Payée</option>
-                            </select>
                         </div>
-                        <div class="flex space-x-3 pt-4">
-                            <button type="button" onclick="closeFactureModal()"
-                                class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
-                                Annuler
-                            </button>
+
+                        <div class="flex justify-end space-x-3 pt-4">
                             <button type="submit"
-                                class="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
-                                <i class="fas fa-save mr-2"></i>Générer Facture
-                            </button>
+                                class="px-4 py-2 bg-cordes-blue text-white rounded-lg hover:bg-cordes-dark transition-colors">
+                                <i class="fas fa-save mr-2"></i>Enregistrer</button>
                         </div>
                     </form>
                 </div>

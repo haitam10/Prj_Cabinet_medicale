@@ -6,8 +6,9 @@ use App\Models\Certificat;
 use App\Models\CertifDoc;
 use App\Models\Patient;
 use App\Models\User;
-use App\Models\DocModel;
+
 use App\Models\Cabinet;
+use App\Models\DocModel;
 use Illuminate\Http\Request;
 
 class CertificatController extends Controller
@@ -55,8 +56,8 @@ class CertificatController extends Controller
             $certificat->save();
 
             // Get selected template for the doctor
-            $template = CertifDoc::where('id_docteur', $medecin->id)
-                ->where('is_selected', true)
+            $template = DocModel::where('id_docteur', $medecin->id)
+                ->where('document','certificat')
                 ->first();
 
             // Create template object with default values

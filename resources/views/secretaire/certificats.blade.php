@@ -245,7 +245,7 @@
                 </button>
             </div>
             
-            <form action="{{ route('certificat.store') }}" method="POST" class="p-6">
+            <form action="{{ route('secretaire.certificat.store') }}" method="POST" class="p-6">
                 @csrf
                 <div class="space-y-4">
                     <div>

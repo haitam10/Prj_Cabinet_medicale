@@ -122,7 +122,7 @@
             @endif
 
             <div class="bg-white rounded-lg shadow-sm p-6">
-                <form action="{{ route('papier.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
+                <form action="{{ route('secretaire.papier.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
                     @csrf
                     
                     <!-- Title -->
@@ -506,7 +506,7 @@
         function resetForm() {
             if (confirm('Êtes-vous sûr de vouloir réinitialiser les informations du cabinet ?')) {
                 // This only resets the cabinet info form fields
-                document.querySelector('form[action="{{ route('papier.store') }}"]').reset();
+                document.querySelector('form[action="{{ route('secretaire.papier.store') }}"]').reset();
             }
         }
 
@@ -561,7 +561,7 @@
             // template_type is already in formData from the hidden input
             
             $.ajax({
-                url: "{{ route('papier.createTemplate') }}", // Correct route helper usage
+                url: "{{ route('secretaire.papier.createTemplate') }}", // Correct route helper usage
                 method: 'POST',
                 data: formData,
                 processData: false,
@@ -606,7 +606,7 @@
 
             // Load template data
             $.ajax({
-                url: `/papier/get-template/${type}/${id}`, // Correctly passes type and ID as URL segments
+                url: `papier/get-template/${type}`, // Correctly passes type and ID as URL segments
                 method: 'GET',
                 success: function(template) {
                     document.getElementById('editName').value = template.model_nom || ''; 
@@ -647,7 +647,7 @@
             // id and template_type are already in formData from hidden inputs
             
             $.ajax({
-                url: "{{ route('papier.updateTemplate') }}", // Correct route helper usage
+                url: "{{ route('secretaire.papier.updateTemplate') }}", // Correct route helper usage
                 method: 'POST', // Use POST for FormData
                 data: formData,
                 processData: false,
@@ -692,7 +692,7 @@
             }
 
             $.ajax({
-                url: `/papier/get-template/${type}/${id}`,
+                url: `papier/get-template/${type}`,
                 method: 'GET',
                 success: function(template) {
                     document.getElementById('viewName').textContent = template.model_nom || 'N/A';

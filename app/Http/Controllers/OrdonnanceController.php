@@ -143,73 +143,80 @@ class OrdonnanceController extends Controller
 
     
 
-   public function getOrdonnanceData($ordonnanceId)
+    public function getOrdonnanceData($ordonnanceId)
 {
     try {
         $ordonnance = Ordonnance::with(['patient', 'medecin'])->findOrFail($ordonnanceId);
         $patient = $ordonnance->patient;
         $medecin = $ordonnance->medecin;
 
-        // Fetch Cabinet from `cabinets` table where id_docteur contains medecin->id
-        $cabinet = Cabinet::whereRaw("FIND_IN_SET(?, id_docteur)", [$medecin->id])->first();
+        if (!$patient || !$medecin) {
+            return response()->json(['error' => 'Patient ou médecin non trouvé pour cette ordonnance.'], 404);
+        }
 
-        // Fetch Template from `doc_models` table for this doctor and 'ordonnance'
+        // Fetch template specific to this doctor and document type 'ordonnance'
         $template = DocModel::where('id_docteur', $medecin->id)
                             ->where('document', 'ordonnance')
                             ->first();
 
-        return response()->json([
-            'ordonnance' => [
-                'id' => $ordonnance->id,
-                'medicaments' => $ordonnance->medicaments,
-                'instructions' => $ordonnance->instructions,
-                'duree_traitement' => $ordonnance->duree_traitement,
-                'date_ordonnance' => $ordonnance->date_ordonnance,
-            ],
+        // Fetch cabinet associated with the doctor
+        $cab = Cabinet::whereRaw("FIND_IN_SET(?, id_docteur)", [$medecin->id])->first();
 
+        // Construct templateData, safely accessing properties with null coalescing and correct source
+        $templateData = [
+            'id' => $template->id ?? null, // Template ID
+            'model_nom' => $template->model_nom ?? null, // Template name
+            'logo_file_path' => $template->logo_file_path ?? null,
+            'descr_head' => $template->descr_head ?? null, // Header description
+            'descr_body' => $template->descr_body ?? null, // Body description
+            'descr_footer' => $template->descr_footer ?? null, // Footer description
+            'document' => 'certificat', // Document type
+            'is_selected' => $template->is_selected ?? 0, // Template selection flag
+        ];
+
+        // Prepare the response structure for the certificate
+        $documentData = [
+            'certificat' => [
+                'id' => $ordonnance->id,
+                'contenu' => $ordonnance->instructions, // Assuming 'instructions' are the content
+                'type' => 'Voyage', // Example, can change based on logic
+                'date_certificat' => $ordonnance->date_ordonance,
+                'duree_traitement' => $ordonnance->duree_traitement,
+            ],
             'patient' => [
                 'id' => $patient->id,
-                'cin' => $patient->cin,
-                'nom' => $patient->nom,
-                'prenom' => $patient->prenom,
-                'email' => $patient->email,
-                'telephone' => $patient->telephone,
-                'adresse' => $patient->adresse,
-                'date_naissance' => $patient->date_naissance,
-                'sexe' => $patient->sexe,
+                'cin' => $patient->cin ?? 'N/A',
+                'nom' => ($patient->nom ?? 'N/A') . ' ' . ($patient->prenom ?? ''),
+                'telephone' => $patient->telephone ?? 'N/A',
+                'date_naissance' => $patient->date_naissance ?? 'N/A',
+                'sexe' => $patient->sexe ?? 'N/A',
             ],
-
             'medecin' => [
-                'id' => $medecin->id,
-                'nom' => $medecin->nom,
-                'prenom' => $medecin->prenom,
-                'email' => $medecin->email,
-                'telephone' => $medecin->telephone,
-                'specialite' => $medecin->specialite,
+                'id' => $medecin->id ?? null,
+                'nom' => $medecin->nom ?? 'N/A',
+                'prenom' => $medecin->prenom ?? null,
+                'email' => $medecin->email ?? 'N/A',
+                'telephone' => $medecin->telephone ?? 'N/A',
+                'specialite' => $medecin->specialite ?? 'N/A',
             ],
-
             'cabinet' => [
-                'id' => $cabinet->id ?? null,
-                'nom_cabinet' => $cabinet->nom_cabinet ?? null,
-                'addr_cabinet' => $cabinet->addr_cabinet ?? null,
-                'tel_cabinet' => $cabinet->tel_cabinet ?? null,
-                'descr_cabinet' => $cabinet->descr_cabinet ?? null,
+                'id' => $cab->id ?? null,
+                'nom_cabinet' => $cab->nom_cabinet ?? 'N/A',
+                'addr_cabinet' => $cab->addr_cabinet ?? 'N/A',
+                'tel_cabinet' => $cab->tel_cabinet ?? 'N/A',
+                'descr_cabinet' => $cab->descr_cabinet ?? 'N/A',
             ],
+            'template' => $templateData, // Pass the safely constructed template data
+        ];
 
-            'template' => [
-                'id' => $template->id ?? null,
-                'model_nom' => $template->model_nom ?? null,
-                'logo_file_path' => $template->logo_file_path ?? null,
-                'descr_head' => $template->descr_head ?? null,
-                'descr_body' => $template->descr_body ?? null,
-                'descr_footer' => $template->descr_footer ?? null,
-                'document' => $template->document ?? null,
-                'is_selected' => $template->is_selected ?? null,
-            ],
-        ]);
-    } catch (\Exception $e) {
+        return response()->json($documentData);
+    } catch (Exception $e) { // Catch more specific exceptions if needed
+        // Log the error for debugging purposes
+        Log::error("Erreur lors de la récupération des données de l'ordonnance: " . $e->getMessage(), ['exception' => $e]);
+        
         return response()->json([
-            'error' => 'Erreur lors de la récupération des données de l\'ordonnance: ' . $e->getMessage()
+            'error' => 'Erreur lors de la récupération des données de l\'ordonnance.',
+            'message' => $e->getMessage() // Provide the error message for debugging
         ], 500);
     }
 }

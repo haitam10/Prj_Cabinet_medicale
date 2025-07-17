@@ -92,9 +92,7 @@ class DocumentController extends Controller
             return view('secretaire.certificats', compact('documents','patients','medecins'));
         }
 
-/**
- * Display ordonnances listing
- */
+
     public function showOrds(Request $request)
         {
             $documents = null;

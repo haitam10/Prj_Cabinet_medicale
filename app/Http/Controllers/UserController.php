@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules;
 
 class UserController extends Controller
 {
@@ -30,7 +32,6 @@ class UserController extends Controller
         }
     }
 
-
     /**
      * Show the form for creating a new resource.
      */
@@ -55,16 +56,17 @@ class UserController extends Controller
             'password' => 'required|string|min:6|confirmed',
             'role' => 'required|string',
             'statut' => 'required|string',
+            'date_naissance' => 'nullable|date|before:today',
+            'sexe' => 'nullable|string|in:homme,femme',
+            'telephone' => 'nullable|string|max:20',
+            'adresse' => 'nullable|string|max:500',
+            'specialite' => 'nullable|string|max:255',
+            'numero_adeli' => 'nullable|string|max:50',
         ]);
 
-        $user = User::create([
-            'cin' => $validated['cin'],
-            'nom' => $validated['nom'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role' => $validated['role'],
-            'statut' => $validated['statut'],
-        ]);
+        $validated['password'] = Hash::make($validated['password']);
+
+        $user = User::create($validated);
 
         if ($request->wantsJson()) {
             return response()->json(['message' => 'Utilisateur créé avec succès.', 'user' => $user], 201);
@@ -114,16 +116,22 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email,' . $user->id,
             'role' => 'required|string',
             'statut' => 'required|string',
+            'date_naissance' => 'nullable|date|before:today',
+            'sexe' => 'nullable|string|in:homme,femme',
+            'telephone' => 'nullable|string|max:20',
+            'adresse' => 'nullable|string|max:500',
+            'specialite' => 'nullable|string|max:255',
+            'numero_adeli' => 'nullable|string|max:50',
             'password' => 'nullable|string|min:6|confirmed',
         ]);
 
-        $data = $request->only('cin', 'nom', 'email', 'role', 'statut');
-
         if ($request->filled('password')) {
-            $data['password'] = Hash::make($request->password);
+            $validated['password'] = Hash::make($request->password);
+        } else {
+            unset($validated['password']);
         }
 
-        $user->update($data);
+        $user->update($validated);
 
         if ($request->wantsJson()) {
             return response()->json(['message' => 'Utilisateur mis à jour avec succès.', 'user' => $user]);
@@ -145,5 +153,52 @@ class UserController extends Controller
         }
 
         return redirect()->route('users.index')->with('success', 'Utilisateur supprimé avec succès.');
+    }
+
+    /**
+     * Affiche le profil de l'utilisateur connecté.
+     */
+    public function profile()
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        return view('secretaire.profile', compact('user'));
+    }
+
+    /**
+     * Met à jour le profil de l'utilisateur connecté.
+     */
+    public function updateProfile(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $request->validate([
+            'cin' => 'required|string|max:20|unique:users,cin,' . $user->id,
+            'nom' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'statut' => 'required|string|in:actif,inactif,suspendu',
+            'date_naissance' => 'nullable|date|before:today',
+            'sexe' => 'nullable|string|in:homme,femme',
+            'telephone' => 'nullable|string|max:20',
+            'adresse' => 'nullable|string|max:500',
+            'specialite' => 'nullable|string|max:255',
+            'numero_adeli' => 'nullable|string|max:50',
+            'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
+        ]);
+
+        $data = $request->only([
+            'cin', 'nom', 'email', 'statut', 'date_naissance',
+            'sexe', 'telephone', 'adresse', 'specialite', 'numero_adeli'
+        ]);
+
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->password);
+        }
+
+        $user->update($data);
+
+        return redirect()->route('secretaire.profile')->with('success', 'Profil mis à jour avec succès !');
     }
 }

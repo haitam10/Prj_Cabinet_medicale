@@ -113,13 +113,12 @@ class PapierController extends Controller
     }
         
     
-    public function getTemplate($type, $id)
+    public function getTemplate($type)
     {
         $doctorId = Auth::id() ?? 2;
                 
         // Find the template by ID, doctor ID, and document type
-        $template = DocModel::where('id', $id)
-                            ->where('id_docteur', $doctorId)
+        $template = DocModel::where('id_docteur', $doctorId)
                             ->where('document', $type)
                             ->first();
                             
@@ -172,7 +171,15 @@ class PapierController extends Controller
         $doctorId = Auth::id() ?? 2;
         $type = $request->input('template_type');
         $cabinet = Cabinet::where('id_docteur', $doctorId)->first();
-
+        if (!$cabinet) {
+            $cabinet = Cabinet::create([
+                'id_docteur' => $doctorId,
+                'nom_cabinet' => 'Nom par défaut',
+                'addr_cabinet' => '',
+                'tel_cabinet' => '',
+                'descr_cabinet' => '',
+            ]);
+        }
 
         // Create a new DocModel instance
         $template = new DocModel();
