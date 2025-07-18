@@ -48,6 +48,8 @@
                     Dashboard
                 </a>
 
+
+
                 <a href="{{ route('secretaire.rendezvous') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-calendar-check mr-3 text-white"></i>
@@ -83,12 +85,33 @@
                         <i class="fas fa-calendar-alt mr-3 text-gray-400 group-hover:text-white"></i>
                         Calendrier
                     </a>
+                    <a href="{{ route('secretaire.certificats') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-file-medical mr-3 text-white"></i>
+                        Certificats
+                    </a>
+                    <a href="{{ route('secretaire.ordonnances') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-prescription-bottle-medical mr-3 text-gray-400 group-hover:text-white"></i>
+                        Ordonnances
+                    </a>
+                    <a href="{{ route('secretaire.remarques') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-sticky-note mr-3 text-gray-400 group-hover:text-white"></i>
+                        Remarques
+                    </a>
+                    <a href="{{ route('secretaire.papier') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-cog mr-3 text-gray-400 group-hover:text-white"></i>
+                        Papier
+                    </a>
                 @endif
                 <a href="{{ route('secretaire.profile') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-user mr-3 text-cordes-accent"></i>
                     Mon Profil
                 </a>
+
             </div>
         </nav>
 
@@ -275,7 +298,7 @@
                                 placeholder="Décrivez le motif du rendez-vous...">{{ old('motif') }}</textarea>
                         </div>
                         <div class="flex justify-end space-x-3 pt-4">
- 
+
                             <button type="submit"
                                 class="px-4 py-2 bg-cordes-blue text-white rounded-lg hover:bg-cordes-dark transition-colors">
                                 <i class="fas fa-save mr-2"></i>Enregistrer

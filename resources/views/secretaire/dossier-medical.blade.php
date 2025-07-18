@@ -78,6 +78,26 @@
                         <i class="fas fa-calendar-alt mr-3 text-gray-400 group-hover:text-white"></i>
                         Calendrier
                     </a>
+                    <a href="{{ route('secretaire.certificats') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-file-medical mr-3 text-white"></i>
+                        Certificats
+                    </a>
+                    <a href="{{ route('secretaire.ordonnances') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-prescription-bottle-medical mr-3 text-gray-400 group-hover:text-white"></i>
+                        Ordonnances
+                    </a>
+                    <a href="{{ route('secretaire.remarques') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-sticky-note mr-3 text-gray-400 group-hover:text-white"></i>
+                        Remarques
+                    </a>
+                    <a href="{{ route('secretaire.papier') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-cog mr-3 text-gray-400 group-hover:text-white"></i>
+                        Papier
+                    </a>
                 @endif
                 <a href="{{ route('secretaire.profile') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">

@@ -113,7 +113,7 @@
                 <span class="text-white text-xl font-bold">C-M</span>
             </div>
         </div>
-        <nav class="mt-8 px-4">
+                <nav class="mt-8 px-4">
             <div class="space-y-2">
                 <a href="{{ route('secretaire.dashboard') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
@@ -122,7 +122,7 @@
                 </a>
                 <a href="{{ route('secretaire.rendezvous') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-calendar-check mr-3 text-gray-400 group-hover:text-white"></i>
+                    <i class="fas fa-calendar-check mr-3 text-white"></i>
                     Rendez-vous
                 </a>
                 <a href="{{ route('secretaire.patients') }}"
@@ -143,7 +143,7 @@
                 @if (Auth::check() && Auth::user()->role === 'medecin')
                     <a href="{{ route('secretaire.dossier-medical') }}"
                         class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                        <i class="fas fa-file-medical mr-3 text-gray-400 group-hover:text-white"></i>
+                        <i class="fas fa-file-medical mr-3 text-white"></i>
                         Dossier Médical
                     </a>
                     <a href="{{ route('secretaire.calendrier') }}"
@@ -151,15 +151,34 @@
                         <i class="fas fa-calendar-alt mr-3 text-gray-400 group-hover:text-white"></i>
                         Calendrier
                     </a>
+                    <a href="{{ route('secretaire.certificats') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-file-medical mr-3 text-white"></i>
+                        Certificats
+                    </a>
+                    <a href="{{ route('secretaire.ordonnances') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-prescription-bottle-medical mr-3 text-gray-400 group-hover:text-white"></i>
+                        Ordonnances
+                    </a>
+                    <a href="{{ route('secretaire.remarques') }}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-sticky-note mr-3 text-gray-400 group-hover:text-white"></i>
+                        Remarques
+                    </a>
+                    <a href="{{ route('secretaire.papier') }}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-cog mr-3 text-gray-400 group-hover:text-white"></i>
+                        Papier
+                    </a>
                 @endif
                 <a href="{{ route('secretaire.profile') }}"
-                    class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
+                        class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
                     <i class="fas fa-user mr-3 text-cordes-accent"></i>
                     Mon Profil
                 </a>
             </div>
-        </nav>
-        <!-- Section utilisateur avec bouton de déconnexion -->
+        </nav>        <!-- Section utilisateur avec bouton de déconnexion -->
         <div class="absolute bottom-4 left-4 right-4">
             <div
                 class="bg-gray-800 rounded-lg p-4 group cursor-pointer hover:bg-red-600 transition-colors duration-200">

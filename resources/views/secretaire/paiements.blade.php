@@ -88,6 +88,26 @@
                         <i class="fas fa-calendar-alt mr-3 text-gray-400 group-hover:text-white"></i>
                         Calendrier
                     </a>
+                    <a href="{{ route('secretaire.certificats') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-file-medical mr-3 text-white"></i>
+                        Certificats
+                    </a>
+                    <a href="{{ route('secretaire.ordonnances') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-prescription-bottle-medical mr-3 text-gray-400 group-hover:text-white"></i>
+                        Ordonnances
+                    </a>
+                    <a href="{{ route('secretaire.remarques') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-sticky-note mr-3 text-gray-400 group-hover:text-white"></i>
+                        Remarques
+                    </a>
+                    <a href="{{ route('secretaire.papier') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-cog mr-3 text-gray-400 group-hover:text-white"></i>
+                        Papier
+                    </a>
                 @endif
 
                 <a href="{{ route('secretaire.profile') }}"
@@ -392,7 +412,7 @@
                             <label for="montant" class="block text-sm font-medium text-gray-700 mb-1">
                                 Montant (DH) <span class="text-red-500">*</span>
                             </label>
-                            <input type="number" id="montant" name="montant" step="0.01" min="0" required 
+                            <input type="number" id="montant" name="montant" step="0.01" min="0" required
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                         </div>
                         <div>
