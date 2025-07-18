@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -30,6 +29,7 @@
             body * {
                 visibility: hidden;
             }
+
             #printFrame {
                 visibility: visible;
                 position: absolute;
@@ -38,6 +38,7 @@
                 width: 100%;
                 height: 100%;
             }
+
             .no-print {
                 display: none !important;
             }
@@ -56,7 +57,7 @@
                 <span class="text-white text-xl font-bold">Espace Secrétaire</span>
             </div>
         </div>
-            <nav class="mt-8 px-4">
+        <nav class="mt-8 px-4">
             <div class="space-y-2">
                 <a href="{{ route('secretaire.dashboard') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
@@ -122,16 +123,21 @@
                 </a>
             </div>
         </nav>
+        <!-- Section utilisateur avec bouton de déconnexion -->
         <div class="absolute bottom-4 left-4 right-4">
-            <div class="bg-gray-800 rounded-lg p-4">
-                <div class="flex items-center space-x-3">
-                    <img src="https://cdn-icons-png.flaticon.com/512/17003/17003310.png" alt="Secrétaire"
-                        class="w-10 h-10 rounded-full" />
-                    <div>
-                        <p class="text-white text-sm font-medium">Secrétaire</p>
-                        <p class="text-gray-400 text-xs">Connecté</p>
+            <div class="bg-gray-800 rounded-lg p-4 group cursor-pointer hover:bg-red-600 transition-colors duration-200">
+                <form method="POST" action="{{ route('logout') }}" id="logout-form">
+                    @csrf
+                    <div class="flex items-center space-x-3" onclick="document.getElementById('logout-form').submit();">
+                        <img src="https://cdn-icons-png.flaticon.com/512/17003/17003310.png" alt="User"
+                            class="w-10 h-10 rounded-full">
+                        <div>
+                            <p class="text-white text-sm font-medium">{{ Auth::user()->nom ?? 'Utilisateur' }}</p>
+                            <p class="text-gray-400 text-xs">{{ ucfirst(Auth::user()->role ?? '') }} — <span
+                                    class="text-red-400">Se déconnecter</span></p>
+                        </div>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
     </div>
@@ -153,13 +159,15 @@
 
         <main class="p-6">
             @if (session('success'))
-                <div id="successMessage" class="mb-4 p-4 bg-green-100 text-green-800 rounded-lg border border-green-200 transition-opacity duration-500">
+                <div id="successMessage"
+                    class="mb-4 p-4 bg-green-100 text-green-800 rounded-lg border border-green-200 transition-opacity duration-500">
                     <i class="fas fa-check-circle mr-2"></i>{{ session('success') }}
                 </div>
             @endif
 
             @if (session('error'))
-                <div id="errorMessage" class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 transition-opacity duration-500">
+                <div id="errorMessage"
+                    class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 transition-opacity duration-500">
                     <i class="fas fa-exclamation-circle mr-2"></i>{{ session('error') }}
                 </div>
             @endif
@@ -172,7 +180,7 @@
                         <input type="text" id="searchInput" placeholder="Rechercher par CIN ou nom patient..."
                             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                     </div>
-                    
+
                     <div class="relative">
                         <i class="fas fa-user-md absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                         <select id="medecinFilter"
@@ -180,11 +188,11 @@
                             <option value="">Tous les médecins</option>
                         </select>
                     </div>
-                    
+
                     <div class="flex items-center text-sm text-gray-600">
                         <i class="fas fa-prescription-bottle-medical mr-2 text-blue-600"></i>
                         <span id="documentCount">
-                            {{ count($documents ?? []) }} 
+                            {{ count($documents ?? []) }}
                             Ordonnance{{ count($documents ?? []) > 1 ? 's' : '' }}
                         </span>
                     </div>
@@ -192,22 +200,28 @@
             </div>
 
             <div class="overflow-x-auto bg-white shadow rounded-xl">
-               <table class="min-w-full divide-y divide-gray-200">
+                <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CIN</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PATIENT</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MÉDICAMENTS</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MÉDECIN</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AJOUTÉ LE</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACTIONS</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                CIN</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                PATIENT</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                MÉDICAMENTS</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                MÉDECIN</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                AJOUTÉ LE</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                ACTIONS</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @forelse ($documents ?? [] as $doc)
-                            <tr class="hover:bg-gray-50 transition-colors document-row" 
-                                data-cin="{{ $doc['patient_cin'] ?? '' }}" 
-                                data-patient="{{ $doc['patient_nom'] ?? '' }}" 
+                            <tr class="hover:bg-gray-50 transition-colors document-row"
+                                data-cin="{{ $doc['patient_cin'] ?? '' }}"
+                                data-patient="{{ $doc['patient_nom'] ?? '' }}"
                                 data-medecin="{{ $doc['medecin_nom'] ?? '' }}">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {{ $doc['patient_cin'] ?? '' }}
@@ -254,7 +268,8 @@
     </div>
 
     <!-- MODAL GÉNERER ORDONNANCE -->
-    <div id="generateModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div id="generateModal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white w-full max-w-2xl rounded-lg shadow-xl m-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center p-6 border-b border-gray-200">
                 <h2 class="text-2xl font-semibold text-gray-800">
@@ -264,7 +279,7 @@
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
-            
+
             <form action="{{ route('secretaire.ordonnance.store') }}" method="POST" class="p-6">
                 @csrf
                 <div class="space-y-4">
@@ -272,60 +287,69 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             <i class="fas fa-user mr-1"></i>Patient
                         </label>
-                        <select name="patient_id" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
+                        <select name="patient_id" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
                             <option value="">Sélectionner un patient</option>
-                            @foreach($patients ?? [] as $patient)
-                            <option value="{{ $patient->id }}">{{ $patient->cin }} - {{ $patient->nom }}</option>
+                            @foreach ($patients ?? [] as $patient)
+                                <option value="{{ $patient->id }}">{{ $patient->cin }} - {{ $patient->nom }}
+                                </option>
                             @endforeach
                         </select>
                     </div>
-                    
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             <i class="fas fa-user-md mr-1"></i>Médecin
                         </label>
-                        <select name="medecin_id" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
-                            <option value="">Sélectionner un médecin</option>
-                            @foreach($medecins ?? [] as $medecin)
-                            <option value="{{ $medecin->id }}">Dr. {{ $medecin->nom }}</option>
-                            @endforeach
-                        </select>
+                         <input type="hidden" name="medecin_id" value="{{ Auth::id() }}">
+
+                        <input type="text" value="Dr. {{ Auth::user()->nom ?? 'Médecin non défini' }}" readonly
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed outline-none">
                     </div>
-                    
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             <i class="fas fa-pills mr-1"></i>Médicaments
                         </label>
-                        <textarea name="medicaments" rows="3" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none" placeholder="Liste des médicaments prescrits..."></textarea>
+                        <textarea name="medicaments" rows="3" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none"
+                            placeholder="Liste des médicaments prescrits..."></textarea>
                     </div>
-                    
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             <i class="fas fa-file-alt mr-1"></i>Instructions
                         </label>
-                        <textarea name="instructions" rows="3" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none" placeholder="Instructions pour le patient..."></textarea>
+                        <textarea name="instructions" rows="3" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none"
+                            placeholder="Instructions pour le patient..."></textarea>
                     </div>
-                    
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             <i class="fas fa-clock mr-1"></i>Durée du traitement
                         </label>
-                        <input type="text" name="duree_traitement" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none" placeholder="Ex: 7 jours, 2 semaines...">
+                        <input type="text" name="duree_traitement" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none"
+                            placeholder="Ex: 7 jours, 2 semaines...">
                     </div>
-                    
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             <i class="fas fa-calendar mr-1"></i>Date
                         </label>
-                        <input type="date" name="date_ordonnance" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
+                        <input type="date" name="date_ordonnance" required readonly
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
                     </div>
                 </div>
-                
+
                 <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200 mt-6">
-                    <button type="button" onclick="closeGenerateModal()" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                    <button type="button" onclick="closeGenerateModal()"
+                        class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
                         <i class="fas fa-times mr-2"></i>Annuler
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                         <i class="fas fa-save mr-2"></i>Générer
                     </button>
                 </div>
@@ -342,7 +366,7 @@
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
-            
+
             <div class="p-6">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <!-- Left Side - Patient & Doctor Info -->
@@ -365,12 +389,12 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Right Side - Document Content -->
                     <div class="space-y-6">
                         <div class="bg-gray-50 p-4 rounded-lg">
                             <h3 class="text-lg font-semibold text-gray-800 mb-4">Contenu de l'Ordonnance</h3>
-                            
+
                             <div class="space-y-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-600">Instructions</label>
@@ -389,12 +413,14 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="flex justify-end space-x-3 p-6 border-t border-gray-200">
-                <button onclick="closeViewModal()" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                <button onclick="closeViewModal()"
+                    class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
                     Fermer
                 </button>
-                <button onclick="printCurrentDocument()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                <button onclick="printCurrentDocument()"
+                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
                     <i class="fas fa-print mr-2"></i>Imprimer
                 </button>
             </div>
@@ -405,7 +431,7 @@
     <iframe id="printFrame" style="display: none;"></iframe>
 
     <!-- AUTO PRINT SCRIPT -->
-    @if(session('print_document') && session('print_ordonnance'))
+    @if (session('print_document') && session('print_ordonnance'))
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 const printData = @json(session('print_ordonnance'));
@@ -428,7 +454,8 @@
                 if (message) {
                     const closeButton = document.createElement('button');
                     closeButton.innerHTML = '<i class="fas fa-times"></i>';
-                    closeButton.className = 'float-right text-current opacity-70 hover:opacity-100 transition-opacity ml-2';
+                    closeButton.className =
+                        'float-right text-current opacity-70 hover:opacity-100 transition-opacity ml-2';
                     closeButton.onclick = () => hideMessage(message);
                     message.appendChild(closeButton);
 
@@ -468,7 +495,7 @@
                 })
                 .then(fullDocData => {
                     currentDocument = fullDocData; // Store the full data for viewing and printing
-                    
+
                     document.getElementById('patientInfo').textContent =
                         `${fullDocData.patient.cin || ''} - ${fullDocData.patient.nom || ''} ${fullDocData.patient.prenom || ''}`;
 
@@ -476,9 +503,9 @@
                         `Dr. ${fullDocData.medecin.nom || ''} ${fullDocData.medecin.prenom || ''}`;
 
                     document.getElementById('documentDate').textContent =
-                        fullDocData.ordonnance.date_ordonnance
-                            ? new Date(fullDocData.ordonnance.date_ordonnance).toLocaleDateString('fr-FR')
-                            : '';
+                        fullDocData.ordonnance.date_ordonnance ?
+                        new Date(fullDocData.ordonnance.date_ordonnance).toLocaleDateString('fr-FR') :
+                        '';
 
                     document.getElementById('instructions').textContent =
                         fullDocData.ordonnance.instructions || 'Non spécifié';
@@ -492,7 +519,8 @@
                     document.getElementById('viewModal').classList.remove('hidden');
                 })
                 .catch(error => {
-                    console.error('Erreur lors de la récupération des données de l\'ordonnance pour visualisation:', error);
+                    console.error('Erreur lors de la récupération des données de l\'ordonnance pour visualisation:',
+                        error);
                     alert('Erreur lors de la récupération des données de l\'ordonnance pour visualisation.');
                 });
         }
@@ -517,7 +545,8 @@
                     printOrdonnance(fullDocData);
                 })
                 .catch(error => {
-                    console.error('Erreur lors de la récupération des données de l\'ordonnance pour impression:', error);
+                    console.error('Erreur lors de la récupération des données de l\'ordonnance pour impression:',
+                    error);
                     alert('Erreur lors de la récupération des données de l\'ordonnance pour impression.');
                 });
         }
@@ -528,20 +557,20 @@
             }
         }
 
-       function printOrdonnance(data) {
+        function printOrdonnance(data) {
 
-    const template = data.template || {};
+            const template = data.template || {};
 
-    let prescriptionDate = null;
-    if (data.date) {
-        prescriptionDate = new Date(data.date);
-    } else if (data.ordonnance && data.ordonnance.date_ordonnance) {
-         prescriptionDate = new Date(data.ordonnance.date_ordonnance);
-    } else {
-        prescriptionDate = new Date(); // Fallback to current date
-    }
+            let prescriptionDate = null;
+            if (data.date) {
+                prescriptionDate = new Date(data.date);
+            } else if (data.ordonnance && data.ordonnance.date_ordonnance) {
+                prescriptionDate = new Date(data.ordonnance.date_ordonnance);
+            } else {
+                prescriptionDate = new Date(); // Fallback to current date
+            }
 
-    const ordonnanceHTML = `
+            const ordonnanceHTML = `
         <!DOCTYPE html>
         <html lang="fr">
         <head>
@@ -761,15 +790,15 @@
         </html>
     `;
 
-    const printFrame = document.getElementById('printFrame');
-    printFrame.contentDocument.open();
-    printFrame.contentDocument.write(ordonnanceHTML);
-    printFrame.contentDocument.close();
+            const printFrame = document.getElementById('printFrame');
+            printFrame.contentDocument.open();
+            printFrame.contentDocument.write(ordonnanceHTML);
+            printFrame.contentDocument.close();
 
-    setTimeout(() => {
-        printFrame.contentWindow.print();
-    }, 500);
-}   
+            setTimeout(() => {
+                printFrame.contentWindow.print();
+            }, 500);
+        }
 
         // FIXED Search and Filter Functions
         function setupSearchAndFilter() {
@@ -787,10 +816,10 @@
                     const cin = (row.getAttribute('data-cin') || '').toLowerCase();
                     const patientName = (row.getAttribute('data-patient') || '').toLowerCase();
                     const medecinName = (row.getAttribute('data-medecin') || '').toLowerCase();
-                    
+
                     const matchesSearch = cin.includes(searchTerm) || patientName.includes(searchTerm);
                     const matchesMedecin = !selectedMedecin || medecinName.includes(selectedMedecin);
-                    
+
                     if (matchesSearch && matchesMedecin) {
                         row.style.display = '';
                         visibleCount++;
@@ -810,7 +839,8 @@
                 }
 
                 // Update count
-                document.getElementById('documentCount').textContent = `${visibleCount} Ordonnance${visibleCount > 1 ? 's' : ''}`;
+                document.getElementById('documentCount').textContent =
+                    `${visibleCount} Ordonnance${visibleCount > 1 ? 's' : ''}`;
             }
 
             if (searchInput) searchInput.addEventListener('input', filterTable);
@@ -840,7 +870,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             autoHideMessages();
             setupSearchAndFilter();
-            
+
             // Set current date
             const today = new Date().toISOString().split('T')[0];
             const dateInput = document.querySelector('input[name="date_ordonnance"]');
@@ -850,4 +880,5 @@
         });
     </script>
 </body>
+
 </html>

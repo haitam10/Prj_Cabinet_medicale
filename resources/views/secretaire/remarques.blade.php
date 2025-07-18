@@ -58,10 +58,10 @@
                 <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
                     <i class="fas fa-cube text-cordes-blue text-lg"></i>
                 </div>
-                <span class="text-white text-xl font-bold">Espace Secrétaire</span>
+                <span class="text-white text-xl font-bold">C-M</span>
             </div>
         </div>
-            <nav class="mt-8 px-4">
+        <nav class="mt-8 px-4">
             <div class="space-y-2">
                 <a href="{{ route('secretaire.dashboard') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
@@ -127,16 +127,21 @@
                 </a>
             </div>
         </nav>
+        <!-- Section utilisateur avec bouton de déconnexion -->
         <div class="absolute bottom-4 left-4 right-4">
-            <div class="bg-gray-800 rounded-lg p-4">
-                <div class="flex items-center space-x-3">
-                    <img src="https://cdn-icons-png.flaticon.com/512/17003/17003310.png" alt="Secrétaire"
-                        class="w-10 h-10 rounded-full" />
-                    <div>
-                        <p class="text-white text-sm font-medium">Secrétaire</p>
-                        <p class="text-gray-400 text-xs">Connecté</p>
+            <div class="bg-gray-800 rounded-lg p-4 group cursor-pointer hover:bg-red-600 transition-colors duration-200">
+                <form method="POST" action="{{ route('logout') }}" id="logout-form">
+                    @csrf
+                    <div class="flex items-center space-x-3" onclick="document.getElementById('logout-form').submit();">
+                        <img src="https://cdn-icons-png.flaticon.com/512/17003/17003310.png" alt="User"
+                            class="w-10 h-10 rounded-full">
+                        <div>
+                            <p class="text-white text-sm font-medium">{{ Auth::user()->nom ?? 'Utilisateur' }}</p>
+                            <p class="text-gray-400 text-xs">{{ ucfirst(Auth::user()->role ?? '') }} — <span
+                                    class="text-red-400">Se déconnecter</span></p>
+                        </div>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
     </div>
@@ -183,8 +188,7 @@
                         <select id="medecinFilter"
                             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent appearance-none">
                             <option value="">Tous les médecins</option>
-                            <option value="Hamza">Dr. Hamza</option>
-                            <option value="Reda">Dr. Reda</option>
+                            {{-- Options dynamiques ajoutées par JavaScript --}}
                         </select>
                     </div>
                     
@@ -238,10 +242,15 @@
                                             title="Voir">
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <button onclick='openPrintModal(@json($doc))'
-                                            class="text-green-600 hover:text-green-800 transition-colors p-2 rounded hover:bg-green-50"
-                                            title="Imprimer">
-                                            <i class="fas fa-print"></i>
+                                        <button onclick='openEditModal(@json($doc))'
+                                            class="text-yellow-600 hover:text-yellow-800 transition-colors p-2 rounded hover:bg-yellow-50"
+                                            title="Éditer">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button onclick='openDeleteModal(@json($doc))'
+                                            class="text-red-600 hover:text-red-800 transition-colors p-2 rounded hover:bg-red-50"
+                                            title="Supprimer">
+                                            <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
                                 </td>
@@ -272,8 +281,7 @@
                 </button>
             </div>
             
-            {{-- <form action="{{ route('remarque.store') ?? '#' }}" method="POST" class="p-6"> --}}
-                <form action="#" method="POST" class="p-6">
+            <form action="{{ route('secretaire.remarques.store') }}" method="POST" class="p-6">
                 @csrf
                 <div class="space-y-4">
                     <div>
@@ -282,7 +290,9 @@
                         </label>
                         <select name="patient_id" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
                             <option value="">Sélectionner un patient</option>
-                            <!-- Add patients from controller -->
+                            @foreach($patients ?? [] as $patient)
+                            <option value="{{ $patient->id }}">{{ $patient->cin }} - {{ $patient->nom }}</option>
+                            @endforeach
                         </select>
                     </div>
                     
@@ -290,11 +300,10 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             <i class="fas fa-user-md mr-1"></i>Médecin
                         </label>
-                        <select name="medecin_id" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
-                            <option value="">Sélectionner un médecin</option>
-                            <option value="1">Dr. Hamza</option>
-                            <option value="2">Dr. Reda</option>
-                        </select>
+                        <input type="text" value="Dr. {{ Auth::user()->nom }}" readonly 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed outline-none">
+                        <input type="hidden" name="medecin_id" value="{{ Auth::id() }}">
+                        <p class="text-xs text-gray-500 mt-1">Le médecin est automatiquement défini par votre session</p>
                     </div>
                     
                     <div>
@@ -378,6 +387,94 @@
                     <i class="fas fa-print mr-2"></i>Imprimer
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDITER REMARQUE -->
+    <div id="editModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white w-full max-w-2xl rounded-lg shadow-xl m-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center p-6 border-b border-gray-200">
+                <h2 class="text-2xl font-semibold text-gray-800">
+                    <i class="fas fa-edit mr-2 text-yellow-600"></i>Éditer Remarque
+                </h2>
+                <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <form id="editRemarqueForm" method="POST" class="p-6">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="id" id="edit_remarque_id">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-user mr-1"></i>Patient
+                        </label>
+                        <select name="patient_id" id="edit_patient_id" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
+                            @foreach($patients ?? [] as $patient)
+                            <option value="{{ $patient->id }}">{{ $patient->cin }} - {{ $patient->nom }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-user-md mr-1"></i>Médecin
+                        </label>
+                        <input type="text" id="edit_medecin_name" readonly 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed outline-none">
+                        <input type="hidden" name="medecin_id" id="edit_medecin_id">
+                        <p class="text-xs text-gray-500 mt-1">Le médecin ne peut pas être modifié</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-file-alt mr-1"></i>Remarque
+                        </label>
+                        <textarea name="remarque" id="edit_remarque" rows="6" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none" placeholder="Saisir la remarque médicale..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-calendar mr-1"></i>Date
+                        </label>
+                        <input type="date" name="date_remarque" id="edit_date_remarque" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cordes-accent focus:border-transparent outline-none">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200 mt-6">
+                    <button type="button" onclick="closeEditModal()" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                        <i class="fas fa-times mr-2"></i>Annuler
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
+                        <i class="fas fa-save mr-2"></i>Mettre à jour
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL SUPPRIMER REMARQUE -->
+    <div id="deleteModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white w-full max-w-md rounded-lg shadow-xl m-4">
+            <div class="flex justify-between items-center p-6 border-b border-gray-200">
+                <h2 class="text-2xl font-semibold text-gray-800">
+                    <i class="fas fa-trash mr-2 text-red-600"></i>Supprimer Remarque
+                </h2>
+                <button onclick="closeDeleteModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <form id="deleteRemarqueForm" method="POST" class="p-6">
+                @csrf
+                @method('DELETE')
+                <input type="hidden" name="id" id="delete_remarque_id">
+                <p class="mb-6 text-gray-700">Êtes-vous sûr de vouloir supprimer cette remarque ? Cette action est irréversible.</p>
+                <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200 mt-6">
+                    <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                        <i class="fas fa-times mr-2"></i>Annuler
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                        <i class="fas fa-trash mr-2"></i>Supprimer
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -550,7 +647,72 @@
             if (medecinFilter) medecinFilter.addEventListener('change', filterTable);
         }
 
-        // Modal event listeners
+        // CORRECTED Edit Modal Function - Fix patient selection
+        function openEditModal(docData) {
+            console.log('Opening edit modal with data:', docData);
+            
+            // Reset form first
+            document.getElementById('editRemarqueForm').reset();
+            
+            // Set basic fields
+            document.getElementById('edit_remarque_id').value = docData.id || '';
+            document.getElementById('edit_medecin_id').value = docData.medecin_id || '';
+            document.getElementById('edit_medecin_name').value = 'Dr. ' + (docData.medecin_nom || '');
+            document.getElementById('edit_remarque').value = docData.remarque || '';
+            document.getElementById('edit_date_remarque').value = docData.date ? new Date(docData.date).toISOString().split('T')[0] : '';
+            
+            // FIXED: Properly select patient in dropdown using a more reliable method
+            const patientSelect = document.getElementById('edit_patient_id');
+            if (patientSelect && docData.patient_id) {
+                console.log('Trying to select patient ID:', docData.patient_id);
+                
+                // Method 1: Direct value assignment
+                patientSelect.value = docData.patient_id;
+                
+                // Method 2: If direct assignment doesn't work, iterate through options
+                if (patientSelect.value != docData.patient_id) {
+                    console.log('Direct assignment failed, trying manual selection');
+                    for (let i = 0; i < patientSelect.options.length; i++) {
+                        if (patientSelect.options[i].value == docData.patient_id) {
+                            patientSelect.selectedIndex = i;
+                            console.log('Patient selected at index:', i);
+                            break;
+                        }
+                    }
+                }
+                
+                // Method 3: Force trigger change event to ensure selection is registered
+                patientSelect.dispatchEvent(new Event('change'));
+                
+                console.log('Final selected value:', patientSelect.value);
+            } else {
+                console.warn('Patient select element or patient_id not found');
+            }
+            
+            // Set form action
+            document.getElementById('editRemarqueForm').action = '/secretaire/remarques/' + (docData.id || '');
+            
+            // Show modal
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+            // Reset form completely
+            document.getElementById('editRemarqueForm').reset();
+        }
+
+        function openDeleteModal(docData) {
+            document.getElementById('delete_remarque_id').value = docData.id || '';
+            document.getElementById('deleteRemarqueForm').action = '/secretaire/remarques/' + (docData.id || '');
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.add('hidden');
+        }
+
+        // Modal event listeners for clicking outside to close
         document.getElementById('generateModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeGenerateModal();
@@ -563,24 +725,70 @@
             }
         });
 
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEditModal();
+            }
+        });
+
+        document.getElementById('deleteModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDeleteModal();
+            }
+        });
+
+        // Keyboard event listeners
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeGenerateModal();
                 closeViewModal();
+                closeEditModal();
+                closeDeleteModal();
             }
         });
 
+        // Initialize everything when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             autoHideMessages();
             setupSearchAndFilter();
             
-            // Set current date
+            // Set current date for new remarks
             const today = new Date().toISOString().split('T')[0];
             const dateInput = document.querySelector('input[name="date_remarque"]');
             if (dateInput) {
                 dateInput.value = today;
             }
+
+            // Populate medecin filter options
+            populateMedecinFilter();
         });
+
+        // Function to populate medecin filter from table data
+        function populateMedecinFilter() {
+            const medecinFilter = document.getElementById('medecinFilter');
+            const tableRows = document.querySelectorAll('.document-row');
+            const medecins = new Set();
+
+            tableRows.forEach(row => {
+                const medecinName = row.getAttribute('data-medecin');
+                if (medecinName && medecinName.trim()) {
+                    medecins.add(medecinName.trim());
+                }
+            });
+
+            // Clear existing options except the first one
+            while (medecinFilter.children.length > 1) {
+                medecinFilter.removeChild(medecinFilter.lastChild);
+            }
+
+            // Add medecin options
+            medecins.forEach(medecin => {
+                const option = document.createElement('option');
+                option.value = medecin;
+                option.textContent = `Dr. ${medecin}`;
+                medecinFilter.appendChild(option);
+            });
+        }
     </script>
 </body>
 </html>

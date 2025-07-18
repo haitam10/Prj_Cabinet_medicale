@@ -367,19 +367,12 @@
                         @endforeach
                     </select>
                 </div>
-                <div>
-                    <label for="medecin_id" class="block text-sm font-medium text-gray-700 mb-1">Médecin</label>
-                    <select name="medecin_id" id="medecin_id" required
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
-                        <option value="">Sélectionnez un médecin</option>
-                        @foreach ($medecins as $medecin)
-                            <option value="{{ $medecin->id }}"
-                                {{ old('medecin_id') == $medecin->id ? 'selected' : '' }}>
-                                {{ $medecin->nom }} {{ $medecin->prenom }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
+                      <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Médecin</label>
+                            <input type="hidden" name="medecin_id" value="{{ Auth::id() }}">
+                            <input type="text" value="Dr. {{ Auth::user()->nom ?? 'Médecin' }}" readonly
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed outline-none">
+                        </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>

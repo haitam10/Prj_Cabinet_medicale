@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Mon Profil - Cabinet Médical</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDgc-1iIqCKAz2yAM6chdi7bnX68fUWZ2k&libraries=places&callback=initMap" async defer></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script>
@@ -70,6 +69,26 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
         }
+        .btn-locate {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+        .btn-locate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+        }
+        .btn-locate:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
         .readonly-input {
             background-color: #f8fafc;
             color: #6b7280;
@@ -100,6 +119,12 @@
             background-color: #fef3c7;
             color: #d97706;
         }
+        #map {
+            height: 300px;
+            margin-top: 0.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -113,7 +138,7 @@
                 <span class="text-white text-xl font-bold">C-M</span>
             </div>
         </div>
-                <nav class="mt-8 px-4">
+        <nav class="mt-8 px-4">
             <div class="space-y-2">
                 <a href="{{ route('secretaire.dashboard') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
@@ -178,7 +203,8 @@
                     Mon Profil
                 </a>
             </div>
-        </nav>        <!-- Section utilisateur avec bouton de déconnexion -->
+        </nav>
+        <!-- Section utilisateur avec bouton de déconnexion -->
         <div class="absolute bottom-4 left-4 right-4">
             <div
                 class="bg-gray-800 rounded-lg p-4 group cursor-pointer hover:bg-red-600 transition-colors duration-200">
@@ -315,6 +341,15 @@
                             </div>
 
                             <div>
+                                <label class="form-label block mb-1 font-medium" for="telephone">Téléphone</label>
+                                <input type="text" id="telephone" name="telephone" value="{{ old('telephone', $user->telephone) }}" 
+                                       class="form-input w-full rounded border-gray-300 focus:ring focus:ring-cordes-blue">
+                                @error('telephone')
+                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
                                 <label class="form-label block mb-1 font-medium" for="role">Rôle</label>
                                 <input type="text" id="role" name="role" value="{{ ucfirst($user->role) }}" 
                                        class="form-input w-full rounded border-gray-300 bg-gray-100 cursor-not-allowed" readonly>
@@ -365,13 +400,14 @@
                                 @enderror
                             </div>
 
-
                             <div>
+ 
+                                
                                 <label class="form-label block mb-1 font-medium" for="adresse">Adresse</label>
                                 <input type="text" id="adresse" name="adresse" 
                                     value="{{ old('adresse', $user->adresse) }}" 
                                     class="form-input w-full rounded border-gray-300 focus:ring focus:ring-cordes-blue"
-                                    placeholder="Commencez à taper votre adresse...">
+                                    placeholder="Commencez à taper votre adresse ou cliquez sur 'Localiser ma position'">
                                 @error('adresse')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                 @enderror
@@ -379,16 +415,14 @@
                                 <input type="hidden" id="latitude" name="latitude" value="{{ old('latitude', $user->latitude ?? '') }}">
                                 <input type="hidden" id="longitude" name="longitude" value="{{ old('longitude', $user->longitude ?? '') }}">
 
-                                <div id="map" style="height: 300px; margin-top: 0.5rem; border-radius: 0.5rem; border: 1px solid #d1d5db;"></div>
-                            </div>
-                                                        <div>
-                                <!-- BOUTON POUR LOCALISER -->
-                                <button type="button" id="btnLocateMe" class="mb-2 px-4 py-2 bg-cordes-blue text-white rounded hover:bg-cordes-blue-dark transition">
+                                <div id="map"></div>
+
+                                                               <!-- BOUTON POUR LOCALISER -->
+                                <button type="button" id="btnLocateMe" class="btn-locate">
                                     <i class="fas fa-map-marker-alt mr-2"></i>
-                                    Localiser ma position
+                                    <span id="locateText">Localiser ma position</span>
                                 </button>
                             </div>
-
 
                             @if($user->role === 'medecin')
                                 <div>
@@ -453,6 +487,12 @@
     </div>
 
     <script>
+        // Variables globales
+        let map;
+        let marker;
+        let autocomplete;
+        let geocoder;
+
         // Auto-dismiss messages after 5 seconds
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(function() {
@@ -468,116 +508,273 @@
             }, 5000);
         });
 
-        // Gestion du bouton Localiser ma position
-        document.addEventListener('DOMContentLoaded', function () {
-            const btnLocate = document.getElementById('btnLocateMe');
-            if (btnLocate) {
-                btnLocate.addEventListener('click', () => {
-                    if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(position => {
-                            const lat = position.coords.latitude;
-                            const lng = position.coords.longitude;
+        // Initialisation de la carte Google Maps
+        function initMap() {
+            const latInput = document.getElementById('latitude');
+            const lngInput = document.getElementById('longitude');
+            const adresseInput = document.getElementById('adresse');
 
-                            // Mettre à jour les inputs cachés
-                            document.getElementById('latitude').value = lat;
-                            document.getElementById('longitude').value = lng;
+            // Récupérer les coordonnées existantes ou utiliser les coordonnées par défaut (Casablanca)
+            const lat = parseFloat(latInput.value) || 33.5731;
+            const lng = parseFloat(lngInput.value) || -7.5898;
+            const initialPosition = { lat, lng };
 
-                            // Mettre à jour la carte et le marqueur
-                            const pos = new google.maps.LatLng(lat, lng);
-                            map.setCenter(pos);
-                            map.setZoom(15);
-                            marker.setPosition(pos);
+            // Initialiser la carte
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: initialPosition,
+                zoom: latInput.value && lngInput.value ? 15 : 13,
+                streetViewControl: false,
+                mapTypeControl: false,
+                fullscreenControl: false,
+            });
 
-                            // Récupérer l'adresse inverse
-                            const geocoder = new google.maps.Geocoder();
-                            geocoder.geocode({ location: pos }, (results, status) => {
-                                if (status === 'OK' && results[0]) {
-                                    document.getElementById('adresse').value = results[0].formatted_address;
-                                }
-                            });
-                        }, error => {
-                            alert('Impossible de récupérer votre position : ' + error.message);
-                        });
+            // Initialiser le geocoder
+            geocoder = new google.maps.Geocoder();
+
+            // Créer le marqueur draggable
+            marker = new google.maps.Marker({
+                position: initialPosition,
+                map: map,
+                draggable: true,
+                title: 'Votre position'
+            });
+
+            // Initialiser l'autocomplétion Google Places
+            autocomplete = new google.maps.places.Autocomplete(adresseInput, {
+                types: ['geocode'],
+                componentRestrictions: { country: 'ma' } // Restreindre au Maroc
+            });
+
+            // Événement : sélection d'une adresse via l'autocomplétion
+            autocomplete.addListener('place_changed', function() {
+                const place = autocomplete.getPlace();
+                
+                if (!place.geometry || !place.geometry.location) {
+                    console.log('Aucune géométrie trouvée pour cette adresse');
+                    return;
+                }
+
+                const location = place.geometry.location;
+                updateMapAndInputs(location.lat(), location.lng(), place.formatted_address);
+            });
+
+            // Événement : déplacement manuel du marqueur
+            marker.addListener('dragend', function() {
+                const position = marker.getPosition();
+                const lat = position.lat();
+                const lng = position.lng();
+                
+                // Mettre à jour les inputs cachés
+                latInput.value = lat;
+                lngInput.value = lng;
+
+                // Géocodage inverse pour obtenir l'adresse
+                geocoder.geocode({ location: { lat, lng } }, function(results, status) {
+                    if (status === 'OK' && results[0]) {
+                        adresseInput.value = results[0].formatted_address;
                     } else {
-                        alert('La géolocalisation n\'est pas supportée par votre navigateur.');
+                        console.log('Géocodage inverse échoué : ' + status);
                     }
                 });
+            });
+
+            // Configurer le bouton de géolocalisation
+            setupGeolocationButton();
+        }
+
+        // Configuration du bouton de géolocalisation
+        function setupGeolocationButton() {
+            const btnLocate = document.getElementById('btnLocateMe');
+            const locateText = document.getElementById('locateText');
+
+            if (btnLocate) {
+                btnLocate.addEventListener('click', function() {
+                    if (!navigator.geolocation) {
+                        alert('La géolocalisation n\'est pas supportée par votre navigateur.');
+                        return;
+                    }
+
+                    // Désactiver le bouton et changer le texte
+                    btnLocate.disabled = true;
+                    locateText.textContent = 'Localisation en cours...';
+
+                    const options = {
+                        enableHighAccuracy: true,
+                        timeout: 15000,
+                        maximumAge: 0
+                    };
+
+                    navigator.geolocation.getCurrentPosition(
+                        function(position) {
+                            const lat = position.coords.latitude;
+                            const lng = position.coords.longitude;
+                            
+                            console.log('Position obtenue:', lat, lng);
+                            
+                            // Mettre à jour la carte d'abord
+                            updateMapAndInputs(lat, lng, '');
+                            
+                            // Essayer plusieurs méthodes pour obtenir l'adresse
+                            getAddressFromCoordinates(lat, lng)
+                                .then(address => {
+                                    if (address) {
+                                        document.getElementById('adresse').value = address;
+                                        showNotification('Position et adresse localisées avec succès!', 'success');
+                                    } else {
+                                        showNotification('Position localisée, mais adresse non trouvée.', 'warning');
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Erreur géocodage:', error);
+                                    showNotification('Position localisée, mais erreur lors de la récupération de l\'adresse.', 'warning');
+                                })
+                                .finally(() => {
+                                    // Réactiver le bouton
+                                    btnLocate.disabled = false;
+                                    locateText.textContent = 'Localiser ma position';
+                                });
+                        },
+                        function(error) {
+                            let errorMessage = 'Erreur de géolocalisation : ';
+                            
+                            switch(error.code) {
+                                case error.PERMISSION_DENIED:
+                                    errorMessage += 'Permission refusée. Veuillez autoriser la géolocalisation.';
+                                    break;
+                                case error.POSITION_UNAVAILABLE:
+                                    errorMessage += 'Position indisponible.';
+                                    break;
+                                case error.TIMEOUT:
+                                    errorMessage += 'Délai d\'attente dépassé.';
+                                    break;
+                                default:
+                                    errorMessage += 'Erreur inconnue.';
+                                    break;
+                            }
+                            
+                            console.error('Erreur de géolocalisation:', error);
+                            alert(errorMessage);
+                            
+                            // Réactiver le bouton
+                            btnLocate.disabled = false;
+                            locateText.textContent = 'Localiser ma position';
+                        },
+                        options
+                    );
+                });
             }
-        });
-    </script>
+        }
 
-    <script
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDgc-1iIqCKAz2yAM6chdi7bnX68fUWZ2k&libraries=places&callback=initMap"
-      async
-      defer>
-    </script>
+        // Fonction pour obtenir l'adresse à partir des coordonnées avec plusieurs tentatives
+        async function getAddressFromCoordinates(lat, lng) {
+            const methods = [
+                // Méthode 1: Google Geocoding API
+                () => new Promise((resolve, reject) => {
+                    geocoder.geocode({ 
+                        location: { lat, lng },
+                        language: 'fr',
+                        region: 'MA'
+                    }, function(results, status) {
+                        if (status === 'OK' && results && results.length > 0) {
+                            resolve(results[0].formatted_address);
+                        } else {
+                            reject(new Error('Google Geocoding failed: ' + status));
+                        }
+                    });
+                }),
+                
+                // Méthode 2: Nominatim (OpenStreetMap)
+                () => fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=fr&addressdetails=1`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data.display_name) {
+                            return data.display_name;
+                        }
+                        throw new Error('Nominatim failed');
+                    }),
+                
+                // Méthode 3: Places API Nearby Search comme fallback
+                () => new Promise((resolve, reject) => {
+                    const service = new google.maps.places.PlacesService(map);
+                    service.nearbySearch({
+                        location: { lat, lng },
+                        radius: 50,
+                        type: ['establishment']
+                    }, function(results, status) {
+                        if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
+                            resolve(results[0].vicinity || results[0].name);
+                        } else {
+                            reject(new Error('Places API failed: ' + status));
+                        }
+                    });
+                })
+            ];
 
-    <script>
-      let map;
-      let marker;
-      let autocomplete;
-
-      function initMap() {
-        const latInput = document.getElementById('latitude');
-        const lngInput = document.getElementById('longitude');
-        const adresseInput = document.getElementById('adresse');
-
-        const lat = parseFloat(latInput.value) || 33.5731;      // Coordonnée par défaut (Casablanca)
-        const lng = parseFloat(lngInput.value) || -7.5898;
-
-        const initialPosition = { lat, lng };
-
-        // Initialiser la carte
-        map = new google.maps.Map(document.getElementById('map'), {
-          center: initialPosition,
-          zoom: 13,
-        });
-
-        // Marqueur draggable
-        marker = new google.maps.Marker({
-          position: initialPosition,
-          map: map,
-          draggable: true,
-        });
-
-        // Autocomplete Google Places sur le champ adresse
-        autocomplete = new google.maps.places.Autocomplete(adresseInput, {
-          types: ['geocode'],
-        });
-
-        // Quand l'utilisateur sélectionne une adresse
-        autocomplete.addListener('place_changed', () => {
-          const place = autocomplete.getPlace();
-          if (!place.geometry) {
-            return;
-          }
-          const location = place.geometry.location;
-
-          // Mettre à jour la carte et le marqueur
-          map.setCenter(location);
-          map.setZoom(15);
-          marker.setPosition(location);
-
-          // Mettre à jour les inputs cachés
-          latInput.value = location.lat();
-          lngInput.value = location.lng();
-        });
-
-        // Quand l'utilisateur déplace le marqueur manuellement
-        marker.addListener('dragend', () => {
-          const pos = marker.getPosition();
-          latInput.value = pos.lat();
-          lngInput.value = pos.lng();
-
-          // Optionnel : récupérer adresse inverse
-          const geocoder = new google.maps.Geocoder();
-          geocoder.geocode({ location: pos }, (results, status) => {
-            if (status === 'OK' && results[0]) {
-              adresseInput.value = results[0].formatted_address;
+            // Essayer chaque méthode jusqu'à ce qu'une fonctionne
+            for (const method of methods) {
+                try {
+                    const address = await method();
+                    if (address && address.trim()) {
+                        console.log('Adresse trouvée:', address);
+                        return address;
+                    }
+                } catch (error) {
+                    console.log('Méthode échouée:', error.message);
+                    continue;
+                }
             }
-          });
-        });
-      }
+            
+            // Si toutes les méthodes échouent, créer une adresse basique
+            return `Latitude: ${lat.toFixed(6)}, Longitude: ${lng.toFixed(6)}`;
+        }
+        // Fonction pour mettre à jour la carte et les inputs
+        function updateMapAndInputs(lat, lng, address) {
+            const position = { lat, lng };
+            
+            // Mettre à jour la carte
+            map.setCenter(position);
+            map.setZoom(15);
+            
+            // Mettre à jour le marqueur
+            marker.setPosition(position);
+            
+            // Mettre à jour les inputs
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lng;
+            
+            if (address) {
+                document.getElementById('adresse').value = address;
+            }
+        }
+
+        // Fonction pour afficher des notifications
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 ${
+                type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 
+                type === 'warning' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' : 
+                'bg-red-100 text-red-800 border border-red-200'
+            }`;
+            
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'exclamation-circle'} mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Supprimer la notification après 3 secondes
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
     </script>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDgc-1iIqCKAz2yAM6chdi7bnX68fUWZ2k&libraries=places&callback=initMap" async defer></script>
 </body>
 </html>

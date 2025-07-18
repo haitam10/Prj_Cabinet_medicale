@@ -13,6 +13,7 @@ use App\Http\Controllers\CalendrierController;
 use App\Http\Controllers\PapierController;
 use App\Http\Controllers\OrdonnanceController;
 use App\Http\Controllers\CertificatController;
+use App\Http\Controllers\RemarqueController;
 
 // Page de connexion
 Route::get('/', function () {
@@ -87,8 +88,11 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/ordonnance/store', [OrdonnanceController::class, 'store'])->name('ordonnance.store');
         Route::get('/ordonnance/print/{id}', [OrdonnanceController::class, 'printOrdonnance'])->name('ordonnance.print');
 
-        // Routes remarques
+ // Routes remarques
         Route::get('/remarques', [DocumentController::class, 'showRems'])->name('remarques');
+        Route::post('/remarques', [RemarqueController::class, 'store'])->name('remarques.store');
+        Route::put('/remarques/{id}', [RemarqueController::class, 'update'])->name('remarques.update');
+        Route::delete('/remarques/{id}', [RemarqueController::class, 'destroy'])->name('remarques.destroy');
 
         // Routes papier
         Route::get('/papier', [PapierController::class, 'index'])->name('papier');
