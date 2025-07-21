@@ -39,6 +39,10 @@ class CertificatController extends Controller
             'type' => 'required|string',
             'contenu' => 'string',
             'date_certificat' => 'required|date',
+            'template_id' => 'nullable|string',
+            'template_descr_head' => 'nullable|string',
+            'template_descr_body' => 'nullable|string', 
+            'template_descr_footer' => 'nullable|string',
         ]);
 
         try {
@@ -54,31 +58,90 @@ class CertificatController extends Controller
             $certificat->contenu = $request->contenu;
             $certificat->save();
 
-            // Get selected template for the doctor
-            $template = CertifDoc::where('id_docteur', $medecin->id)
-                ->where('is_selected', true)
-                ->first();
+            // Get selected template based on template_id from request
+            $selectedTemplateId = $request->template_id;
+            $template = null;
 
-            // Create template object with default values
+            if ($selectedTemplateId && $selectedTemplateId !== 'default') {
+                // Try to get the specific template
+                $template = DocModel::where('id_docteur', $medecin->id)
+                    ->where('document', 'certificat')
+                    ->where('id', $selectedTemplateId)
+                    ->first();
+            }
+
+            // If no specific template found or default selected, use default
+            if (!$template) {
+                $template = (object) [
+                    'id' => 'default',
+                    'model_nom' => 'Modèle par défaut',
+                    'logo_file_path' => 'uploads/okz6IeWL6Tc8ws7w6DzvCGeECccdMxOIYfeVUy0p.png',
+                    'descr_head' => 'Je soussigné(e), atteste que le patient suivant :',
+                    'descr_body' => 'présente un état nécessitant un arrêt temporaire de ses activités.',
+                    'descr_footer' => 'Document remis à la personne concernée pour usage administratif.'
+                ];
+            }
+
+            // Override template descriptions with user modifications if provided
+            if ($request->filled('template_descr_head')) {
+                $template->descr_head = $request->template_descr_head;
+            }
+            if ($request->filled('template_descr_body')) {
+                $template->descr_body = $request->template_descr_body;
+            }
+            if ($request->filled('template_descr_footer')) {
+                $template->descr_footer = $request->template_descr_footer;
+            }
+            
+            // Get cabinet information
+            $cabinet = Cabinet::whereRaw("FIND_IN_SET(?, id_docteur)", [$medecin->id])->first();
+
+            // Prepare template data
             $templateData = [
-                'nom_cabinet' => $template->nom_cabinet ?? 'Cabinet Médical',
-                'addr_cabinet' => $template->addr_cabinet ?? '123 Rue Médicale, Casablanca',
-                'tel_cabinet' => $template->tel_cabinet ?? '0522-123456',
-                'desc_cabinet' => $template->desc_cabinet ?? '',
-                'logo_file_path' => $template->logo_file_path ?? null,
+                'id' => $template->id ?? 'default',
+                'model_nom' => $template->model_nom ?? 'Modèle par défaut',
+                'logo_file_path' => $template->logo_file_path ?? 'uploads/okz6IeWL6Tc8ws7w6DzvCGeECccdMxOIYfeVUy0p.png',
+                'descr_head' => $template->descr_head ?? 'Je soussigné(e), atteste que le patient suivant :',
+                'descr_body' => $template->descr_body ?? 'présente un état nécessitant un arrêt temporaire de ses activités.',
+                'descr_footer' => $template->descr_footer ?? 'Document remis à la personne concernée pour usage administratif.'
             ];
 
-            // Prepare printable data with template details
+            // Save template information in session for future use
+            session(['certificat_template_' . $certificat->id => $templateData]);
+
+            // Prepare printable data with all necessary information
             $documentData = [
-                'patient_cin' => $patient->cin,
-                'patient_nom' => $patient->nom,
-                'medecin_id' => $medecin->id,
-                'medecin_nom' => $medecin->nom,
-                'type' => $request->type,
-                'contenu' => $request->contenu,
-                'description' => $request->contenu,
-                'date' => $request->date_certificat,
-                'template' => $templateData, // pass template data as array
+                'certificat' => [
+                    'id' => $certificat->id,
+                    'contenu' => $certificat->contenu,
+                    'type' => $certificat->type,
+                    'date_certificat' => $certificat->date_certificat,
+                ],
+                'patient' => [
+                    'id' => $patient->id,
+                    'cin' => $patient->cin,
+                    'nom' => $patient->nom,
+                    'prenom' => $patient->prenom,
+                    'telephone' => $patient->contact,
+                    'date_naissance' => $patient->date_naissance,
+                    'sexe' => $patient->sexe,
+                ],
+                'medecin' => [
+                    'id' => $medecin->id,
+                    'nom' => $medecin->nom,
+                    'prenom' => $medecin->prenom,
+                    'email' => $medecin->email,
+                    'telephone' => $medecin->telephone,
+                    'specialite' => $medecin->specialite,
+                ],
+                'cabinet' => [
+                    'id' => $cabinet->id ?? null,
+                    'nom_cabinet' => $cabinet->nom_cabinet ?? 'Cabinet Médical',
+                    'addr_cabinet' => $cabinet->addr_cabinet ?? '123 Rue Médicale, Casablanca',
+                    'tel_cabinet' => $cabinet->tel_cabinet ?? '0522-123456',
+                    'descr_cabinet' => $cabinet->descr_cabinet ?? '',
+                ],
+                'template' => $templateData,
             ];
 
             session(['print_certificat' => $documentData]);
@@ -99,36 +162,78 @@ class CertificatController extends Controller
             // Retrieve the certificat from the database
             $certificat = Certificat::findOrFail($certificatId);
             // Fetch the related patient and doctor data
-            $patient = $certificat->patient; // assuming relationship is set on Certificat model
-            $medecin = $certificat->medecin; // assuming relationship is set on Certificat model
+            $patient = $certificat->patient;
+            $medecin = $certificat->medecin;
 
-            // Get selected template for the doctor
-            $template = CertifDoc::where('id_docteur', $medecin->id)
-                ->where('is_selected', true)
-                ->first();
+            // Try to get saved template information from session first
+            $templateData = session('certificat_template_' . $certificatId);
+            
+            if (!$templateData) {
+                // Fallback: Get selected template for the doctor - try to get doctor's template or use default
+                $template = DocModel::where('id_docteur', $medecin->id)
+                    ->where('document', 'certificat')
+                    ->where('is_selected', true)
+                    ->first();
 
-            // Create template object with default values
-            $templateData = [
-                'nom_cabinet' => $template->nom_cabinet ?? 'Bureau Médical',
-                'addr_cabinet' => $template->addr_cabinet ?? '123 Rue Médicale, Casablanca',
-                'tel_cabinet' => $template->tel_cabinet ?? '0522-123456',
-                'desc_cabinet' => $template->desc_cabinet ?? '',
-                'logo_file_path' => $template->logo_file_path ?? null,
-            ];
+                // If no selected template found, use default
+                if (!$template) {
+                    $template = (object) [
+                        'id' => 'default',
+                        'model_nom' => 'Modèle par défaut',
+                        'logo_file_path' => 'uploads/okz6IeWL6Tc8ws7w6DzvCGeECccdMxOIYfeVUy0p.png',
+                        'descr_head' => 'Je soussigné(e), atteste que le patient suivant :',
+                        'descr_body' => 'présente un état nécessitant un arrêt temporaire de ses activités.',
+                        'descr_footer' => 'Document remis à la personne concernée pour usage administratif.'
+                    ];
+                }
+
+                // Create template object with default values
+                $templateData = [
+                    'id' => $template->id ?? 'default',
+                    'model_nom' => $template->model_nom ?? 'Modèle par défaut',
+                    'logo_file_path' => $template->logo_file_path ?? 'uploads/okz6IeWL6Tc8ws7w6DzvCGeECccdMxOIYfeVUy0p.png',
+                    'descr_head' => $template->descr_head ?? 'Je soussigné(e), atteste que le patient suivant :',
+                    'descr_body' => $template->descr_body ?? 'présente un état nécessitant un arrêt temporaire de ses activités.',
+                    'descr_footer' => $template->descr_footer ?? 'Document remis à la personne concernée pour usage administratif.'
+                ];
+            }
+
+            // Get cabinet information
+            $cabinet = Cabinet::whereRaw("FIND_IN_SET(?, id_docteur)", [$medecin->id])->first();
 
             // Prepare the document data just like the store method
             $documentData = [
-                'id' => $certificat->id, // Include certificate ID
-                'patient_cin' => $patient->cin,
-                'patient_nom' => $patient->nom,
-                'medecin_id' => $medecin->id,
-                'medecin_nom' => $medecin->nom,
-                'type' => $certificat->type,
-                'contenu' => $certificat->contenu,
-                'description' => $certificat->contenu, // or modify as per your requirement
-                'date' => $certificat->date_certificat,
-                'certificat_type' => $certificat->type, // Ensure this matches what's used in blade
-                'template' => $templateData, // pass template data as array
+                'certificat' => [
+                    'id' => $certificat->id,
+                    'contenu' => $certificat->contenu,
+                    'type' => $certificat->type,
+                    'date_certificat' => $certificat->date_certificat,
+                ],
+                'patient' => [
+                    'id' => $patient->id,
+                    'cin' => $patient->cin,
+                    'nom' => $patient->nom,
+                    'prenom' => $patient->prenom,
+                    'telephone' => $patient->contact,
+                    'date_naissance' => $patient->date_naissance,
+                    'sexe' => $patient->sexe,
+                ],
+                'medecin' => [
+                    'id' => $medecin->id,
+                    'nom' => $medecin->nom,
+                    'prenom' => $medecin->prenom,
+                    'email' => $medecin->email,
+                    'telephone' => $medecin->telephone,
+                    'specialite' => $medecin->specialite,
+                ],
+                'cabinet' => [
+                    'id' => $cabinet->id ?? null,
+                    'nom_cabinet' => $cabinet->nom_cabinet ?? 'Cabinet Médical',
+                    'addr_cabinet' => $cabinet->addr_cabinet ?? '123 Rue Médicale, Casablanca',
+                    'tel_cabinet' => $cabinet->tel_cabinet ?? '0522-123456',
+                    'descr_cabinet' => $cabinet->descr_cabinet ?? '',
+                ],
+                'template' => $templateData,
             ];
 
             // You can also prepare the document to be printed (for example, as in the store method)
@@ -148,68 +253,92 @@ class CertificatController extends Controller
     {
         try 
         {
-        $certificat = Certificat::with(['patient', 'medecin'])->findOrFail($certificatId);
-        $patient = $certificat->patient;
-        $medecin = $certificat->medecin;
+            $certificat = Certificat::with(['patient', 'medecin'])->findOrFail($certificatId);
+            $patient = $certificat->patient;
+            $medecin = $certificat->medecin;
 
-        // Fetch Cabinet from `cabinets` table where id_docteur contains medecin->id
-        $cabinet = Cabinet::whereRaw("FIND_IN_SET(?, id_docteur)", [$medecin->id])->first();
+            // Fetch Cabinet from `cabinets` table where id_docteur contains medecin->id
+            $cabinet = Cabinet::whereRaw("FIND_IN_SET(?, id_docteur)", [$medecin->id])->first();
 
-        // Fetch Template from `doc_models` table for this doctor and 'ordonnance'
-        $template = DocModel::where('id_docteur', $medecin->id)
-                            ->where('document', 'certificat')
-                            ->first();
+            // Try to get saved template information from session first
+            $savedTemplateData = session('certificat_template_' . $certificatId);
+            
+            if ($savedTemplateData) {
+                // Use saved template data
+                $templateData = $savedTemplateData;
+            } else {
+                // Fallback: Fetch Template from `doc_models` table for this doctor and 'certificat'
+                $template = DocModel::where('id_docteur', $medecin->id)
+                                    ->where('document', 'certificat')
+                                    ->where('is_selected', true)
+                                    ->first();
 
-        return response()->json([
-            'certificat' => [
-                'id' => $certificat->id,
-                'contenu' => $certificat->contenu,
-                'type' => $certificat->type,
-                'date_certificat' => $certificat->date_certificat,
-            ],
+                // If no selected template found, use default
+                if (!$template) {
+                    $template = (object) [
+                        'id' => 'default',
+                        'model_nom' => 'Modèle par défaut',
+                        'logo_file_path' => 'uploads/okz6IeWL6Tc8ws7w6DzvCGeECccdMxOIYfeVUy0p.png',
+                        'descr_head' => 'Je soussigné(e), atteste que le patient suivant :',
+                        'descr_body' => 'présente un état nécessitant un arrêt temporaire de ses activités.',
+                        'descr_footer' => 'Document remis à la personne concernée pour usage administratif.'
+                    ];
+                }
 
-            'patient' => [
-                'id' => $patient->id,
-                'cin' => $patient->cin,
-                'nom' => $patient->nom,
-                'telephone' => $patient->contact,
-                'date_naissance' => $patient->date_naissance,
-                'sexe' => $patient->sexe,
-            ],
-
-            'medecin' => [
-                'id' => $medecin->id,
-                'nom' => $medecin->nom,
-                'prenom' => $medecin->prenom,
-                'email' => $medecin->email,
-                'telephone' => $medecin->telephone,
-                'specialite' => $medecin->specialite,
-            ],
-
-            'cabinet' => [
-                'id' => $cabinet->id ?? null,
-                'nom_cabinet' => $cabinet->nom_cabinet ?? null,
-                'addr_cabinet' => $cabinet->addr_cabinet ?? null,
-                'tel_cabinet' => $cabinet->tel_cabinet ?? null,
-                'descr_cabinet' => $cabinet->descr_cabinet ?? null,
-            ],
-
-            'template' => [
-                'id' => $template->id ?? null,
-                'model_nom' => $template->model_nom ?? null,
-                'logo_file_path' => $template->logo_file_path ?? null,
-                'descr_head' => $template->descr_head ?? null,
-                'descr_body' => $template->descr_body ?? null,
-                'descr_footer' => $template->descr_footer ?? null,
-                'document' => $template->document ?? null,
-                'is_selected' => $template->is_selected ?? null,
-            ],
-        ]);
-            } catch (\Exception $e) {
-                return response()->json([
-                    'error' => 'Erreur lors de la récupération des données de l\'ordonnance: ' . $e->getMessage()
-                ], 500);
+                $templateData = [
+                    'id' => $template->id ?? 'default',
+                    'model_nom' => $template->model_nom ?? 'Modèle par défaut',
+                    'logo_file_path' => $template->logo_file_path ?? 'uploads/okz6IeWL6Tc8ws7w6DzvCGeECccdMxOIYfeVUy0p.png',
+                    'descr_head' => $template->descr_head ?? 'Je soussigné(e), atteste que le patient suivant :',
+                    'descr_body' => $template->descr_body ?? 'présente un état nécessitant un arrêt temporaire de ses activités.',
+                    'descr_footer' => $template->descr_footer ?? 'Document remis à la personne concernée pour usage administratif.',
+                    'document' => $template->document ?? 'certificat',
+                    'is_selected' => $template->is_selected ?? true,
+                ];
             }
+
+            return response()->json([
+                'certificat' => [
+                    'id' => $certificat->id,
+                    'contenu' => $certificat->contenu,
+                    'type' => $certificat->type,
+                    'date_certificat' => $certificat->date_certificat,
+                ],
+
+                'patient' => [
+                    'id' => $patient->id,
+                    'cin' => $patient->cin,
+                    'nom' => $patient->nom,
+                    'prenom' => $patient->prenom,
+                    'telephone' => $patient->contact,
+                    'date_naissance' => $patient->date_naissance,
+                    'sexe' => $patient->sexe,
+                ],
+
+                'medecin' => [
+                    'id' => $medecin->id,
+                    'nom' => $medecin->nom,
+                    'prenom' => $medecin->prenom,
+                    'email' => $medecin->email,
+                    'telephone' => $medecin->telephone,
+                    'specialite' => $medecin->specialite,
+                ],
+
+                'cabinet' => [
+                    'id' => $cabinet->id ?? null,
+                    'nom_cabinet' => $cabinet->nom_cabinet ?? 'Cabinet Médical',
+                    'addr_cabinet' => $cabinet->addr_cabinet ?? '123 Rue Médicale, Casablanca',
+                    'tel_cabinet' => $cabinet->tel_cabinet ?? '0522-123456',
+                    'descr_cabinet' => $cabinet->descr_cabinet ?? '',
+                ],
+
+                'template' => $templateData,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Erreur lors de la récupération des données du certificat: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     
