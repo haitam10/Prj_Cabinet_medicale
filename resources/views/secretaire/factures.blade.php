@@ -328,13 +328,12 @@
                                         @endif
                                         
                                         @if ($facture->statut === 'payée')
-                                            <button onclick="printFacture(this)"
+                                            <button onclick="printFacture({{ $facture->id }})"
                                                 class="text-green-600 hover:text-green-800 transition-colors p-1 rounded hover:bg-green-50"
-                                                title="Imprimer la facture"
-                                                data-facture-json="{{ json_encode($facture) }}">
+                                                title="Imprimer la facture">
                                                 <i class="fas fa-print"></i>
                                             </button>
-                                                                                        <button onclick="deleteFacture({{ $facture->id }})"
+                                            <button onclick="deleteFacture({{ $facture->id }})"
                                                 class="text-red-600 hover:text-red-800 transition-colors p-1 rounded hover:bg-red-50"
                                                 title="Supprimer la facture">
                                                 <i class="fas fa-trash"></i>
@@ -555,7 +554,7 @@
     </div>
 
     <script>
-        console.log('Script de factures chargé !'); // Premier log pour vérifier si le script s'exécute
+        console.log('Script de factures chargé !');
 
         // Configuration CSRF pour les requêtes AJAX
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -739,31 +738,57 @@
             }
         }
 
-        // Fonction pour imprimer la facture
-        function printFacture(buttonElement) {
-            console.log('printFacture a été appelée !');
-            const factureJson = buttonElement.getAttribute('data-facture-json');
-            let facture;
-            try {
-                facture = JSON.parse(factureJson);
-                console.log('Facture parsée avec succès:', facture);
-            } catch (e) {
-                console.error('Erreur lors du parsing JSON de la facture:', e);
-                // Pas d'alerte, juste un log pour le débogage
-                return;
-            }
+        // Fonction pour imprimer la facture avec données dynamiques
+        function printFacture(factureId) {
+            console.log('printFacture appelée avec ID:', factureId);
+            
+            // Appel AJAX pour récupérer les détails complets de la facture
+            fetch(`/factures/${factureId}`, {
+                method: 'GET',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Données de la facture récupérées:', data);
+                generateInvoiceContent(data);
+            })
+            .catch(error => {
+                console.error('Erreur lors de la récupération de la facture:', error);
+                showTemporaryMessage('Erreur lors de la récupération des données de la facture.', 'error');
+            });
+        }
 
+        // Fonction pour générer le contenu de la facture avec les données dynamiques
+        function generateInvoiceContent(facture) {
             const printArea = document.getElementById('printArea');
             if (!printArea) {
                 console.error('Élément de zone d\'impression non trouvé !');
                 return;
             }
 
-            const patientName = facture.patient ? facture.patient.nom : 'N/A';
-            const patientCin = facture.patient ? facture.patient.cin : 'N/A';
-            const medecinName = facture.medecin ? facture.medecin.nom : 'N/A';
-            const secretaireName = facture.secretaire ? facture.secretaire.nom : 'N/A';
-            const utilisateurName = facture.utilisateur ? facture.utilisateur.nom : 'N/A';
+            // Récupérer les données du cabinet (depuis le blade)
+            const cabinetData = @json($cabinet ?? null);
+            
+            // Utiliser les données du cabinet de la base de données ou des valeurs par défaut
+            const cabinetName = cabinetData?.nom_cabinet || 'Cabinet Médical';
+            const cabinetAddress = cabinetData?.addr_cabinet || 'Adresse non renseignée';
+            const cabinetPhone = cabinetData?.tel_cabinet || 'Téléphone non renseigné';
+            const cabinetEmail = 'contact@cabinet.ma'; // Email par défaut
+
+            const patientName = facture.patient?.nom || 'N/A';
+            const patientCin = facture.patient?.cin || 'N/A';
+            const patientContact = facture.patient?.contact || 'N/A';
+            const patientAddress = facture.patient?.adresse || 'N/A';
+            
+            const medecinName = facture.medecin?.nom || 'N/A';
+            const medecinSpecialite = facture.medecin?.specialite || '';
+            
+            const secretaireName = facture.secretaire?.nom || 'N/A';
+            const utilisateurName = facture.utilisateur?.nom || 'N/A';
 
             const formattedDate = new Date(facture.date).toLocaleDateString('fr-FR', {
                 year: 'numeric',
@@ -780,17 +805,17 @@
                 <div style="max-width: 800px; margin: 0 auto; padding: 30px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
                     <div style="text-align: center; margin-bottom: 30px;">
                         <h1 style="font-size: 28px; margin-bottom: 5px; color: #1e40af;">Facture Médicale</h1>
-                        <p style="font-size: 14px; color: #555;">Date d'émission: ${formattedDate}</p>
+                        <p style="font-size: 14px; color: #555;">Facture N° ${facture.id} - Date d'émission: ${formattedDate}</p>
                     </div>
 
                     <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
                         <div>
                             <h2 style="font-size: 18px; margin-bottom: 10px; color: #333;">Informations du Cabinet</h2>
                             <p style="font-size: 14px; line-height: 1.6;">
-                                Nom du Cabinet: Clinique C-M<br>
-                                Adresse: 123 Rue de la Santé, Ville<br>
-                                Téléphone: +212 5XX XXX XXX<br>
-                                Email: contact@cliniquecm.com
+                                <strong>${cabinetName}</strong><br>
+                                ${cabinetAddress}<br>
+                                Téléphone: ${cabinetPhone}<br>
+                                Email: ${cabinetEmail}
                             </p>
                         </div>
                         <div style="text-align: right;">
@@ -806,46 +831,52 @@
                     <div style="margin-bottom: 30px;">
                         <h2 style="font-size: 18px; margin-bottom: 10px; color: #333;">Informations du Patient</h2>
                         <p style="font-size: 14px; line-height: 1.6;">
-                            Nom: ${patientName}<br>
-                            CIN: ${patientCin}
+                            <strong>Nom:</strong> ${patientName}<br>
+                            <strong>CIN:</strong> ${patientCin}<br>
+                            <strong>Contact:</strong> ${patientContact}<br>
+                            <strong>Adresse:</strong> ${patientAddress}
+                        </p>
+                    </div>
+
+                    <div style="margin-bottom: 30px;">
+                        <h2 style="font-size: 18px; margin-bottom: 10px; color: #333;">Personnel Médical</h2>
+                        <p style="font-size: 14px; line-height: 1.6;">
+                            <strong>Médecin Traitant:</strong> ${medecinName}${medecinSpecialite ? ' - ' + medecinSpecialite : ''}<br>
+                            <strong>Secrétaire:</strong> ${secretaireName}
                         </p>
                     </div>
 
                     <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
                         <thead>
                             <tr>
-                                <th style="padding: 10px; border: 1px solid #ddd; background-color: #f2f2f2; text-align: left;">Description</th>
-                                <th style="padding: 10px; border: 1px solid #ddd; background-color: #f2f2f2; text-align: right;">Montant (DH)</th>
+                                <th style="padding: 15px; border: 1px solid #ddd; background-color: #f8f9fa; text-align: left; font-size: 14px;">Description</th>
+                                <th style="padding: 15px; border: 1px solid #ddd; background-color: #f8f9fa; text-align: center; font-size: 14px;">Quantité</th>
+                                <th style="padding: 15px; border: 1px solid #ddd; background-color: #f8f9fa; text-align: right; font-size: 14px;">Montant (DH)</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td style="padding: 10px; border: 1px solid #ddd;">Consultation / Prestation Médicale</td>
-                                <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">${number_format(facture.montant, 2)}</td>
+                                <td style="padding: 15px; border: 1px solid #ddd;">Consultation / Prestation Médicale</td>
+                                <td style="padding: 15px; border: 1px solid #ddd; text-align: center;">1</td>
+                                <td style="padding: 15px; border: 1px solid #ddd; text-align: right;">${number_format(facture.montant, 2)}</td>
                             </tr>
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="1" style="padding: 10px; border: 1px solid #ddd; text-align: right; font-weight: bold;">Total à payer:</td>
-                                <td style="padding: 10px; border: 1px solid #ddd; text-align: right; font-weight: bold; font-size: 18px; color: #1e40af;">${number_format(facture.montant, 2)} DH</td>
+                                <td colspan="2" style="padding: 15px; border: 1px solid #ddd; text-align: right; font-weight: bold; background-color: #f8f9fa;">Total à payer:</td>
+                                <td style="padding: 15px; border: 1px solid #ddd; text-align: right; font-weight: bold; font-size: 18px; color: #1e40af; background-color: #f8f9fa;">${number_format(facture.montant, 2)} DH</td>
                             </tr>
                         </tfoot>
                     </table>
 
-                    <div style="margin-bottom: 30px;">
-                        <h2 style="font-size: 18px; margin-bottom: 10px; color: #333;">Détails du Personnel</h2>
-                        <p style="font-size: 14px; line-height: 1.6;">
-                            Médecin Traitant: ${medecinName}<br>
-                            Secrétaire: ${secretaireName}
-                        </p>
-                    </div>
-
-                    <div style="text-align: center; margin-top: 50px; font-size: 12px; color: #777;">
-                        Merci de votre confiance.
-                        <p style="margin-top: 10px;">Ce document est une facture et ne nécessite pas de signature.</p>
+                    <div style="text-align: center; margin-top: 50px; font-size: 12px; color: #777; border-top: 1px solid #eee; padding-top: 20px;">
+                        <p><strong>Merci de votre confiance</strong></p>
+                        <p style="margin-top: 10px;">Ce document constitue une facture et fait foi de paiement.</p>
+                        <p style="margin-top: 5px;">Pour toute question, n'hésitez pas à nous contacter.</p>
                     </div>
                 </div>
             `;
+            
             printArea.innerHTML = invoiceContent;
             console.log('Contenu de la zone d\'impression défini.');
 

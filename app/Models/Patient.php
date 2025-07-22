@@ -26,6 +26,12 @@ class Patient extends Model
         'taille',
         'profession',
         'situation_familiale',
+        'uuid',
+        'password_hash',
+        'emergency_contact_name',
+        'emergency_contact_phone',
+        'is_active',
+        'profile_image'
     ];
 
     public function rendezvous()

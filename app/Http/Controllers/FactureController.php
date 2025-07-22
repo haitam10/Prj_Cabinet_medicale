@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Facture;
 use App\Models\Patient;
 use App\Models\User;
+use App\Models\Cabinet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -28,11 +29,19 @@ class FactureController extends Controller
         $secretaires = User::where('role', 'secretaire')->where('statut', 'actif')->get();
         $users = User::all();
 
+        // Récupérer les informations du cabinet pour l'utilisateur connecté
+        $cabinet = Cabinet::where('id_docteur', Auth::id())->first();
+
+        // Si pas de cabinet pour l'utilisateur connecté, prendre le premier cabinet disponible
+        if (!$cabinet) {
+            $cabinet = Cabinet::first();
+        }
+
         if ($request->wantsJson()) {
             return response()->json($factures);
         }
 
-        return view('secretaire.factures', compact('factures', 'patients', 'medecins', 'secretaires', 'users'));
+        return view('secretaire.factures', compact('factures', 'patients', 'medecins', 'secretaires', 'users', 'cabinet'));
     }
 
     /**
@@ -92,11 +101,41 @@ class FactureController extends Controller
      */
     public function show(Request $request, Facture $facture)
     {
+        // Charger toutes les relations nécessaires
+        $facture->load(['patient', 'medecin', 'secretaire', 'utilisateur']);
+
         if ($request->wantsJson()) {
             return response()->json($facture);
         }
 
         return view('factures.show', compact('facture'));
+    }
+
+    /**
+     * Récupérer les détails complets d'une facture pour impression
+     */
+    public function getFactureDetails(Request $request, Facture $facture)
+    {
+        // Charger toutes les relations nécessaires
+        $facture->load(['patient', 'medecin', 'secretaire', 'utilisateur']);
+
+        // Récupérer les informations du cabinet du médecin
+        $cabinet = null;
+        if ($facture->medecin_id) {
+            $cabinet = Cabinet::where('id_docteur', $facture->medecin_id)->first();
+        }
+
+        // Si pas de cabinet pour ce médecin, prendre le premier cabinet disponible
+        if (!$cabinet) {
+            $cabinet = Cabinet::first();
+        }
+
+        $factureData = [
+            'facture' => $facture,
+            'cabinet' => $cabinet
+        ];
+
+        return response()->json($factureData);
     }
 
     /**
@@ -155,7 +194,6 @@ class FactureController extends Controller
 
     /**
      * Remove the specified resource from storage.
-     * — Version originale (ancien contrôleur)
      */
     public function destroy(Request $request, Facture $facture)
     {

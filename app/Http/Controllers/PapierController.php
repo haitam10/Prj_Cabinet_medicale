@@ -11,8 +11,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\DocModel;
 use App\Models\CertifDoc;
 use App\Models\OrdonDoc;
-use Intervention\Image\ImageManager;
-use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\Facades\Image;
 
 class PapierController extends Controller
 {
@@ -200,18 +199,20 @@ class PapierController extends Controller
             // Get the full path for storage
             $fullPath = storage_path('app/public/' . $path);
             
-            // Process image with Intervention Image v3 (if available) or use basic file operations
-            if (class_exists('Intervention\Image\ImageManager')) {
-                // Use Intervention Image v3 for better processing
-                $manager = new ImageManager(new Driver());
-                $image = $manager->read($file->getRealPath());
+            // Process image with Intervention Image (if available) or use basic file operations
+            if (class_exists('Intervention\Image\Facades\Image')) {
+                // Use Intervention Image for better processing
+                $image = Image::make($file->getRealPath());
                 
-                // Resize to logo size (150x150 max, maintaining aspect ratio)
-                $image->scaleDown(150, 150);
+                // Resize and optimize the image
+                $image->resize(300, 300, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                });
                 
-                // Create a transparent background and save as PNG
-                // PNG format automatically preserves transparency
-                $image->toPng()->save($fullPath);
+                // Convert to PNG for consistency
+                $image->encode('png', 90);
+                $image->save($fullPath);
             } else {
                 // Fallback: simple file move
                 $file->storeAs('uploads', $filename, 'public');

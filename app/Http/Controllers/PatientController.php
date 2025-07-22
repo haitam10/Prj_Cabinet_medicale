@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Patient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 class PatientController extends Controller
 {
     public function index(Request $request)
@@ -46,6 +47,10 @@ class PatientController extends Controller
             'taille' => 'nullable|numeric|min:0|max:999.99',
             'profession' => 'nullable|string|max:255',
             'situation_familiale' => 'nullable|in:celibataire,marie,divorce,veuf',
+            'emergency_contact_name' => 'nullable|string|max:100',
+            'emergency_contact_phone' => 'nullable|string|max:20',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'is_active' => 'nullable|boolean',
         ];
 
         $messages = [
@@ -61,11 +66,28 @@ class PatientController extends Controller
             'email.email' => 'L\'adresse email n\'est pas valide.',
             'poids.numeric' => 'Le poids doit être un nombre.',
             'taille.numeric' => 'La taille doit être un nombre.',
+            'emergency_contact_name.max' => 'Le nom du contact d\'urgence ne peut pas dépasser 100 caractères.',
+            'emergency_contact_phone.max' => 'Le téléphone du contact d\'urgence ne peut pas dépasser 20 caractères.',
+            'profile_image.image' => 'Le fichier doit être une image.',
+            'profile_image.mimes' => 'L\'image doit être au format jpeg, png, jpg ou gif.',
+            'profile_image.max' => 'L\'image ne peut pas dépasser 2MB.',
         ];
 
         $validated = $request->validate($rules, $messages);
 
         try {
+            // Generate a default password hash (can be changed later)
+            $validated['password_hash'] = Hash::make('default123');
+            
+            // Set default active status
+            $validated['is_active'] = $validated['is_active'] ?? true;
+
+            // Handle profile image upload
+            if ($request->hasFile('profile_image')) {
+                $imagePath = $request->file('profile_image')->store('patient_profiles', 'public');
+                $validated['profile_image'] = $imagePath;
+            }
+
             $patient = Patient::create($validated);
             Log::info('Patient créé avec succès', ['patient_id' => $patient->id]);
 
@@ -121,6 +143,10 @@ class PatientController extends Controller
             'taille' => 'nullable|numeric|min:0|max:999.99',
             'profession' => 'nullable|string|max:255',
             'situation_familiale' => 'nullable|in:celibataire,marie,divorce,veuf',
+            'emergency_contact_name' => 'nullable|string|max:100',
+            'emergency_contact_phone' => 'nullable|string|max:20',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'is_active' => 'nullable|boolean',
         ];
 
         $messages = [
@@ -136,11 +162,27 @@ class PatientController extends Controller
             'email.email' => 'L\'adresse email n\'est pas valide.',
             'poids.numeric' => 'Le poids doit être un nombre.',
             'taille.numeric' => 'La taille doit être un nombre.',
+            'emergency_contact_name.max' => 'Le nom du contact d\'urgence ne peut pas dépasser 100 caractères.',
+            'emergency_contact_phone.max' => 'Le téléphone du contact d\'urgence ne peut pas dépasser 20 caractères.',
+            'profile_image.image' => 'Le fichier doit être une image.',
+            'profile_image.mimes' => 'L\'image doit être au format jpeg, png, jpg ou gif.',
+            'profile_image.max' => 'L\'image ne peut pas dépasser 2MB.',
         ];
 
         $validated = $request->validate($rules, $messages);
 
         try {
+            // Handle profile image upload
+            if ($request->hasFile('profile_image')) {
+                // Delete old image if exists
+                if ($patient->profile_image && \Storage::disk('public')->exists($patient->profile_image)) {
+                    \Storage::disk('public')->delete($patient->profile_image);
+                }
+                
+                $imagePath = $request->file('profile_image')->store('patient_profiles', 'public');
+                $validated['profile_image'] = $imagePath;
+            }
+
             $patient->update($validated);
             if ($request->wantsJson()) {
                 return response()->json([
@@ -160,6 +202,11 @@ class PatientController extends Controller
     public function destroy(Request $request, Patient $patient)
     {
         try {
+            // Delete profile image if exists
+            if ($patient->profile_image && \Storage::disk('public')->exists($patient->profile_image)) {
+                \Storage::disk('public')->delete($patient->profile_image);
+            }
+            
             $patient->delete();
             if ($request->wantsJson()) {
                 return response()->json(['message' => 'Patient supprimé avec succès.']);
