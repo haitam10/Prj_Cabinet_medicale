@@ -25,12 +25,14 @@ return new class extends Migration
             $table->string('role');
             $table->string('statut')->default('actif');
 
-            $table->date('date_naissance')->nullable();   
+            $table->date('date_naissance')->nullable();
             $table->string('sexe', 10)->nullable();
             $table->string('telephone')->nullable();
             $table->string('adresse')->nullable();
             $table->string('specialite')->nullable();
             $table->string('numero_adeli')->nullable();
+
+            $table->foreignId('medecin_id')->nullable()->constrained('users')->onDelete('set null');
 
             $table->rememberToken();
             $table->timestamps();
@@ -62,4 +64,3 @@ return new class extends Migration
         Schema::dropIfExists('users');
     }
 };
-

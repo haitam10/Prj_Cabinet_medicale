@@ -12,15 +12,21 @@ class Consultation extends Model
     protected $fillable = [
         'patient_id',
         'medecin_id',
+        'rendezvous_id',
         'date_consultation',
+        'heure',
         'motif',
         'symptomes',
         'diagnostic',
-        'traitement'
+        'traitement',
+        'follow_up_instructions',
+        'consultation_fee',
+        'status'
     ];
 
     protected $casts = [
-        'date_consultation' => 'date'
+        'date_consultation' => 'date',
+        'heure' => 'datetime:H:i',
     ];
 
     public function patient()
@@ -31,5 +37,10 @@ class Consultation extends Model
     public function medecin()
     {
         return $this->belongsTo(User::class, 'medecin_id');
+    }
+
+    public function rendezvous()
+    {
+        return $this->belongsTo(Rendezvous::class);
     }
 }

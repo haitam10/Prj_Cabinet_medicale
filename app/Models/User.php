@@ -32,6 +32,7 @@ class User extends Authenticatable
         'numero_adeli',
         'latitude',
         'longitude',
+        'medecin_id',
     ];
 
     /**
@@ -95,5 +96,16 @@ class User extends Authenticatable
     public function facturesSecretaire()
     {
         return $this->hasMany(Facture::class, 'secretaire_id');
+    }
+
+    // Relations pour la gestion des secrétaires
+    public function secretaires()
+    {
+        return $this->hasMany(User::class, 'medecin_id')->where('role', 'secretaire');
+    }
+
+    public function medecin()
+    {
+        return $this->belongsTo(User::class, 'medecin_id');
     }
 }

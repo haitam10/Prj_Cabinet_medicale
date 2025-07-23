@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cabinet;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -39,11 +40,144 @@ class PapierController extends Controller
             // Retrieve cabinet information for the authenticated doctor
             $cabinetInfo = Cabinet::where('id_docteur', $doctorId)->first();
 
+            // Retrieve secretaires associated with the authenticated doctor
+            $secretaires = User::where('role', 'secretaire')
+                              ->where('medecin_id', $doctorId)
+                              ->get();
+
             // Pass data to the view
-            return view('secretaire.papier', compact('cabinetInfo', 'certifModels', 'ordonnModels'));
+            return view('secretaire.papier', compact('cabinetInfo', 'certifModels', 'ordonnModels', 'secretaires'));
         } catch (\Exception $e) {
             Log::error('Erreur lors de la récupération des templates: ' . $e->getMessage());
             return back()->with('error', 'Une erreur est survenue lors du chargement de la page.');
+        }
+    }
+
+    /**
+     * Get available secretaires (not associated with any doctor)
+     */
+    public function getAvailableSecretaires()
+    {
+        try {
+            $availableSecretaires = User::where('role', 'secretaire')
+                                       ->whereNull('medecin_id')
+                                       ->where('statut', 'actif')
+                                       ->get(['id', 'nom', 'email', 'telephone']);
+
+            return response()->json([
+                'success' => true,
+                'secretaires' => $availableSecretaires
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la récupération des secrétaires disponibles: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération des secrétaires disponibles.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Associate a secretaire with the authenticated doctor
+     */
+    public function associateSecretaire(Request $request)
+    {
+        try {
+            $request->validate([
+                'secretaire_id' => 'required|exists:users,id'
+            ]);
+
+            $doctorId = Auth::id() ?? 2;
+            $secretaireId = $request->secretaire_id;
+
+            DB::beginTransaction();
+
+            // Check if secretaire exists and is not already associated
+            $secretaire = User::where('id', $secretaireId)
+                             ->where('role', 'secretaire')
+                             ->whereNull('medecin_id')
+                             ->first();
+
+            if (!$secretaire) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Secrétaire non trouvée ou déjà associée à un autre médecin.'
+                ], 404);
+            }
+
+            // Associate secretaire with doctor
+            $secretaire->medecin_id = $doctorId;
+            $secretaire->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Secrétaire associée avec succès.',
+                'secretaire' => [
+                    'id' => $secretaire->id,
+                    'nom' => $secretaire->nom,
+                    'email' => $secretaire->email,
+                    'telephone' => $secretaire->telephone
+                ]
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Données invalides.',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur lors de l\'association de la secrétaire: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'association de la secrétaire.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Dissociate a secretaire from the authenticated doctor
+     */
+    public function dissociateSecretaire(Request $request, $secretaireId)
+    {
+        try {
+            $doctorId = Auth::id() ?? 2;
+
+            DB::beginTransaction();
+
+            // Find secretaire associated with the authenticated doctor
+            $secretaire = User::where('id', $secretaireId)
+                             ->where('role', 'secretaire')
+                             ->where('medecin_id', $doctorId)
+                             ->first();
+
+            if (!$secretaire) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Secrétaire non trouvée ou non associée à ce médecin.'
+                ], 404);
+            }
+
+            // Dissociate secretaire from doctor
+            $secretaire->medecin_id = null;
+            $secretaire->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Secrétaire dissociée avec succès.'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur lors de la dissociation de la secrétaire: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la dissociation de la secrétaire.'
+            ], 500);
         }
     }
         

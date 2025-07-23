@@ -78,6 +78,17 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/dossier-medical/habitude', [DossierMedicalController::class, 'updateHabitudeVie'])->name('dossier-medical.habitude.update');
         Route::put('/dossier-medical/fichier', [DossierMedicalController::class, 'updateFichierMedical'])->name('dossier-medical.fichier.update');
 
+        // Routes pour certificats
+        Route::post('/dossier-medical/certificat', [DossierMedicalController::class, 'storeCertificat'])->name('dossier-medical.certificat.store');
+        Route::put('/dossier-medical/certificat', [DossierMedicalController::class, 'updateCertificat'])->name('dossier-medical.certificat.update');
+        Route::delete('/dossier-medical/certificat', [DossierMedicalController::class, 'destroyCertificat'])->name('dossier-medical.certificat.destroy');
+
+        // Routes pour remarques
+        Route::post('/dossier-medical/remarque', [DossierMedicalController::class, 'storeRemarque'])->name('dossier-medical.remarque.store');
+        Route::put('/dossier-medical/remarque', [DossierMedicalController::class, 'updateRemarque'])->name('dossier-medical.remarque.update');
+        Route::delete('/dossier-medical/remarque', [DossierMedicalController::class, 'destroyRemarque'])->name('dossier-medical.remarque.destroy');
+
+
         // Routes certificats
         Route::get('/certificats', [DocumentController::class, 'showCerts'])->name('certificats');
         Route::get('/certificat/{id}', [CertificatController::class, 'show'])->name('certificat.show');
@@ -88,7 +99,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/ordonnance/store', [OrdonnanceController::class, 'store'])->name('ordonnance.store');
         Route::get('/ordonnance/print/{id}', [OrdonnanceController::class, 'printOrdonnance'])->name('ordonnance.print');
 
- // Routes remarques
+        // Routes remarques
         Route::get('/remarques', [DocumentController::class, 'showRems'])->name('remarques');
         Route::post('/remarques', [RemarqueController::class, 'store'])->name('remarques.store');
         Route::put('/remarques/{id}', [RemarqueController::class, 'update'])->name('remarques.update');
@@ -104,6 +115,11 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/papier/updateTemplate', [PapierController::class, 'updateTemplate'])->name('papier.updateTemplate');
         Route::delete('papier/delete-template/{type}/{id}', [PapierController::class, 'deleteTemplate']);
         Route::get('papier/template/{type}', [PapierController::class, 'getTemplates']);
+
+        // Routes secrétaires management
+        Route::get('/papier/available-secretaires', [PapierController::class, 'getAvailableSecretaires'])->name('papier.getAvailableSecretaires');
+        Route::post('/papier/associate-secretaire', [PapierController::class, 'associateSecretaire'])->name('papier.associateSecretaire');
+        Route::delete('/papier/dissociate-secretaire/{secretaireId}', [PapierController::class, 'dissociateSecretaire'])->name('papier.dissociateSecretaire');
     });
 
     // Routes API pour les certificats et ordonnances - accessibles aux médecins uniquement

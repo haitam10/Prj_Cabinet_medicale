@@ -297,6 +297,64 @@
                         </div>
                     </div>
 
+                    <!-- Secrétaires Section -->
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">
+                                <i class="fas fa-user-friends mr-2 text-purple-600"></i>Secrétaires
+                            </h3>
+                            <button type="button" onclick="openAddSecretaireModal()" class="px-4 py-2 bg-cordes-blue text-white rounded-lg hover:bg-cordes-dark transition-colors">
+                                <i class="fas fa-plus mr-2"></i>Ajouter Secrétaire
+                            </button>
+                        </div>
+                        
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-100">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">N°</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Téléphone</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="secretairesTableBody">
+                                        @php $secretaireIndex = 1; @endphp
+                                        
+                                        @forelse($secretaires as $secretaire)
+                                        <tr id="secretaire-row-{{ $secretaire->id }}">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $secretaireIndex++ }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {{ $secretaire->nom }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {{ $secretaire->email }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {{ $secretaire->telephone ?? 'N/A' }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                                <button type="button" onclick="dissociateSecretaire({{ $secretaire->id }})" 
+                                                        class="text-red-600 hover:text-red-900">
+                                                    <i class="fas fa-unlink"></i> Dissocier
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        @empty
+                                        <tr id="no-secretaires-row">
+                                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                                                Aucune secrétaire associée
+                                            </td>
+                                        </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Action Buttons for Cabinet Info -->
                     <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
                         <button type="button" onclick="resetForm()" class="px-6 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
@@ -478,6 +536,37 @@
         </div>
     </div>
 
+    <!-- Add Secretaire Modal -->
+    <div id="addSecretaireModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-lg w-full">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold">Associer une Secrétaire</h3>
+                        <button onclick="closeAddSecretaireModal()" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Secrétaires disponibles</label>
+                            <div id="availableSecretairesList" class="max-h-60 overflow-y-auto border border-gray-300 rounded-lg">
+                                <!-- Secrétaires disponibles seront chargées ici -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end mt-6 space-x-2">
+                        <button type="button" onclick="closeAddSecretaireModal()" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
+                            Annuler
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Set up CSRF token for all AJAX requests
         $.ajaxSetup({
@@ -523,9 +612,168 @@
             }
         }
 
+        // --- Secrétaire Management Functions ---
+        function openAddSecretaireModal() {
+            const modal = document.getElementById('addSecretaireModal');
+            const secretairesList = document.getElementById('availableSecretairesList');
+            
+            // Clear previous content
+            secretairesList.innerHTML = '<div class="p-4 text-center text-gray-500">Chargement...</div>';
+            
+            // Load available secretaires
+            $.ajax({
+                url: "{{ route('secretaire.papier.getAvailableSecretaires') }}",
+                method: 'GET',
+                success: function(response) {
+                    if (response.success && response.secretaires.length > 0) {
+                        let html = '';
+                        response.secretaires.forEach(secretaire => {
+                            html += `
+                                <div class="p-3 border-b border-gray-200 hover:bg-gray-50 flex justify-between items-center">
+                                    <div>
+                                        <div class="font-medium">${secretaire.nom}</div>
+                                        <div class="text-sm text-gray-500">${secretaire.email}</div>
+                                        <div class="text-sm text-gray-500">${secretaire.telephone || 'N/A'}</div>
+                                    </div>
+                                    <button onclick="associateSecretaire(${secretaire.id})" 
+                                            class="px-3 py-1 bg-cordes-blue text-white rounded hover:bg-cordes-dark text-sm">
+                                        <i class="fas fa-plus mr-1"></i>Associer
+                                    </button>
+                                </div>
+                            `;
+                        });
+                        secretairesList.innerHTML = html;
+                    } else {
+                        secretairesList.innerHTML = '<div class="p-4 text-center text-gray-500">Aucune secrétaire disponible</div>';
+                    }
+                },
+                error: function() {
+                    secretairesList.innerHTML = '<div class="p-4 text-center text-red-500">Erreur lors du chargement</div>';
+                }
+            });
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeAddSecretaireModal() {
+            document.getElementById('addSecretaireModal').classList.add('hidden');
+        }
+
+        function associateSecretaire(secretaireId) {
+            $.ajax({
+                url: "{{ route('secretaire.papier.associateSecretaire') }}",
+                method: 'POST',
+                data: {
+                    secretaire_id: secretaireId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        closeAddSecretaireModal();
+                        showMessage('Secrétaire associée avec succès', 'success');
+                        
+                        // Add the new secretaire to the table
+                        addSecretaireToTable(response.secretaire);
+                    }
+                },
+                error: function(xhr) {
+                    let errorMessage = 'Erreur lors de l\'association';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
+                    showMessage(errorMessage, 'error');
+                }
+            });
+        }
+
+        function dissociateSecretaire(secretaireId) {
+            if (confirm('Êtes-vous sûr de vouloir dissocier cette secrétaire ?')) {
+                $.ajax({
+                    url: `/secretaire/papier/dissociate-secretaire/${secretaireId}`,
+                    method: 'DELETE',
+                    success: function(response) {
+                        if (response.success) {
+                            showMessage('Secrétaire dissociée avec succès', 'success');
+                            
+                            // Remove the secretaire from the table
+                            removeSecretaireFromTable(secretaireId);
+                        }
+                    },
+                    error: function(xhr) {
+                        let errorMessage = 'Erreur lors de la dissociation';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        showMessage(errorMessage, 'error');
+                    }
+                });
+            }
+        }
+
+        function addSecretaireToTable(secretaire) {
+            const tableBody = document.getElementById('secretairesTableBody');
+            const noSecretairesRow = document.getElementById('no-secretaires-row');
+            
+            // Remove "no secretaires" row if it exists
+            if (noSecretairesRow) {
+                noSecretairesRow.remove();
+            }
+            
+            // Calculate next index
+            const existingRows = tableBody.querySelectorAll('tr:not(#no-secretaires-row)');
+            const nextIndex = existingRows.length + 1;
+            
+            // Create new row
+            const newRow = document.createElement('tr');
+            newRow.id = `secretaire-row-${secretaire.id}`;
+            newRow.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${nextIndex}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${secretaire.nom}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${secretaire.email}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${secretaire.telephone || 'N/A'}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                    <button type="button" onclick="dissociateSecretaire(${secretaire.id})" 
+                            class="text-red-600 hover:text-red-900">
+                        <i class="fas fa-unlink"></i> Dissocier
+                    </button>
+                </td>
+            `;
+            
+            tableBody.appendChild(newRow);
+        }
+
+        function removeSecretaireFromTable(secretaireId) {
+            const row = document.getElementById(`secretaire-row-${secretaireId}`);
+            if (row) {
+                row.remove();
+                
+                // Check if table is empty and add "no secretaires" row
+                const tableBody = document.getElementById('secretairesTableBody');
+                const remainingRows = tableBody.querySelectorAll('tr');
+                
+                if (remainingRows.length === 0) {
+                    const noSecretairesRow = document.createElement('tr');
+                    noSecretairesRow.id = 'no-secretaires-row';
+                    noSecretairesRow.innerHTML = `
+                        <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                            Aucune secrétaire associée
+                        </td>
+                    `;
+                    tableBody.appendChild(noSecretairesRow);
+                } else {
+                    // Update row numbers
+                    remainingRows.forEach((row, index) => {
+                        const firstCell = row.querySelector('td:first-child');
+                        if (firstCell) {
+                            firstCell.textContent = index + 1;
+                        }
+                    });
+                }
+            }
+        }
+
         // --- Delete Template Function ---
         function deleteTemplate(type, id) {
-            if (confirm(`Êtes-vous sûr de vouloir supprimer ce template de ${type} ?`)) {
+            if (confirm(`Êtes-vous sûr de vouloir surprimer ce template de ${type} ?`)) {
                 $.ajax({
                     url: `{{ url('/secretaire/papier/delete-template') }}/${type}/${id}`,
                     method: 'DELETE',
