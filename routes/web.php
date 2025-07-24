@@ -41,6 +41,9 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('secretaire')->name('secretaire.')->middleware('role:secretaire|medecin')->group(function () {
         Route::get('/dashboard', [AuthController::class, 'secretDash'])->name('dashboard');
         Route::get('/patients', [PatientController::class, 'index'])->name('patients');
+        // Route pour récupérer les détails du patient (nouvelle route ajoutée)
+        Route::get('/patients/{patient}/details', [PatientController::class, 'getPatientDetails'])->name('patients.details');
+
         Route::get('/factures', [FactureController::class, 'index'])->name('factures');
         Route::get('/factures/print/{facture}', [FactureController::class, 'print'])->name('factures.print');
         Route::get('/rendezvous', [RendezvousController::class, 'index'])->name('rendezvous');
@@ -128,11 +131,17 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/api/ordonnance/{id}/data', [OrdonnanceController::class, 'getOrdonnanceData']);
     });
 
-    // CRUD 
-    Route::resource('rendezvous', RendezvousController::class)->except(['index']);
-    Route::resource('patients', PatientController::class)->except(['index']);
-    Route::resource('factures', FactureController::class)->except(['index']);
-    Route::resource('paiements', PaiementController::class)->except(['index']);
+    // CRUD pour rendez-vous - accessible aux secrétaires ET médecins
+    Route::middleware('role:secretaire|medecin')->group(function () {
+        Route::resource('rendezvous', RendezvousController::class)->except(['index']);
+    });
+
+    // CRUD pour les autres ressources - accessible aux secrétaires ET médecins  
+    Route::middleware('role:secretaire|medecin')->group(function () {
+        Route::resource('patients', PatientController::class)->except(['index']);
+        Route::resource('factures', FactureController::class)->except(['index']);
+        Route::resource('paiements', PaiementController::class)->except(['index']);
+    });
 
     // Gestion des utilisateurs, admin uniquement
     Route::resource('users', UserController::class)->middleware('role:admin');

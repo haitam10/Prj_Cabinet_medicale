@@ -8,16 +8,31 @@ use Illuminate\Database\Eloquent\Model;
 class Rendezvous extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'rendezvous';
+
+    // clé primaire auto-increment par défaut, pas besoin de surcharger
 
     protected $fillable = [
         'patient_id',
         'medecin_id',
         'secretaire_id',
-        'date',
-        'statut',
-        'motif',
+        'appointment_date',
+        'appointment_time',
+        'duration',
+        'status',
+        'appointment_type',
+        'reason',
+        'patient_notes',
+        'doctor_notes',
+        'cancelled_at',
+        'cancellation_reason',
+        'feedback',
+    ];
+
+    protected $casts = [
+        'appointment_date' => 'date',
+        'cancelled_at' => 'datetime',
     ];
 
     public function patient()

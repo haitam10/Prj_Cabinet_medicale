@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
+
 class PatientController extends Controller
 {
     public function index(Request $request)
@@ -76,16 +78,18 @@ class PatientController extends Controller
         $validated = $request->validate($rules, $messages);
 
         try {
-            // Generate a default password hash (can be changed later)
             $validated['password_hash'] = Hash::make('default123');
-            
-            // Set default active status
             $validated['is_active'] = $validated['is_active'] ?? true;
 
-            // Handle profile image upload
             if ($request->hasFile('profile_image')) {
                 $imagePath = $request->file('profile_image')->store('patient_profiles', 'public');
                 $validated['profile_image'] = $imagePath;
+
+                // === Ajout pour copie automatique dans public ===
+                $sourcePath = storage_path('app/public/' . $imagePath);
+                $destinationPath = public_path('storage/' . $imagePath);
+                File::ensureDirectoryExists(dirname($destinationPath));
+                File::copy($sourcePath, $destinationPath);
             }
 
             $patient = Patient::create($validated);
@@ -172,15 +176,19 @@ class PatientController extends Controller
         $validated = $request->validate($rules, $messages);
 
         try {
-            // Handle profile image upload
             if ($request->hasFile('profile_image')) {
-                // Delete old image if exists
                 if ($patient->profile_image && \Storage::disk('public')->exists($patient->profile_image)) {
                     \Storage::disk('public')->delete($patient->profile_image);
                 }
-                
+
                 $imagePath = $request->file('profile_image')->store('patient_profiles', 'public');
                 $validated['profile_image'] = $imagePath;
+
+                // === Ajout pour copie automatique dans public ===
+                $sourcePath = storage_path('app/public/' . $imagePath);
+                $destinationPath = public_path('storage/' . $imagePath);
+                File::ensureDirectoryExists(dirname($destinationPath));
+                File::copy($sourcePath, $destinationPath);
             }
 
             $patient->update($validated);
@@ -202,11 +210,10 @@ class PatientController extends Controller
     public function destroy(Request $request, Patient $patient)
     {
         try {
-            // Delete profile image if exists
             if ($patient->profile_image && \Storage::disk('public')->exists($patient->profile_image)) {
                 \Storage::disk('public')->delete($patient->profile_image);
             }
-            
+
             $patient->delete();
             if ($request->wantsJson()) {
                 return response()->json(['message' => 'Patient supprimé avec succès.']);
@@ -217,6 +224,38 @@ class PatientController extends Controller
                 return response()->json(['error' => 'Erreur lors de la suppression du patient.'], 500);
             }
             return redirect()->route('secretaire.patients')->with('error', 'Erreur lors de la suppression du patient.');
+        }
+    }
+
+    // NOUVELLE MÉTHODE AJOUTÉE
+    public function getPatientDetails(Request $request, Patient $patient)
+    {
+        try {
+            // Charger le patient avec ses relations
+            $patient->load([
+                'consultations' => function($query) {
+                    $query->with('medecin')->orderBy('date_consultation', 'desc');
+                },
+                'ordonnances' => function($query) {
+                    $query->with('medecin')->orderBy('date_ordonance', 'desc');
+                },
+                'certificats' => function($query) {
+                    $query->with('medecin')->orderBy('date_certificat', 'desc');
+                }
+            ]);
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'patient' => $patient,
+                    'consultations' => $patient->consultations,
+                    'ordonnances' => $patient->ordonnances,
+                    'certificats' => $patient->certificats
+                ]);
+            }
+
+            return response()->json(['error' => 'Requête non valide'], 400);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Erreur lors de la récupération des données'], 500);
         }
     }
 }

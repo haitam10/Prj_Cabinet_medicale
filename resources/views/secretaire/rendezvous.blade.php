@@ -138,19 +138,18 @@
             <div class="px-6 py-4 flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-semibold text-gray-900">Rendez-vous</h1>
-                    <p class="text-gray-600 text-sm mt-1">Liste des rendez-vous enregistrés</p>
+                    <p class="text-gray-600 text-sm mt-1">Gestion des rendez-vous médicaux</p>
                 </div>
                 <button onclick="openAddModal()"
                     class="px-4 py-2 bg-cordes-blue text-white rounded-lg hover:bg-cordes-dark transition-colors">
-                    <i class="fas fa-plus mr-2"></i>Ajouter RDV
+                    <i class="fas fa-plus mr-2"></i>Nouveau RDV
                 </button>
             </div>
         </header>
 
         <main class="p-6">
-            <!-- ZONE DES MESSAGES - Système amélioré et corrigé -->
+            <!-- ZONE DES MESSAGES -->
             <div id="messages-container" class="space-y-4 mb-6">
-                <!-- Messages de succès -->
                 @if (session('success'))
                     <div id="successMessage"
                         class="alert-message p-4 bg-green-100 text-green-800 rounded-lg border border-green-200 transition-all duration-500 opacity-100 transform translate-y-0">
@@ -169,7 +168,6 @@
                     </div>
                 @endif
 
-                <!-- Messages d'erreur -->
                 @if (session('error'))
                     <div id="errorMessage"
                         class="alert-message p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 transition-all duration-500 opacity-100 transform translate-y-0">
@@ -188,7 +186,6 @@
                     </div>
                 @endif
 
-                <!-- Erreurs de validation -->
                 @if ($errors->any())
                     <div id="validationErrors"
                         class="alert-message p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 transition-all duration-500 opacity-100 transform translate-y-0">
@@ -219,25 +216,36 @@
 
             <!-- Filtres et recherche -->
             <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                     <div class="relative">
                         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" id="searchInput" placeholder="Rechercher un rendez-vous..."
+                        <input type="text" id="searchInput" placeholder="Rechercher un patient..."
                             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                     </div>
                     <div class="relative">
                         <i class="fas fa-filter absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        <select id="statutFilter"
+                        <select id="statusFilter"
                             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent appearance-none">
                             <option value="">Tous les statuts</option>
-                            <option value="confirmé">Confirmé</option>
-                            <option value="en attente">En attente</option>
-                            <option value="annulé">Annulé</option>
+                            <option value="pending">En attente</option>
+                            <option value="confirmed">Confirmé</option>
+                            <option value="completed">Terminé</option>
+                            <option value="cancelled">Annulé</option>
                         </select>
                     </div>
                     <div class="relative">
-                        <i
-                            class="fas fa-calendar absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <i class="fas fa-tag absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <select id="typeFilter"
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent appearance-none">
+                            <option value="">Tous les types</option>
+                            <option value="consultation">Consultation</option>
+                            <option value="follow_up">Suivi</option>
+                            <option value="emergency">Urgence</option>
+                            <option value="routine">Routine</option>
+                        </select>
+                    </div>
+                    <div class="relative">
+                        <i class="fas fa-calendar absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                         <input type="date" id="dateFilter"
                             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                     </div>
@@ -254,13 +262,13 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Date</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Heure</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Médecin</th>
+                                Date & Heure</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Patient</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Type</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Durée</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Statut</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -273,54 +281,103 @@
                         @forelse ($latest_rvs as $rdv)
                             <tr class="hover:bg-gray-50 transition-colors rdv-row"
                                 data-search="{{ strtolower($rdv->patient->nom ?? '') }} {{ strtolower($rdv->patient->prenom ?? '') }}"
-                                data-statut="{{ $rdv->statut }}"
-                                data-date="{{ \Carbon\Carbon::parse($rdv->date)->format('Y-m-d') }}">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    {{ \Carbon\Carbon::parse($rdv->date)->format('d/m/Y') }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ \Carbon\Carbon::parse($rdv->date)->format('H:i') }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ $rdv->medecin->nom ?? 'Inconnu' }} {{ $rdv->medecin->prenom ?? '' }}
-                                    @if ($rdv->medecin && isset($rdv->medecin->specialite))
-                                        <div class="text-xs text-gray-500">{{ $rdv->medecin->specialite }}</div>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ $rdv->patient->nom ?? 'Inconnu' }} {{ $rdv->patient->prenom ?? '' }}
+                                data-status="{{ $rdv->status }}"
+                                data-type="{{ $rdv->appointment_type }}"
+                                data-date="{{ $rdv->appointment_date->format('Y-m-d') }}">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {{ $rdv->appointment_date->format('d/m/Y') }}
+                                    </div>
+                                    <div class="text-sm text-gray-500">
+                                        @php
+                                            $timeString = $rdv->appointment_time;
+                                            if (strlen($timeString) > 5) {
+                                                $timeString = substr($timeString, 0, 5);
+                                            }
+                                        @endphp
+                                        {{ $timeString }}
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    @if ($rdv->statut == 'confirmé')
-                                        <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                            <i class="fas fa-check-circle mr-1"></i>Confirmé
-                                        </span>
-                                    @elseif($rdv->statut == 'en attente')
-                                        <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                            <i class="fas fa-clock mr-1"></i>En attente
-                                        </span>
-                                    @else
-                                        <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                            <i class="fas fa-times-circle mr-1"></i>Annulé
-                                        </span>
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {{ $rdv->patient->nom ?? 'Inconnu' }} {{ $rdv->patient->prenom ?? '' }}
+                                    </div>
+                                    @if($rdv->patient && $rdv->patient->telephone)
+                                        <div class="text-xs text-gray-500">{{ $rdv->patient->telephone }}</div>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
-                                    {{ $rdv->motif ?? 'Aucun motif' }}
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @php
+                                        $typeColors = [
+                                            'consultation' => 'bg-blue-100 text-blue-800',
+                                            'follow_up' => 'bg-purple-100 text-purple-800',
+                                            'emergency' => 'bg-red-100 text-red-800',
+                                            'routine' => 'bg-gray-100 text-gray-800'
+                                        ];
+                                        $typeLabels = [
+                                            'consultation' => 'Consultation',
+                                            'follow_up' => 'Suivi',
+                                            'emergency' => 'Urgence',
+                                            'routine' => 'Routine'
+                                        ];
+                                    @endphp
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $typeColors[$rdv->appointment_type] ?? 'bg-gray-100 text-gray-800' }}">
+                                        {{ $typeLabels[$rdv->appointment_type] ?? ucfirst($rdv->appointment_type) }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {{ $rdv->duration }} min
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @php
+                                        $statusColors = [
+                                            'pending' => 'bg-yellow-100 text-yellow-800',
+                                            'confirmed' => 'bg-green-100 text-green-800', 
+                                            'completed' => 'bg-blue-100 text-blue-800',
+                                            'cancelled' => 'bg-red-100 text-red-800'
+                                        ];
+                                        $statusLabels = [
+                                            'pending' => 'En attente',
+                                            'confirmed' => 'Confirmé',
+                                            'completed' => 'Terminé', 
+                                            'cancelled' => 'Annulé'
+                                        ];
+                                        $statusIcons = [
+                                            'pending' => 'fas fa-clock',
+                                            'confirmed' => 'fas fa-check-circle',
+                                            'completed' => 'fas fa-check-double',
+                                            'cancelled' => 'fas fa-times-circle'
+                                        ];
+                                    @endphp
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $statusColors[$rdv->status] ?? 'bg-gray-100 text-gray-800' }}">
+                                        <i class="{{ $statusIcons[$rdv->status] ?? 'fas fa-question' }} mr-1"></i>
+                                        {{ $statusLabels[$rdv->status] ?? ucfirst($rdv->status) }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-900 max-w-xs">
+                                    <div class="truncate" title="{{ $rdv->reason ?? 'Aucun motif' }}">
+                                        {{ $rdv->reason ?? 'Aucun motif' }}
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex space-x-2">
                                         <button onclick='openEditModal(@json($rdv))'
-                                            class="text-blue-600 hover:text-blue-800 transition-colors p-1 rounded hover:bg-blue-50">
+                                            class="text-blue-600 hover:text-blue-800 transition-colors p-1 rounded hover:bg-blue-50"
+                                            title="Modifier">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button onclick="deleteRendezVous({{ $rdv->id }})"
-                                            class="text-red-600 hover:text-red-800 transition-colors p-1 rounded hover:bg-red-50">
+                                        <button onclick="deleteRendezVous('{{ $rdv->id }}')"
+                                            class="text-red-600 hover:text-red-800 transition-colors p-1 rounded hover:bg-red-50"
+                                            title="Supprimer">
                                             <i class="fas fa-trash"></i>
                                         </button>
+                                        @if($rdv->status === 'cancelled' && $rdv->cancelled_at)
+                                            <button onclick="showCancellationInfo('{{ $rdv->cancelled_at->format('d/m/Y H:i') }}', '{{ $rdv->cancellation_reason ?? 'Aucune raison spécifiée' }}')"
+                                                class="text-gray-600 hover:text-gray-800 transition-colors p-1 rounded hover:bg-gray-50"
+                                                title="Info annulation">
+                                                <i class="fas fa-info-circle"></i>
+                                            </button>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -345,63 +402,122 @@
 
     <!-- MODAL AJOUTER RDV -->
     <div id="addModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white w-full max-w-md rounded-lg shadow-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
+        <div class="bg-white w-full max-w-2xl rounded-lg shadow-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-semibold text-gray-800">Ajouter un rendez-vous</h2>
+                <h2 class="text-xl font-semibold text-gray-800">Nouveau rendez-vous</h2>
                 <button onclick="closeAddModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
                     <i class="fas fa-times text-lg"></i>
                 </button>
             </div>
             <form action="{{ route('rendezvous.store') }}" method="POST" class="space-y-4" id="addForm">
                 @csrf
-                <div>
-                    <label for="patient_id" class="block text-sm font-medium text-gray-700 mb-1">Patient</label>
-                    <select name="patient_id" id="patient_id" required
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
-                        <option value="">Sélectionnez un patient</option>
-                        @foreach ($patients as $patient)
-                            <option value="{{ $patient->id }}"
-                                {{ old('patient_id') == $patient->id ? 'selected' : '' }}>
-                                {{ $patient->nom }} {{ $patient->prenom }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                      <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Médecin</label>
-                            <input type="hidden" name="medecin_id" value="{{ Auth::id() }}">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="patient_id" class="block text-sm font-medium text-gray-700 mb-1">Patient *</label>
+                        <select name="patient_id" id="patient_id" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                            <option value="">Sélectionnez un patient</option>
+                            @foreach ($patients as $patient)
+                                <option value="{{ $patient->id }}" {{ old('patient_id') == $patient->id ? 'selected' : '' }}>
+                                    {{ $patient->nom }} {{ $patient->prenom }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Médecin</label>
+                        @if(Auth::user()->role === 'medecin')
                             <input type="text" value="Dr. {{ Auth::user()->nom ?? 'Médecin' }}" readonly
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed outline-none">
-                        </div>
-                <div class="grid grid-cols-2 gap-4">
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed outline-none">
+                        @elseif(Auth::user()->role === 'secretaire' && Auth::user()->medecin_id)
+                            <input type="text" value="Dr. {{ Auth::user()->medecin->nom ?? 'Médecin' }}" readonly
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed outline-none">
+                        @endif
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                        <input type="date" name="date" id="date" required min="{{ date('Y-m-d') }}"
-                            value="{{ old('date') }}"
+                        <label for="appointment_date" class="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+                        <input type="date" name="appointment_date" id="appointment_date" required 
+                            min="{{ date('Y-m-d') }}" value="{{ old('appointment_date') }}"
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
                     </div>
                     <div>
-                        <label for="heure" class="block text-sm font-medium text-gray-700 mb-1">Heure</label>
-                        <input type="time" name="heure" id="heure" required value="{{ old('heure') }}"
+                        <label for="appointment_time" class="block text-sm font-medium text-gray-700 mb-1">Heure *</label>
+                        <input type="time" name="appointment_time" id="appointment_time" required 
+                            value="{{ old('appointment_time') }}"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
+                    </div>
+                    <div>
+                        <label for="duration" class="block text-sm font-medium text-gray-700 mb-1">Durée (min)</label>
+                        <input type="number" name="duration" id="duration" min="15" max="180" step="15" 
+                            value="{{ old('duration', 30) }}" placeholder="30"
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
                     </div>
                 </div>
-                <div>
-                    <label for="statut" class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
-                    <select name="statut" id="statut" required
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
-                        <option value="en attente" {{ old('statut') == 'en attente' ? 'selected' : '' }}>En attente
-                        </option>
-                        <option value="confirmé" {{ old('statut') == 'confirmé' ? 'selected' : '' }}>Confirmé</option>
-                        <option value="annulé" {{ old('statut') == 'annulé' ? 'selected' : '' }}>Annulé</option>
-                    </select>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Statut *</label>
+                        <select name="status" id="status" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                            <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>En attente</option>
+                            <option value="confirmed" {{ old('status') == 'confirmed' ? 'selected' : '' }}>Confirmé</option>
+                            <option value="completed" {{ old('status') == 'completed' ? 'selected' : '' }}>Terminé</option>
+                            <option value="cancelled" {{ old('status') == 'cancelled' ? 'selected' : '' }}>Annulé</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="appointment_type" class="block text-sm font-medium text-gray-700 mb-1">Type *</label>
+                        <select name="appointment_type" id="appointment_type" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                            <option value="consultation" {{ old('appointment_type') == 'consultation' ? 'selected' : '' }}>Consultation</option>
+                            <option value="follow_up" {{ old('appointment_type') == 'follow_up' ? 'selected' : '' }}>Suivi</option>
+                            <option value="emergency" {{ old('appointment_type') == 'emergency' ? 'selected' : '' }}>Urgence</option>
+                            <option value="routine" {{ old('appointment_type') == 'routine' ? 'selected' : '' }}>Routine</option>
+                        </select>
+                    </div>
                 </div>
+
                 <div>
-                    <label for="motif" class="block text-sm font-medium text-gray-700 mb-1">Motif</label>
-                    <textarea name="motif" id="motif" rows="3"
+                    <label for="reason" class="block text-sm font-medium text-gray-700 mb-1">Motif de consultation</label>
+                    <textarea name="reason" id="reason" rows="3"
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
-                        placeholder="Décrivez le motif du rendez-vous...">{{ old('motif') }}</textarea>
+                        placeholder="Décrivez le motif de la consultation...">{{ old('reason') }}</textarea>
                 </div>
+
+                <div>
+                    <label for="patient_notes" class="block text-sm font-medium text-gray-700 mb-1">Notes du patient</label>
+                    <textarea name="patient_notes" id="patient_notes" rows="2"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
+                        placeholder="Notes ou remarques du patient...">{{ old('patient_notes') }}</textarea>
+                </div>
+
+                @if(Auth::user()->role === 'medecin')
+                <div>
+                    <label for="doctor_notes" class="block text-sm font-medium text-gray-700 mb-1">Notes du médecin</label>
+                    <textarea name="doctor_notes" id="doctor_notes" rows="2"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
+                        placeholder="Notes médicales...">{{ old('doctor_notes') }}</textarea>
+                </div>
+                @endif
+
+                <div id="addCancellationFields" class="hidden">
+                    <label for="cancellation_reason" class="block text-sm font-medium text-gray-700 mb-1">Raison de l'annulation</label>
+                    <textarea name="cancellation_reason" id="cancellation_reason" rows="2"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
+                        placeholder="Expliquez la raison de l'annulation...">{{ old('cancellation_reason') }}</textarea>
+                </div>
+
+                <div>
+                    <label for="feedback" class="block text-sm font-medium text-gray-700 mb-1">Feedback</label>
+                    <textarea name="feedback" id="feedback" rows="2"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
+                        placeholder="Commentaires ou feedback...">{{ old('feedback') }}</textarea>
+                </div>
+
                 <div class="flex justify-end space-x-3 pt-4">
                     <button type="button" onclick="closeAddModal()"
                         class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
@@ -418,7 +534,7 @@
 
     <!-- MODAL MODIFIER RDV -->
     <div id="editModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white w-full max-w-md rounded-lg shadow-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
+        <div class="bg-white w-full max-w-2xl rounded-lg shadow-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-semibold text-gray-800">Modifier le rendez-vous</h2>
                 <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
@@ -429,53 +545,109 @@
                 @csrf
                 @method('PUT')
                 <input type="hidden" name="id" id="edit_id">
-                <div>
-                    <label for="edit_patient_id" class="block text-sm font-medium text-gray-700 mb-1">Patient</label>
-                    <select name="patient_id" id="edit_patient_id" required
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
-                        <option value="">Sélectionnez un patient</option>
-                        @foreach ($patients as $patient)
-                            <option value="{{ $patient->id }}">{{ $patient->nom }} {{ $patient->prenom }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label for="edit_medecin_id" class="block text-sm font-medium text-gray-700 mb-1">Médecin</label>
-                    <select name="medecin_id" id="edit_medecin_id" required
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
-                        <option value="">Sélectionnez un médecin</option>
-                        @foreach ($medecins as $medecin)
-                            <option value="{{ $medecin->id }}">{{ $medecin->nom }} {{ $medecin->prenom }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label for="edit_date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                        <input type="date" name="date" id="edit_date" required min="{{ date('Y-m-d') }}"
+                        <label for="edit_patient_id" class="block text-sm font-medium text-gray-700 mb-1">Patient *</label>
+                        <select name="patient_id" id="edit_patient_id" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                            <option value="">Sélectionnez un patient</option>
+                            @foreach ($patients as $patient)
+                                <option value="{{ $patient->id }}">{{ $patient->nom }} {{ $patient->prenom }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Médecin</label>
+                        @if(Auth::user()->role === 'medecin')
+                            <input type="text" value="Dr. {{ Auth::user()->nom ?? 'Médecin' }}" readonly
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed outline-none">
+                        @elseif(Auth::user()->role === 'secretaire' && Auth::user()->medecin_id)
+                            <input type="text" value="Dr. {{ Auth::user()->medecin->nom ?? 'Médecin' }}" readonly
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed outline-none">
+                        @endif
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="edit_appointment_date" class="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+                        <input type="date" name="appointment_date" id="edit_appointment_date" required
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
                     </div>
                     <div>
-                        <label for="edit_heure" class="block text-sm font-medium text-gray-700 mb-1">Heure</label>
-                        <input type="time" name="heure" id="edit_heure" required
+                        <label for="edit_appointment_time" class="block text-sm font-medium text-gray-700 mb-1">Heure *</label>
+                        <input type="time" name="appointment_time" id="edit_appointment_time" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
+                    </div>
+                    <div>
+                        <label for="edit_duration" class="block text-sm font-medium text-gray-700 mb-1">Durée (min)</label>
+                        <input type="number" name="duration" id="edit_duration" min="15" max="180" step="15"
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
                     </div>
                 </div>
-                <div>
-                    <label for="edit_statut" class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
-                    <select name="statut" id="edit_statut" required
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
-                        <option value="en attente">En attente</option>
-                        <option value="confirmé">Confirmé</option>
-                        <option value="annulé">Annulé</option>
-                    </select>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="edit_status" class="block text-sm font-medium text-gray-700 mb-1">Statut *</label>
+                        <select name="status" id="edit_status" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                            <option value="pending">En attente</option>
+                            <option value="confirmed">Confirmé</option>
+                            <option value="completed">Terminé</option>
+                            <option value="cancelled">Annulé</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="edit_appointment_type" class="block text-sm font-medium text-gray-700 mb-1">Type *</label>
+                        <select name="appointment_type" id="edit_appointment_type" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                            <option value="consultation">Consultation</option>
+                            <option value="follow_up">Suivi</option>
+                            <option value="emergency">Urgence</option>
+                            <option value="routine">Routine</option>
+                        </select>
+                    </div>
                 </div>
+
                 <div>
-                    <label for="edit_motif" class="block text-sm font-medium text-gray-700 mb-1">Motif</label>
-                    <textarea name="motif" id="edit_motif" rows="3"
+                    <label for="edit_reason" class="block text-sm font-medium text-gray-700 mb-1">Motif de consultation</label>
+                    <textarea name="reason" id="edit_reason" rows="3"
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
-                        placeholder="Décrivez le motif du rendez-vous..."></textarea>
+                        placeholder="Décrivez le motif de la consultation..."></textarea>
                 </div>
+
+                <div>
+                    <label for="edit_patient_notes" class="block text-sm font-medium text-gray-700 mb-1">Notes du patient</label>
+                    <textarea name="patient_notes" id="edit_patient_notes" rows="2"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
+                        placeholder="Notes ou remarques du patient..."></textarea>
+                </div>
+
+                @if(Auth::user()->role === 'medecin')
+                <div>
+                    <label for="edit_doctor_notes" class="block text-sm font-medium text-gray-700 mb-1">Notes du médecin</label>
+                    <textarea name="doctor_notes" id="edit_doctor_notes" rows="2"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
+                        placeholder="Notes médicales..."></textarea>
+                </div>
+                @endif
+
+                <div id="cancellationFields" class="hidden">
+                    <label for="edit_cancellation_reason" class="block text-sm font-medium text-gray-700 mb-1">Raison de l'annulation</label>
+                    <textarea name="cancellation_reason" id="edit_cancellation_reason" rows="2"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
+                        placeholder="Expliquez la raison de l'annulation..."></textarea>
+                </div>
+
+                <div>
+                    <label for="edit_feedback" class="block text-sm font-medium text-gray-700 mb-1">Feedback</label>
+                    <textarea name="feedback" id="edit_feedback" rows="2"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
+                        placeholder="Commentaires ou feedback..."></textarea>
+                </div>
+
                 <div class="flex justify-end space-x-3 pt-4">
                     <button type="button" onclick="closeEditModal()"
                         class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
@@ -494,10 +666,6 @@
         // Configuration CSRF pour les requêtes AJAX
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-        // Variables globales
-        let hasValidationErrors = false;
-        let hasSessionError = false;
-
         // Fonction pour obtenir la date et l'heure actuelles
         function getCurrentDateTime() {
             const now = new Date();
@@ -511,7 +679,6 @@
         function validateDateTime(dateInput, timeInput) {
             const selectedDate = dateInput.value;
             const selectedTime = timeInput.value;
-            const currentDateTime = getCurrentDateTime();
 
             if (!selectedDate || !selectedTime) {
                 return {
@@ -520,7 +687,6 @@
                 };
             }
 
-            // Créer des objets Date pour la comparaison
             const selectedDateTime = new Date(selectedDate + 'T' + selectedTime);
             const currentDateTimeObj = new Date();
 
@@ -531,43 +697,7 @@
                 };
             }
 
-            return {
-                valid: true
-            };
-        }
-
-        // Fonction pour afficher les erreurs de validation
-        function showValidationError(message) {
-            const existingError = document.getElementById('datetime-error');
-            if (existingError) {
-                existingError.remove();
-            }
-
-            const errorDiv = document.createElement('div');
-            errorDiv.id = 'datetime-error';
-            errorDiv.className = 'p-3 bg-red-100 border border-red-400 text-red-700 rounded mb-4';
-            errorDiv.innerHTML = `
-            <div class="flex items-center">
-                <i class="fas fa-exclamation-triangle mr-2"></i>
-                <span>${message}</span>
-            </div>
-        `;
-
-            const form = document.getElementById('addForm');
-            form.insertBefore(errorDiv, form.firstChild);
-
-            // Faire défiler vers l'erreur
-            errorDiv.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center'
-            });
-
-            // Supprimer l'erreur après 5 secondes
-            setTimeout(() => {
-                if (errorDiv && errorDiv.parentNode) {
-                    errorDiv.remove();
-                }
-            }, 5000);
+            return { valid: true };
         }
 
         // Fonction pour fermer un message spécifique
@@ -584,7 +714,6 @@
 
         // Fonction pour afficher un message temporaire (AJAX)
         function showMessage(text, type = 'success') {
-            // Supprimer les anciens messages temporaires
             const existingTemp = document.querySelector('.temp-message');
             if (existingTemp) {
                 existingTemp.remove();
@@ -593,10 +722,10 @@
             const messageContainer = document.getElementById('messages-container');
             const messageDiv = document.createElement('div');
             messageDiv.className = `temp-message p-4 rounded-lg border transition-all duration-500 opacity-0 transform translate-y-2 ${
-type === 'success' 
+                type === 'success' 
                     ? 'bg-green-100 text-green-800 border-green-200' 
                     : 'bg-red-100 text-red-800 border-red-200'
-}`;
+            }`;
 
             messageDiv.innerHTML = `
                 <div class="flex items-start">
@@ -613,19 +742,16 @@ type === 'success'
             `;
             messageContainer.appendChild(messageDiv);
 
-            // Animation d'apparition
             requestAnimationFrame(() => {
                 messageDiv.style.opacity = '1';
                 messageDiv.style.transform = 'translateY(0)';
             });
 
-            // Scroll vers le message
             messageDiv.scrollIntoView({
                 behavior: 'smooth',
                 block: 'center'
             });
 
-            // Auto-fermeture après 5 secondes
             setTimeout(() => {
                 if (messageDiv.parentNode) {
                     messageDiv.style.opacity = '0';
@@ -643,7 +769,6 @@ type === 'success'
         function setupAutoCloseMessages() {
             const messages = document.querySelectorAll('.alert-message');
             messages.forEach(message => {
-                // Scroll vers le message si c'est un message d'erreur
                 if (message.classList.contains('bg-red-100')) {
                     message.scrollIntoView({
                         behavior: 'smooth',
@@ -668,7 +793,8 @@ type === 'success'
         // Fonction de recherche et filtrage
         function filterRendezVous() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const statutFilter = document.getElementById('statutFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
             const dateFilter = document.getElementById('dateFilter').value;
 
             const rows = document.querySelectorAll('.rdv-row');
@@ -677,14 +803,16 @@ type === 'success'
 
             rows.forEach(row => {
                 const searchData = row.getAttribute('data-search');
-                const statutData = row.getAttribute('data-statut');
+                const statusData = row.getAttribute('data-status');
+                const typeData = row.getAttribute('data-type');
                 const dateData = row.getAttribute('data-date');
 
                 const matchesSearch = !searchTerm || searchData.includes(searchTerm);
-                const matchesStatut = !statutFilter || statutData === statutFilter;
+                const matchesStatus = !statusFilter || statusData === statusFilter;
+                const matchesType = !typeFilter || typeData === typeFilter;
                 const matchesDate = !dateFilter || dateData === dateFilter;
 
-                if (matchesSearch && matchesStatut && matchesDate) {
+                if (matchesSearch && matchesStatus && matchesType && matchesDate) {
                     row.style.display = '';
                     visibleCount++;
                 } else {
@@ -697,57 +825,115 @@ type === 'success'
             }
 
             document.getElementById('rdvCount').textContent =
-                `${visibleCount} rendez-vous${visibleCount !== 1 ? '' : ''} trouvé${visibleCount !== 1 ? 's' : ''}`;
+                `${visibleCount} rendez-vous trouvé${visibleCount !== 1 ? 's' : ''}`;
         }
 
         // Fonctions pour les modales
         function openAddModal() {
             document.getElementById('addModal').classList.remove('hidden');
-            // Supprimer les erreurs précédentes
-            const existingError = document.getElementById('datetime-error');
-            if (existingError) {
-                existingError.remove();
-            }
-
-            // Scroll vers le haut pour voir les messages
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
+            document.body.style.overflow = 'hidden';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function closeAddModal() {
             document.getElementById('addModal').classList.add('hidden');
-            // Supprimer les erreurs de validation
-            const existingError = document.getElementById('datetime-error');
-            if (existingError) {
-                existingError.remove();
-            }
+            document.body.style.overflow = 'auto';
         }
 
         function openEditModal(rdv) {
+            console.log('Opening edit modal with data:', rdv);
+            
             document.getElementById('editModal').classList.remove('hidden');
-            document.getElementById('editForm').action = `{{ url('/rendezvous') }}/${rdv.id}`;
+            document.body.style.overflow = 'hidden';
+            document.getElementById('editForm').action = `/rendezvous/${rdv.id}`;
             document.getElementById('edit_id').value = rdv.id;
             document.getElementById('edit_patient_id').value = rdv.patient_id;
-            document.getElementById('edit_medecin_id').value = rdv.medecin_id;
 
-            const dateTime = new Date(rdv.date);
-            const datePart = dateTime.toISOString().substring(0, 10);
-            const timePart = dateTime.toTimeString().substring(0, 5);
-            document.getElementById('edit_date').value = datePart;
-            document.getElementById('edit_heure').value = timePart;
-            document.getElementById('edit_statut').value = rdv.statut;
-            document.getElementById('edit_motif').value = rdv.motif || '';
+            // Gestion correcte de la date
+            let dateValue = '';
+            if (rdv.appointment_date_formatted) {
+                dateValue = rdv.appointment_date_formatted;
+            } else if (rdv.appointment_date) {
+                // Si c'est un objet Carbon de Laravel sérialisé
+                if (typeof rdv.appointment_date === 'object' && rdv.appointment_date.date) {
+                    dateValue = rdv.appointment_date.date.split(' ')[0];
+                } else if (typeof rdv.appointment_date === 'string') {
+                    // Si c'est une chaîne de date
+                    dateValue = rdv.appointment_date.split(' ')[0];
+                }
+            }
+            
+            console.log('Setting date to:', dateValue);
+            document.getElementById('edit_appointment_date').value = dateValue;
+            
+            // Gestion correcte de l'heure
+            let timeValue = '';
+            if (rdv.appointment_time_formatted) {
+                timeValue = rdv.appointment_time_formatted;
+            } else if (rdv.appointment_time) {
+                timeValue = rdv.appointment_time;
+                if (typeof timeValue === 'string' && timeValue.length > 5) {
+                    timeValue = timeValue.substring(0, 5); // Get HH:MM format
+                }
+            }
+            
+            console.log('Setting time to:', timeValue);
+            document.getElementById('edit_appointment_time').value = timeValue;
+            
+            // Remplir les autres champs
+            document.getElementById('edit_duration').value = parseInt(rdv.duration) || 30;
+            document.getElementById('edit_status').value = rdv.status;
+            document.getElementById('edit_appointment_type').value = rdv.appointment_type;
+            document.getElementById('edit_reason').value = rdv.reason || '';
+            document.getElementById('edit_patient_notes').value = rdv.patient_notes || '';
+            
+            // Notes du médecin seulement si l'élément existe
+            const doctorNotesField = document.getElementById('edit_doctor_notes');
+            if (doctorNotesField) {
+                doctorNotesField.value = rdv.doctor_notes || '';
+            }
+            
+            document.getElementById('edit_cancellation_reason').value = rdv.cancellation_reason || '';
+            document.getElementById('edit_feedback').value = rdv.feedback || '';
+
+            // Show/hide cancellation fields
+            toggleCancellationFields();
         }
 
         function closeEditModal() {
             document.getElementById('editModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function toggleCancellationFields() {
+            const statusSelect = document.getElementById('edit_status');
+            const cancellationFields = document.getElementById('cancellationFields');
+            
+            if (statusSelect.value === 'cancelled') {
+                cancellationFields.classList.remove('hidden');
+            } else {
+                cancellationFields.classList.add('hidden');
+            }
+        }
+
+        function toggleAddCancellationFields() {
+            const statusSelect = document.getElementById('status');
+            const cancellationFields = document.getElementById('addCancellationFields');
+            
+            if (statusSelect.value === 'cancelled') {
+                cancellationFields.classList.remove('hidden');
+            } else {
+                cancellationFields.classList.add('hidden');
+            }
+        }
+
+        function showCancellationInfo(cancelledAt, reason) {
+            alert(`Annulé le: ${cancelledAt}\nRaison: ${reason}`);
         }
 
         function deleteRendezVous(id) {
             if (confirm('Êtes-vous sûr de vouloir supprimer ce rendez-vous ?')) {
-                fetch(`{{ url('/rendezvous') }}/${id}`, {
+                fetch(`/rendezvous/${id}`, {
                         method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': csrfToken,
@@ -773,114 +959,52 @@ type === 'success'
             }
         }
 
-        // Validation en temps réel pour les champs de date et heure
-        function setupDateTimeValidation() {
-            const dateInput = document.getElementById('date');
-            const timeInput = document.getElementById('heure');
-            const editDateInput = document.getElementById('edit_date');
-            const editTimeInput = document.getElementById('edit_heure');
-
-            // Fonction pour valider en temps réel
-            function validateRealTime(dateField, timeField) {
-                const validation = validateDateTime(dateField, timeField);
-                if (!validation.valid && dateField.value && timeField.value) {
-                    dateField.setCustomValidity(validation.message);
-                    timeField.setCustomValidity(validation.message);
-                } else {
-                    dateField.setCustomValidity('');
-                    timeField.setCustomValidity('');
-                }
-            }
-
-            // Événements pour le modal d'ajout
-            if (dateInput && timeInput) {
-                dateInput.addEventListener('change', () => validateRealTime(dateInput, timeInput));
-                timeInput.addEventListener('change', () => validateRealTime(dateInput, timeInput));
-            }
-
-            // Événements pour le modal d'édition
-            if (editDateInput && editTimeInput) {
-                editDateInput.addEventListener('change', () => validateRealTime(editDateInput, editTimeInput));
-                editTimeInput.addEventListener('change', () => validateRealTime(editDateInput, editTimeInput));
-            }
-        }
-
         // Initialisation au chargement
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM chargé');
 
-            // Configuration de l'auto-fermeture des messages
             setupAutoCloseMessages();
-
-            // Configuration de la validation date/heure
-            setupDateTimeValidation();
 
             // Événements de filtrage
             document.getElementById('searchInput').addEventListener('input', filterRendezVous);
-            document.getElementById('statutFilter').addEventListener('change', filterRendezVous);
+            document.getElementById('statusFilter').addEventListener('change', filterRendezVous);
+            document.getElementById('typeFilter').addEventListener('change', filterRendezVous);
             document.getElementById('dateFilter').addEventListener('change', filterRendezVous);
+
+            // Toggle cancellation fields when status changes
+            document.getElementById('edit_status').addEventListener('change', toggleCancellationFields);
+            document.getElementById('status').addEventListener('change', toggleAddCancellationFields);
 
             // Validation du formulaire d'ajout
             const addForm = document.getElementById('addForm');
             if (addForm) {
                 addForm.addEventListener('submit', function(e) {
-                    const dateInput = document.getElementById('date');
-                    const timeInput = document.getElementById('heure');
-                    const validation = validateDateTime(dateInput, timeInput);
-
-                    if (!validation.valid) {
-                        e.preventDefault();
-                        showValidationError(validation.message);
-                        return false;
-                    }
-                });
-            }
-
-            // Validation du formulaire d'édition
-            const editForm = document.getElementById('editForm');
-            if (editForm) {
-                editForm.addEventListener('submit', function(e) {
-                    const dateInput = document.getElementById('edit_date');
-                    const timeInput = document.getElementById('edit_heure');
-                    const validation = validateDateTime(dateInput, timeInput);
-
-                    if (!validation.valid) {
-                        e.preventDefault();
-                        showValidationError(validation.message);
-                        return false;
+                    const dateInput = document.getElementById('appointment_date');
+                    const timeInput = document.getElementById('appointment_time');
+                    
+                    // Seulement valider pour les statuts non-annulés
+                    const statusSelect = document.getElementById('status');
+                    if (statusSelect.value !== 'cancelled') {
+                        const validation = validateDateTime(dateInput, timeInput);
+                        if (!validation.valid) {
+                            e.preventDefault();
+                            showMessage(validation.message, 'error');
+                            return false;
+                        }
                     }
                 });
             }
 
             // Vérifier s'il y a des erreurs pour rouvrir le modal
-            @if ($errors->any() && old('_token'))
-                hasValidationErrors = true;
+            @if ($errors->any() && old('_token')) 
                 setTimeout(() => {
                     openAddModal();
-                    window.scrollTo({
-                        top: 0,
-                        behavior: 'smooth'
-                    });
-                }, 100);
-            @endif
-
-            @if (session('error') && old('_token'))
-                hasSessionError = true;
-                setTimeout(() => {
-                    openAddModal();
-                    window.scrollTo({
-                        top: 0,
-                        behavior: 'smooth'
-                    });
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 }, 100);
             @endif
 
             @if (session('success'))
-                // Scroll vers le haut pour voir le message de succès
-                window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
-                });
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             @endif
         });
 
@@ -906,5 +1030,4 @@ type === 'success'
         });
     </script>
 </body>
-
 </html>

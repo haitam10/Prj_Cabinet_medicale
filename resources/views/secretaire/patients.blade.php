@@ -342,6 +342,13 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex space-x-2">
+                                        @if (Auth::check() && Auth::user()->role === 'medecin')
+                                            <button onclick="viewPatientDetails({{ $patient->id }})"
+                                                class="text-yellow-600 hover:text-yellow-800 transition-colors p-1 rounded hover:bg-yellow-50"
+                                                title="Voir les détails du patient">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        @endif
                                         <button onclick='openEditModal({{ $patient->id }})'
                                             class="text-blue-600 hover:text-blue-800 transition-colors p-1 rounded hover:bg-blue-50">
                                             <i class="fas fa-edit"></i>
@@ -873,6 +880,58 @@
         </div>
     </div>
 
+    <!-- MODAL VOIR DÉTAILS PATIENT -->
+    <div id="viewDetailsModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white w-full max-w-7xl rounded-lg shadow-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-semibold text-gray-800">Détails du Patient</h2>
+                <button onclick="closeViewDetailsModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Informations globales du patient -->
+            <div class="bg-blue-50 p-6 rounded-lg mb-6">
+                <h3 class="text-xl font-bold text-blue-800 mb-4 flex items-center">
+                    <i class="fas fa-user-circle mr-3"></i>Informations Globales
+                </h3>
+                <div id="patientGlobalInfo" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Les informations seront injectées ici via JavaScript -->
+                </div>
+            </div>
+
+            <!-- Consultations -->
+            <div class="bg-green-50 p-6 rounded-lg mb-6">
+                <h3 class="text-xl font-bold text-green-800 mb-4 flex items-center">
+                    <i class="fas fa-stethoscope mr-3"></i>Consultations
+                </h3>
+                <div id="consultationsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Les consultations seront injectées ici via JavaScript -->
+                </div>
+            </div>
+
+            <!-- Ordonnances -->
+            <div class="bg-purple-50 p-6 rounded-lg mb-6">
+                <h3 class="text-xl font-bold text-purple-800 mb-4 flex items-center">
+                    <i class="fas fa-prescription-bottle-medical mr-3"></i>Ordonnances
+                </h3>
+                <div id="ordonnancesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Les ordonnances seront injectées ici via JavaScript -->
+                </div>
+            </div>
+
+            <!-- Certificats -->
+            <div class="bg-orange-50 p-6 rounded-lg mb-6">
+                <h3 class="text-xl font-bold text-orange-800 mb-4 flex items-center">
+                    <i class="fas fa-certificate mr-3"></i>Certificats
+                </h3>
+                <div id="certificatsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Les certificats seront injectés ici via JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Configuration CSRF pour les requêtes AJAX
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -896,6 +955,130 @@
             } else {
                 preview.innerHTML = '<i class="fas fa-user text-gray-400 text-2xl"></i>';
             }
+        }
+
+        // FONCTION CORRIGÉE POUR VOIR LES DÉTAILS DU PATIENT
+        function viewPatientDetails(patientId) {
+            // Correction: utiliser l'URL correcte avec le préfixe 'secretaire'
+            fetch(`/secretaire/patients/${patientId}/details`, {
+                method: 'GET',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.patient) {
+                    displayPatientDetails(data);
+                    document.getElementById('viewDetailsModal').classList.remove('hidden');
+                } else if (data.error) {
+                    showErrorMessage('Erreur: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                showErrorMessage('Erreur lors de la récupération des détails du patient.');
+            });
+        }
+
+        function displayPatientDetails(data) {
+            const patient = data.patient;
+            const consultations = data.consultations || [];
+            const ordonnances = data.ordonnances || [];
+            const certificats = data.certificats || [];
+
+            // Afficher les informations globales
+            const globalInfoHtml = `
+                <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <h4 class="font-semibold text-gray-800 mb-2">Informations personnelles</h4>
+                    <p><strong>CIN:</strong> ${patient.cin}</p>
+                    <p><strong>Nom:</strong> ${patient.nom}</p>
+                    <p><strong>Sexe:</strong> ${patient.sexe.charAt(0).toUpperCase() + patient.sexe.slice(1)}</p>
+                    <p><strong>Date de naissance:</strong> ${new Date(patient.date_naissance).toLocaleDateString('fr-FR')}</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <h4 class="font-semibold text-gray-800 mb-2">Contact</h4>
+                    <p><strong>Téléphone:</strong> ${patient.contact || 'Non renseigné'}</p>
+                    <p><strong>Email:</strong> ${patient.email || 'Non renseigné'}</p>
+                    <p><strong>Adresse:</strong> ${patient.adresse || 'Non renseignée'}</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <h4 class="font-semibold text-gray-800 mb-2">Informations médicales</h4>
+                    <p><strong>Groupe sanguin:</strong> ${patient.groupe_sanguin || 'Non renseigné'}</p>
+                    <p><strong>Poids:</strong> ${patient.poids ? patient.poids + ' kg' : 'Non renseigné'}</p>
+                    <p><strong>Taille:</strong> ${patient.taille ? patient.taille + ' cm' : 'Non renseigné'}</p>
+                    <p><strong>Allergies:</strong> ${patient.allergies || 'Aucune'}</p>
+                </div>
+            `;
+            document.getElementById('patientGlobalInfo').innerHTML = globalInfoHtml;
+
+            // Afficher les consultations
+            let consultationsHtml = '';
+            if (consultations.length > 0) {
+                consultations.forEach(consultation => {
+                    consultationsHtml += `
+                        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-green-500">
+                            <h4 class="font-semibold text-gray-800 mb-2">Consultation du ${new Date(consultation.date_consultation).toLocaleDateString('fr-FR')}</h4>
+                            <p><strong>Médecin:</strong> ${consultation.medecin ? consultation.medecin.nom : 'Non renseigné'}</p>
+                            <p><strong>Motif:</strong> ${consultation.motif || 'Non renseigné'}</p>
+                            <p><strong>Diagnostic:</strong> ${consultation.diagnostic || 'Non renseigné'}</p>
+                            <p><strong>Traitement:</strong> ${consultation.traitement || 'Non renseigné'}</p>
+                            <p><strong>Statut:</strong> <span class="px-2 py-1 rounded text-xs ${consultation.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${consultation.status}</span></p>
+                        </div>
+                    `;
+                });
+            } else {
+                consultationsHtml = '<div class="col-span-full text-center text-gray-500 py-8"><i class="fas fa-calendar-times text-4xl mb-2"></i><p>Aucune consultation trouvée</p></div>';
+            }
+            document.getElementById('consultationsList').innerHTML = consultationsHtml;
+
+            // Afficher les ordonnances
+            let ordonnancesHtml = '';
+            if (ordonnances.length > 0) {
+                ordonnances.forEach(ordonnance => {
+                    ordonnancesHtml += `
+                        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-purple-500">
+                            <h4 class="font-semibold text-gray-800 mb-2">Ordonnance du ${new Date(ordonnance.date_ordonance).toLocaleDateString('fr-FR')}</h4>
+                            <p><strong>Médecin:</strong> ${ordonnance.medecin ? ordonnance.medecin.nom : 'Non renseigné'}</p>
+                            <p><strong>Médicaments:</strong> ${ordonnance.medicaments || 'Non renseigné'}</p>
+                            <p><strong>Durée:</strong> ${ordonnance.duree_traitement || 'Non renseignée'}</p>
+                            <p><strong>Instructions:</strong> ${ordonnance.instructions || 'Aucune'}</p>
+                        </div>
+                    `;
+                });
+            } else {
+                ordonnancesHtml = '<div class="col-span-full text-center text-gray-500 py-8"><i class="fas fa-prescription-bottle text-4xl mb-2"></i><p>Aucune ordonnance trouvée</p></div>';
+            }
+            document.getElementById('ordonnancesList').innerHTML = ordonnancesHtml;
+
+            // Afficher les certificats
+            let certificatsHtml = '';
+            if (certificats.length > 0) {
+                certificats.forEach(certificat => {
+                    certificatsHtml += `
+                        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-orange-500">
+                            <h4 class="font-semibold text-gray-800 mb-2">Certificat du ${new Date(certificat.date_certificat).toLocaleDateString('fr-FR')}</h4>
+                            <p><strong>Médecin:</strong> ${certificat.medecin ? certificat.medecin.nom : 'Non renseigné'}</p>
+                            <p><strong>Type:</strong> ${certificat.type || 'Non renseigné'}</p>
+                            <p><strong>Contenu:</strong> ${certificat.contenu || 'Non renseigné'}</p>
+                        </div>
+                    `;
+                });
+            } else {
+                certificatsHtml = '<div class="col-span-full text-center text-gray-500 py-8"><i class="fas fa-certificate text-4xl mb-2"></i><p>Aucun certificat trouvé</p></div>';
+            }
+            document.getElementById('certificatsList').innerHTML = certificatsHtml;
+        }
+
+        function closeViewDetailsModal() {
+            document.getElementById('viewDetailsModal').classList.add('hidden');
         }
 
         // Fonction pour masquer automatiquement les messages après 5 secondes
@@ -1140,11 +1323,18 @@
             }
         });
 
+        document.getElementById('viewDetailsModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeViewDetailsModal();
+            }
+        });
+
         // Fermer les modales avec la touche Escape
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeAddModal();
                 closeEditModal();
+                closeViewDetailsModal();
             }
         });
 

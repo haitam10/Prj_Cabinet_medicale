@@ -12,6 +12,7 @@ use App\Models\HabitudeVie;
 use App\Models\Certificat;
 use App\Models\Remarque;
 use App\Models\Rendezvous;
+use App\Models\Ordonnance;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -152,7 +153,8 @@ class DossierMedicalController extends Controller
             'traitement' => 'nullable|string|max:2000',
             'follow_up_instructions' => 'nullable|string|max:2000',
             'consultation_fee' => 'nullable|numeric|min:0',
-            'status' => 'nullable|string|in:En cours,Terminée,Annulée,Reportée'
+            'status' => 'nullable|string|in:En cours,Terminée,Annulée,Reportée',
+            'duree_traitement' => 'nullable|string|max:255'
         ]);
 
         // Utiliser l'ID du médecin connecté ou celui fourni dans la requête
@@ -172,7 +174,23 @@ class DossierMedicalController extends Controller
         }
 
         try {
-            Consultation::create($validated);
+            // Créer la consultation
+            $consultation = Consultation::create($validated);
+
+            // Générer automatiquement une ordonnance si traitement est fourni
+            if (!empty($validated['traitement'])) {
+                Ordonnance::create([
+                    'patient_id' => $validated['patient_id'],
+                    'medecin_id' => $validated['medecin_id'],
+                    'date_ordonance' => $validated['date_consultation'],
+                    'medicaments' => $validated['traitement'],
+                    'duree_traitement' => $validated['duree_traitement'],
+                    'instructions' => $validated['follow_up_instructions']
+                ]);
+                
+                return redirect()->back()->with('success', 'Consultation ajoutée avec succès. Une ordonnance a été générée automatiquement.');
+            }
+
             return redirect()->back()->with('success', 'Consultation ajoutée avec succès.');
         } catch (\Exception $e) {
             Log::error('Erreur lors de la création de la consultation', ['error' => $e->getMessage()]);
@@ -430,7 +448,8 @@ class DossierMedicalController extends Controller
             'traitement' => 'nullable|string|max:2000',
             'follow_up_instructions' => 'nullable|string|max:2000',
             'consultation_fee' => 'nullable|numeric|min:0',
-            'status' => 'nullable|string|in:En cours,Terminée,Annulée,Reportée'
+            'status' => 'nullable|string|in:En cours,Terminée,Annulée,Reportée',
+            'duree_traitement' => 'nullable|string|max:255'
         ]);
 
         // Utiliser l'ID du médecin connecté ou celui fourni dans la requête
@@ -451,6 +470,37 @@ class DossierMedicalController extends Controller
         try {
             $consultation = Consultation::findOrFail($validated['id']);
             $consultation->update($validated);
+
+            // Mettre à jour ou créer l'ordonnance associée si traitement est fourni
+            if (!empty($validated['traitement'])) {
+                // Chercher une ordonnance existante pour cette consultation/patient/médecin/date
+                $ordonnance = Ordonnance::where('patient_id', $validated['patient_id'])
+                    ->where('medecin_id', $validated['medecin_id'])
+                    ->where('date_ordonance', $validated['date_consultation'])
+                    ->first();
+
+                if ($ordonnance) {
+                    // Mettre à jour l'ordonnance existante
+                    $ordonnance->update([
+                        'medicaments' => $validated['traitement'],
+                        'duree_traitement' => $validated['duree_traitement'],
+                        'instructions' => $validated['follow_up_instructions']
+                    ]);
+                } else {
+                    // Créer une nouvelle ordonnance
+                    Ordonnance::create([
+                        'patient_id' => $validated['patient_id'],
+                        'medecin_id' => $validated['medecin_id'],
+                        'date_ordonance' => $validated['date_consultation'],
+                        'medicaments' => $validated['traitement'],
+                        'duree_traitement' => $validated['duree_traitement'],
+                        'instructions' => $validated['follow_up_instructions']
+                    ]);
+                }
+                
+                return redirect()->back()->with('success', 'Consultation modifiée avec succès. L\'ordonnance associée a été mise à jour.');
+            }
+
             return redirect()->back()->with('success', 'Consultation modifiée avec succès.');
         } catch (\Exception $e) {
             Log::error('Erreur lors de la modification de la consultation', ['error' => $e->getMessage()]);

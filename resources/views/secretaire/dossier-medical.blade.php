@@ -321,12 +321,19 @@
                                 <div class="md:col-span-2">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Traitement</label>
                                     <textarea name="traitement" rows="3"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"></textarea>
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"
+                                        placeholder="Les médicaments prescrits (générera automatiquement une ordonnance)"></textarea>
                                 </div>
                                 <div class="md:col-span-2">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Instructions de suivi</label>
                                     <textarea name="follow_up_instructions" rows="3"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Durée du traitement</label>
+                                    <input type="text" name="duree_traitement"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"
+                                        placeholder="Ex: 7 jours, 2 semaines, 1 mois">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Frais de consultation</label>
@@ -344,6 +351,12 @@
                                         <option value="Reportée">Reportée</option>
                                     </select>
                                 </div>
+                            </div>
+                            <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                <p class="text-sm text-blue-800">
+                                    <i class="fas fa-info-circle mr-2"></i>
+                                    <strong>Information :</strong> Si vous remplissez le champ "Traitement", une ordonnance sera automatiquement générée et stockée dans le système.
+                                </p>
                             </div>
                             <button type="submit"
                                 class="mt-4 px-4 py-2 bg-cordes-blue text-white rounded-lg hover:bg-cordes-dark transition-colors">
@@ -370,7 +383,7 @@
                                                         <span class="px-2 py-1 text-xs rounded-full 
                                                             {{ $consultation->status === 'Terminée' ? 'bg-green-100 text-green-800' : 
                                                                ($consultation->status === 'En cours' ? 'bg-blue-100 text-blue-800' : 
-                                                               ($consultation->status === 'Annulée' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800')) }}">
+                                                                  ($consultation->status === 'Annulée' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800')) }}">
                                                             {{ $consultation->status }}
                                                         </span>
                                                     @endif
@@ -393,6 +406,10 @@
                                                     <p class="text-gray-700 mb-1"><strong>Instructions de suivi:</strong>
                                                         {{ $consultation->follow_up_instructions }}</p>
                                                 @endif
+                                                @if ($consultation->duree_traitement)
+                                                    <p class="text-gray-700 mb-1"><strong>Durée du traitement:</strong>
+                                                        {{ $consultation->duree_traitement }}</p>
+                                                @endif
                                                 @if ($consultation->consultation_fee)
                                                     <p class="text-gray-700"><strong>Frais:</strong>
                                                         {{ $consultation->consultation_fee }} DH</p>
@@ -400,7 +417,7 @@
                                             </div>
                                             <div class="flex items-center space-x-2 ml-4">
                                                 <button
-                                                    onclick="editConsultation({{ $consultation->id }}, '{{ \Carbon\Carbon::parse($consultation->date_consultation)->format('Y-m-d') }}', '{{ $consultation->heure ? \Carbon\Carbon::parse($consultation->heure)->format('H:i') : '' }}', {{ $consultation->rendezvous_id ?? 'null' }}, '{{ addslashes($consultation->motif) }}', '{{ addslashes($consultation->symptomes) }}', '{{ addslashes($consultation->diagnostic) }}', '{{ addslashes($consultation->traitement) }}', '{{ addslashes($consultation->follow_up_instructions) }}', {{ $consultation->consultation_fee ?? 'null' }}, '{{ $consultation->status }}', {{ $consultation->medecin_id }})"
+                                                    onclick="editConsultation({{ $consultation->id }}, '{{ \Carbon\Carbon::parse($consultation->date_consultation)->format('Y-m-d') }}', '{{ $consultation->heure ? \Carbon\Carbon::parse($consultation->heure)->format('H:i') : '' }}', {{ $consultation->rendezvous_id ?? 'null' }}, '{{ addslashes($consultation->motif) }}', '{{ addslashes($consultation->symptomes) }}', '{{ addslashes($consultation->diagnostic) }}', '{{ addslashes($consultation->traitement) }}', '{{ addslashes($consultation->follow_up_instructions) }}', {{ $consultation->consultation_fee ?? 'null' }}, '{{ $consultation->status }}', '{{ addslashes($consultation->duree_traitement) }}', {{ $consultation->medecin_id }})"
                                                     class="text-blue-600 hover:text-blue-800">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
@@ -1403,6 +1420,12 @@
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"></textarea>
                                         </div>
                                         <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Durée du traitement</label>
+                                            <input type="text" name="duree_traitement" id="edit_consultation_duree_traitement"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"
+                                                placeholder="Ex: 7 jours, 2 semaines, 1 mois">
+                                        </div>
+                                        <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Frais de consultation</label>
                                             <input type="number" name="consultation_fee" id="edit_consultation_fee" min="0" step="0.01"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue">
@@ -2097,7 +2120,7 @@
         });
 
         // Fonctions pour les modals de modification
-        function editConsultation(id, date_consultation, heure, rendezvous_id, motif, symptomes, diagnostic, traitement, follow_up_instructions, consultation_fee, status, medecin_id) {
+        function editConsultation(id, date_consultation, heure, rendezvous_id, motif, symptomes, diagnostic, traitement, follow_up_instructions, consultation_fee, status, duree_traitement, medecin_id) {
             document.getElementById('editConsultationModal').classList.remove('hidden');
             document.getElementById('edit_consultation_id').value = id;
             document.getElementById('edit_consultation_date').value = date_consultation;
@@ -2110,6 +2133,7 @@
             document.getElementById('edit_consultation_follow_up').value = follow_up_instructions || '';
             document.getElementById('edit_consultation_fee').value = consultation_fee || '';
             document.getElementById('edit_consultation_status').value = status || '';
+            document.getElementById('edit_consultation_duree_traitement').value = duree_traitement || '';
             @if (!$isCurrentUserMedecin)
                 document.getElementById('edit_consultation_medecin_id').value = medecin_id;
             @endif
