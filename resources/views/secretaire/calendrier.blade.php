@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -25,21 +26,25 @@
         .modal {
             display: none;
         }
+
         .modal.show {
             display: flex;
         }
+
         /* Styles personnalisés pour la grille du calendrier */
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 1rem;
         }
+
         .day-card {
             background-color: #fff;
             border-radius: 0.5rem;
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
             padding: 1.5rem;
         }
+
         .day-header {
             font-weight: 600;
             color: #1e293b;
@@ -47,6 +52,7 @@
             border-bottom: 1px solid #e2e8f0;
             padding-bottom: 0.5rem;
         }
+
         .appointment-item {
             background-color: #f8fafc;
             border-left: 4px solid #3b82f6;
@@ -57,21 +63,26 @@
             flex-direction: column;
             gap: 0.25rem;
         }
+
         .appointment-item:last-child {
             margin-bottom: 0;
         }
+
         .appointment-time {
             font-weight: 600;
             color: #1e40af;
         }
+
         .appointment-patient {
             font-weight: 500;
             color: #1e293b;
         }
+
         .appointment-motif {
             color: #475569;
             font-size: 0.875rem;
         }
+
         .appointment-status {
             font-size: 0.75rem;
             padding: 0.25rem 0.5rem;
@@ -80,20 +91,24 @@
             align-items: center;
             gap: 0.25rem;
         }
+
         .status-pending {
             background-color: #fef3c7;
             color: #d97706;
         }
+
         .status-confirmed {
             background-color: #d1fae5;
             color: #065f46;
         }
+
         .status-cancelled {
             background-color: #fee2e2;
             color: #b91c1c;
         }
     </style>
 </head>
+
 <body class="bg-gray-100 min-h-screen">
     <!-- SIDEBAR -->
     <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50">
@@ -143,7 +158,32 @@
                         <i class="fas fa-calendar-alt mr-3 text-gray-400 group-hover:text-white"></i>
                         Calendrier
                     </a>
+                    <a href="{{ route('secretaire.certificats') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-file-medical mr-3 text-white"></i>
+                        Certificats
+                    </a>
+                    <a href="{{ route('secretaire.ordonnances') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-prescription-bottle-medical mr-3 text-gray-400 group-hover:text-white"></i>
+                        Ordonnances
+                    </a>
+                    <a href="{{ route('secretaire.remarques') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-sticky-note mr-3 text-gray-400 group-hover:text-white"></i>
+                        Remarques
+                    </a>
+                    <a href="{{ route('secretaire.papier') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-cog mr-3 text-gray-400 group-hover:text-white"></i>
+                        Papier
+                    </a>
                 @endif
+                <a href="{{ route('secretaire.profile') }}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-user mr-3 text-cordes-accent"></i>
+                    Mon Profil
+                </a>
             </div>
         </nav>
         <!-- Section utilisateur avec bouton de déconnexion -->
@@ -192,7 +232,8 @@
                         <i class="fas fa-chevron-left mr-2"></i>Semaine précédente
                     </a>
                     <h3 class="text-xl font-semibold text-gray-800">
-                        Semaine du {{ $startOfWeek->isoFormat('D MMMM YYYY') }} au {{ $endOfWeek->isoFormat('D MMMM YYYY') }}
+                        Semaine du {{ $startOfWeek->isoFormat('D MMMM YYYY') }} au
+                        {{ $endOfWeek->isoFormat('D MMMM YYYY') }}
                     </h3>
                     <a href="{{ route('secretaire.calendrier', ['date' => $currentDate->copy()->addWeek()->format('Y-m-d')]) }}"
                         class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
@@ -210,57 +251,64 @@
                                 @forelse ($dayData['appointments'] as $appointment)
                                     <div class="appointment-item">
                                         <span class="appointment-time">
-                                            <i class="fas fa-clock mr-1"></i>{{ \Carbon\Carbon::parse($appointment->date)->format('H:i') }}
+                                            <i
+                                                class="fas fa-clock mr-1"></i>{{ \Carbon\Carbon::parse($appointment->date)->format('H:i') }}
                                         </span>
                                         <span class="appointment-patient">
-                                            <i class="fas fa-user mr-1"></i>{{ $appointment->patient->nom ?? 'N/A' }} {{ $appointment->patient->prenom ?? '' }}
+                                            <i class="fas fa-user mr-1"></i>{{ $appointment->patient->nom ?? 'N/A' }}
+                                            {{ $appointment->patient->prenom ?? '' }}
                                         </span>
                                         <span class="appointment-motif">
                                             <i class="fas fa-info-circle mr-1"></i>{{ $appointment->motif }}
                                         </span>
-                                        <span class="appointment-status
+                                        <span
+                                            class="appointment-status
                                             @if ($appointment->statut === 'confirmé') status-confirmed
                                             @elseif($appointment->statut === 'en_attente') status-pending
-                                            @elseif($appointment->statut === 'annulé') status-cancelled
-                                            @endif">
+                                            @elseif($appointment->statut === 'annulé') status-cancelled @endif">
                                             @switch($appointment->statut)
                                                 @case('confirmé')
                                                     <i class="fas fa-check-circle"></i>Confirmé
-                                                    @break
+                                                @break
+
                                                 @case('en_attente')
                                                     <i class="fas fa-hourglass-half"></i>En attente
-                                                    @break
+                                                @break
+
                                                 @case('annulé')
                                                     <i class="fas fa-times-circle"></i>Annulé
-                                                    @break
+                                                @break
+
                                                 @default
                                                     {{ ucfirst($appointment->statut) }}
                                             @endswitch
                                         </span>
                                     </div>
-                                @empty
-                                    <p class="text-gray-500 text-sm text-center py-4">Aucun rendez-vous pour ce jour.</p>
-                                @endforelse
+                                    @empty
+                                        <p class="text-gray-500 text-sm text-center py-4">Aucun rendez-vous pour ce jour.
+                                        </p>
+                                    @endforelse
+                                </div>
                             </div>
-                        </div>
-                    @endforeach
+                        @endforeach
+                    </div>
                 </div>
-            </div>
-        </main>
-    </div>
+            </main>
+        </div>
 
-    <script>
-        // Auto-dismiss messages after 5 seconds
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                const messages = document.querySelectorAll('#successMessage, #errorMessage');
-                messages.forEach(function(message) {
-                    if (message) {
-                        message.style.display = 'none';
-                    }
-                });
-            }, 5000);
-        });
-    </script>
-</body>
-</html>
+        <script>
+            // Auto-dismiss messages after 5 seconds
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(function() {
+                    const messages = document.querySelectorAll('#successMessage, #errorMessage');
+                    messages.forEach(function(message) {
+                        if (message) {
+                            message.style.display = 'none';
+                        }
+                    });
+                }, 5000);
+            });
+        </script>
+    </body>
+
+    </html>

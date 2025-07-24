@@ -9,6 +9,9 @@ use App\Models\FichierMedical;
 use App\Models\ImagerieMedicale;
 use App\Models\Vaccination;
 use App\Models\HabitudeVie;
+use App\Models\Certificat;
+use App\Models\Remarque;
+use App\Models\Rendezvous;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,12 +23,31 @@ class DossierMedicalController extends Controller
 {
     public function index(Request $request)
     {
-        $patients = Patient::orderBy('nom')->get();
-        $medecins = User::where('role', 'medecin')->get() ?? collect();
-
         // Récupérer l'utilisateur connecté
         $currentUser = Auth::user();
         $isCurrentUserMedecin = $currentUser && $currentUser->role === 'medecin';
+
+        // Récupérer les patients avec rendez-vous pour le médecin connecté
+        $patientsAvecRendezVous = collect();
+        if ($isCurrentUserMedecin) {
+            $patientsAvecRendezVous = Patient::whereHas('rendezvous', function($query) use ($currentUser) {
+                $query->where('medecin_id', $currentUser->id);
+            })
+            ->with(['rendezvous' => function($query) use ($currentUser) {
+                $query->where('medecin_id', $currentUser->id)
+                      ->where('date', '>=', now())
+                      ->orderBy('date', 'asc')
+                      ->limit(1);
+            }])
+            ->orderBy('nom')
+            ->get()
+            ->map(function($patient) {
+                $patient->prochain_rdv = $patient->rendezvous->first()?->date;
+                return $patient;
+            });
+        }
+
+        $medecins = User::where('role', 'medecin')->get() ?? collect();
 
         // Date d'aujourd'hui
         $today = now()->format('Y-m-d');
@@ -37,6 +59,9 @@ class DossierMedicalController extends Controller
         $vaccinations = collect();
         $fichiers = collect();
         $habitudes = collect();
+        $certificats = collect();
+        $remarques = collect();
+        $rendezvous = collect();
 
         if ($request->has('patient_id') && $request->patient_id) {
             $selectedPatient = Patient::find($request->patient_id);
@@ -83,12 +108,33 @@ class DossierMedicalController extends Controller
                 } catch (\Exception $e) {
                     $habitudes = collect();
                 }
+
+                try {
+                    $certificats = Certificat::where('patient_id', $selectedPatient->id)
+                        ->with('medecin')->orderBy('date_certificat', 'desc')->get();
+                } catch (\Exception $e) {
+                    $certificats = collect();
+                }
+
+                try {
+                    $remarques = Remarque::where('patient_id', $selectedPatient->id)
+                        ->with('medecin')->orderBy('date_remarque', 'desc')->get();
+                } catch (\Exception $e) {
+                    $remarques = collect();
+                }
+
+                try {
+                    $rendezvous = Rendezvous::where('patient_id', $selectedPatient->id)
+                        ->orderBy('date', 'desc')->get();
+                } catch (\Exception $e) {
+                    $rendezvous = collect();
+                }
             }
         }
 
         return view('secretaire.dossier-medical', compact(
-            'patients', 'medecins', 'selectedPatient', 'consultations', 'examens', 
-            'imageries', 'vaccinations', 'fichiers', 'habitudes',
+            'patientsAvecRendezVous', 'medecins', 'selectedPatient', 'consultations', 'examens', 
+            'imageries', 'vaccinations', 'fichiers', 'habitudes', 'certificats', 'remarques', 'rendezvous',
             'currentUser', 'isCurrentUserMedecin', 'today'
         ));
     }
@@ -98,10 +144,49 @@ class DossierMedicalController extends Controller
         $validated = $request->validate([
             'patient_id' => 'required|exists:patients,id',
             'date_consultation' => 'required|date',
+            'heure' => 'nullable|date_format:H:i',
+            'rendezvous_id' => 'nullable|exists:rendezvous,id',
             'motif' => 'required|string|max:1000',
             'symptomes' => 'nullable|string|max:2000',
             'diagnostic' => 'nullable|string|max:2000',
-            'traitement' => 'nullable|string|max:2000'
+            'traitement' => 'nullable|string|max:2000',
+            'follow_up_instructions' => 'nullable|string|max:2000',
+            'consultation_fee' => 'nullable|numeric|min:0',
+            'status' => 'nullable|string|in:En cours,Terminée,Annulée,Reportée'
+        ]);
+
+        // Utiliser l'ID du médecin connecté ou celui fourni dans la requête
+        $currentUser = Auth::user();
+        if ($currentUser && $currentUser->role === 'medecin') {
+            $validated['medecin_id'] = $currentUser->id;
+        } else {
+            $validated['medecin_id'] = $request->input('medecin_id');
+            $request->validate([
+                'medecin_id' => 'required|exists:users,id'
+            ]);
+        }
+
+        // Convertir l'heure en datetime pour la base de données
+        if ($validated['heure']) {
+            $validated['heure'] = $validated['date_consultation'] . ' ' . $validated['heure'] . ':00';
+        }
+
+        try {
+            Consultation::create($validated);
+            return redirect()->back()->with('success', 'Consultation ajoutée avec succès.');
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la création de la consultation', ['error' => $e->getMessage()]);
+            return redirect()->back()->with('error', 'Erreur lors de la création de la consultation.');
+        }
+    }
+
+    public function storeCertificat(Request $request)
+    {
+        $validated = $request->validate([
+            'patient_id' => 'required|exists:patients,id',
+            'date_certificat' => 'required|date',
+            'type' => 'required|string|max:255',
+            'contenu' => 'required|string|max:5000'
         ]);
 
         // Utiliser l'ID du médecin connecté ou celui fourni dans la requête
@@ -116,11 +201,39 @@ class DossierMedicalController extends Controller
         }
 
         try {
-            Consultation::create($validated);
-            return redirect()->back()->with('success', 'Consultation ajoutée avec succès.');
+            Certificat::create($validated);
+            return redirect()->back()->with('success', 'Certificat ajouté avec succès.');
         } catch (\Exception $e) {
-            Log::error('Erreur lors de la création de la consultation', ['error' => $e->getMessage()]);
-            return redirect()->back()->with('error', 'Erreur lors de la création de la consultation.');
+            Log::error('Erreur lors de la création du certificat', ['error' => $e->getMessage()]);
+            return redirect()->back()->with('error', 'Erreur lors de la création du certificat.');
+        }
+    }
+
+    public function storeRemarque(Request $request)
+    {
+        $validated = $request->validate([
+            'patient_id' => 'required|exists:patients,id',
+            'date_remarque' => 'required|date',
+            'remarque' => 'required|string|max:2000'
+        ]);
+
+        // Utiliser l'ID du médecin connecté ou celui fourni dans la requête
+        $currentUser = Auth::user();
+        if ($currentUser && $currentUser->role === 'medecin') {
+            $validated['medecin_id'] = $currentUser->id;
+        } else {
+            $validated['medecin_id'] = $request->input('medecin_id');
+            $request->validate([
+                'medecin_id' => 'required|exists:users,id'
+            ]);
+        }
+
+        try {
+            Remarque::create($validated);
+            return redirect()->back()->with('success', 'Remarque ajoutée avec succès.');
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la création de la remarque', ['error' => $e->getMessage()]);
+            return redirect()->back()->with('error', 'Erreur lors de la création de la remarque.');
         }
     }
 
@@ -308,11 +421,16 @@ class DossierMedicalController extends Controller
         $validated = $request->validate([
             'id' => 'required|exists:consultations,id',
             'patient_id' => 'required|exists:patients,id',
-            'date_consultation' => 'required|date|before_or_equal:today', // Validation ajoutée
+            'date_consultation' => 'required|date|before_or_equal:today',
+            'heure' => 'nullable|date_format:H:i',
+            'rendezvous_id' => 'nullable|exists:rendezvous,id',
             'motif' => 'required|string|max:1000',
             'symptomes' => 'nullable|string|max:2000',
             'diagnostic' => 'nullable|string|max:2000',
-            'traitement' => 'nullable|string|max:2000'
+            'traitement' => 'nullable|string|max:2000',
+            'follow_up_instructions' => 'nullable|string|max:2000',
+            'consultation_fee' => 'nullable|numeric|min:0',
+            'status' => 'nullable|string|in:En cours,Terminée,Annulée,Reportée'
         ]);
 
         // Utiliser l'ID du médecin connecté ou celui fourni dans la requête
@@ -325,8 +443,10 @@ class DossierMedicalController extends Controller
             $validated['medecin_id'] = $medecins ? $medecins->id : $request->input('medecin_id');
         }
 
-        // La date est maintenant prise du formulaire et validée, plus de hardcoding à now()
-        // $validated['date_consultation'] = now()->format('Y-m-d'); 
+        // Convertir l'heure en datetime pour la base de données
+        if ($validated['heure']) {
+            $validated['heure'] = $validated['date_consultation'] . ' ' . $validated['heure'] . ':00';
+        }
 
         try {
             $consultation = Consultation::findOrFail($validated['id']);
@@ -335,6 +455,63 @@ class DossierMedicalController extends Controller
         } catch (\Exception $e) {
             Log::error('Erreur lors de la modification de la consultation', ['error' => $e->getMessage()]);
             return redirect()->back()->with('error', 'Erreur lors de la modification de la consultation.');
+        }
+    }
+
+    public function updateCertificat(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|exists:certificats,id',
+            'patient_id' => 'required|exists:patients,id',
+            'date_certificat' => 'required|date',
+            'type' => 'required|string|max:255',
+            'contenu' => 'required|string|max:5000'
+        ]);
+
+        // Utiliser l'ID du médecin connecté ou celui fourni dans la requête
+        $currentUser = Auth::user();
+        if ($currentUser && $currentUser->role === 'medecin') {
+            $validated['medecin_id'] = $currentUser->id;
+        } else {
+            $medecins = User::where('role', 'medecin')->first();
+            $validated['medecin_id'] = $medecins ? $medecins->id : $request->input('medecin_id');
+        }
+
+        try {
+            $certificat = Certificat::findOrFail($validated['id']);
+            $certificat->update($validated);
+            return redirect()->back()->with('success', 'Certificat modifié avec succès.');
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la modification du certificat', ['error' => $e->getMessage()]);
+            return redirect()->back()->with('error', 'Erreur lors de la modification du certificat.');
+        }
+    }
+
+    public function updateRemarque(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|exists:remarques,id',
+            'patient_id' => 'required|exists:patients,id',
+            'date_remarque' => 'required|date',
+            'remarque' => 'required|string|max:2000'
+        ]);
+
+        // Utiliser l'ID du médecin connecté ou celui fourni dans la requête
+        $currentUser = Auth::user();
+        if ($currentUser && $currentUser->role === 'medecin') {
+            $validated['medecin_id'] = $currentUser->id;
+        } else {
+            $medecins = User::where('role', 'medecin')->first();
+            $validated['medecin_id'] = $medecins ? $medecins->id : $request->input('medecin_id');
+        }
+
+        try {
+            $remarque = Remarque::findOrFail($validated['id']);
+            $remarque->update($validated);
+            return redirect()->back()->with('success', 'Remarque modifiée avec succès.');
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la modification de la remarque', ['error' => $e->getMessage()]);
+            return redirect()->back()->with('error', 'Erreur lors de la modification de la remarque.');
         }
     }
 
@@ -347,7 +524,7 @@ class DossierMedicalController extends Controller
             'resultat' => 'required|string|max:1000',
             'unite' => 'nullable|string|max:50',
             'valeurs_reference' => 'nullable|string|max:255',
-            'date_examen' => 'required|date|before_or_equal:today', // Validation ajoutée
+            'date_examen' => 'required|date|before_or_equal:today',
             'commentaire' => 'nullable|string|max:1000'
         ]);
 
@@ -359,9 +536,6 @@ class DossierMedicalController extends Controller
             $medecins = User::where('role', 'medecin')->first();
             $validated['medecin_id'] = $medecins ? $medecins->id : $request->input('medecin_id');
         }
-
-        // La date est maintenant prise du formulaire et validée, plus de hardcoding à now()
-        // $validated['date_examen'] = now()->format('Y-m-d');
 
         try {
             $examen = ExamenBiologique::findOrFail($validated['id']);
@@ -381,7 +555,7 @@ class DossierMedicalController extends Controller
             'type' => 'required|string|max:255',
             'zone_examinee' => 'required|string|max:255',
             'resultat' => 'required|string|max:2000',
-            'date_examen' => 'required|date|before_or_equal:today', // Validation ajoutée
+            'date_examen' => 'required|date|before_or_equal:today',
             'commentaire' => 'nullable|string|max:1000'
         ]);
 
@@ -393,9 +567,6 @@ class DossierMedicalController extends Controller
             $medecins = User::where('role', 'medecin')->first();
             $validated['medecin_id'] = $medecins ? $medecins->id : $request->input('medecin_id');
         }
-
-        // La date est maintenant prise du formulaire et validée, plus de hardcoding à now()
-        // $validated['date_examen'] = now()->format('Y-m-d');
 
         try {
             $imagerie = ImagerieMedicale::findOrFail($validated['id']);
@@ -413,7 +584,7 @@ class DossierMedicalController extends Controller
             'id' => 'required|exists:vaccinations,id',
             'patient_id' => 'required|exists:patients,id',
             'nom' => 'required|string|max:255',
-            'date_vaccination' => 'required|date|before_or_equal:today', // Validation ajoutée
+            'date_vaccination' => 'required|date|before_or_equal:today',
             'date_rappel' => 'nullable|date|after:date_vaccination',
             'commentaire' => 'nullable|string|max:1000'
         ]);
@@ -426,9 +597,6 @@ class DossierMedicalController extends Controller
             $medecins = User::where('role', 'medecin')->first();
             $validated['medecin_id'] = $medecins ? $medecins->id : $request->input('medecin_id');
         }
-
-        // La date est maintenant prise du formulaire et validée, plus de hardcoding à now()
-        // $validated['date_vaccination'] = now()->format('Y-m-d');
 
         try {
             $vaccination = Vaccination::findOrFail($validated['id']);
@@ -478,8 +646,8 @@ class DossierMedicalController extends Controller
         $validated = $request->validate([
             'id' => 'required|exists:fichiers_medicales,id',
             'patient_id' => 'required|exists:patients,id',
-            'nom' => 'required|string|max:255', // Ajout de la validation pour le nom
-            'fichier' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240', // Rendu nullable pour la mise à jour
+            'nom' => 'required|string|max:255',
+            'fichier' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240',
             'type' => 'required|string|max:100',
             'commentaire' => 'nullable|string|max:1000'
         ]);
@@ -539,6 +707,28 @@ class DossierMedicalController extends Controller
         try {
             Consultation::findOrFail($id)->delete();
             return redirect()->back()->with('success', 'Consultation supprimée avec succès.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erreur lors de la suppression.');
+        }
+    }
+
+    public function destroyCertificat(Request $request)
+    {
+        $id = $request->input('id');
+        try {
+            Certificat::findOrFail($id)->delete();
+            return redirect()->back()->with('success', 'Certificat supprimé avec succès.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erreur lors de la suppression.');
+        }
+    }
+
+    public function destroyRemarque(Request $request)
+    {
+        $id = $request->input('id');
+        try {
+            Remarque::findOrFail($id)->delete();
+            return redirect()->back()->with('success', 'Remarque supprimée avec succès.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Erreur lors de la suppression.');
         }

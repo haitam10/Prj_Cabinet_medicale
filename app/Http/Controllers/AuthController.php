@@ -26,6 +26,21 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
+        // Vérifier d'abord si l'utilisateur existe et a le bon statut
+        $user = User::where('email', $credentials['email'])->first();
+        
+        if (!$user) {
+            return redirect()->route('login')->withErrors([
+                'email' => 'Email ou mot de passe incorrect.',
+            ])->withInput();
+        }
+        
+        if ($user->statut !== 'actif') {
+            return redirect()->route('login')->withErrors([
+                'email' => 'Votre compte n\'est pas encore activé. Veuillez contacter l\'administrateur.',
+            ])->withInput();
+        }
+        
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
             $user = Auth::user();
@@ -62,8 +77,13 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json(['message' => 'Email ou mot de passe incorrect.'
-            ], 401);
+            return response()->json(['message' => 'Email ou mot de passe incorrect.'], 401);
+        }
+        
+        if ($user->statut !== 'actif') {
+            return response()->json([
+                'message' => 'Votre compte n\'est pas encore activé. Veuillez contacter l\'administrateur.'
+            ], 403);
         }
 
         return response()->json(['message' => 'Connexion réussie.',

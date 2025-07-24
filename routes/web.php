@@ -10,6 +10,10 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DossierMedicalController;
 use App\Http\Controllers\CalendrierController;
+use App\Http\Controllers\PapierController;
+use App\Http\Controllers\OrdonnanceController;
+use App\Http\Controllers\CertificatController;
+use App\Http\Controllers\RemarqueController;
 
 // Page de connexion
 Route::get('/', function () {
@@ -42,6 +46,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/rendezvous', [RendezvousController::class, 'index'])->name('rendezvous');
         Route::get('/paiements', [PaiementController::class, 'index'])->name('paiements');
         Route::get('/docs', [DocumentController::class, 'index'])->name('docs');
+        // Gestion profil
+        Route::get('/profile', [UserController::class, 'profile'])->name('profile');
+        Route::put('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
     });
 
     // Routes dossier médical et calendrier accessibles UNIQUEMENT au médecin
@@ -70,9 +77,58 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/dossier-medical/vaccination', [DossierMedicalController::class, 'updateVaccination'])->name('dossier-medical.vaccination.update');
         Route::put('/dossier-medical/habitude', [DossierMedicalController::class, 'updateHabitudeVie'])->name('dossier-medical.habitude.update');
         Route::put('/dossier-medical/fichier', [DossierMedicalController::class, 'updateFichierMedical'])->name('dossier-medical.fichier.update');
+
+        // Routes pour certificats
+        Route::post('/dossier-medical/certificat', [DossierMedicalController::class, 'storeCertificat'])->name('dossier-medical.certificat.store');
+        Route::put('/dossier-medical/certificat', [DossierMedicalController::class, 'updateCertificat'])->name('dossier-medical.certificat.update');
+        Route::delete('/dossier-medical/certificat', [DossierMedicalController::class, 'destroyCertificat'])->name('dossier-medical.certificat.destroy');
+
+        // Routes pour remarques
+        Route::post('/dossier-medical/remarque', [DossierMedicalController::class, 'storeRemarque'])->name('dossier-medical.remarque.store');
+        Route::put('/dossier-medical/remarque', [DossierMedicalController::class, 'updateRemarque'])->name('dossier-medical.remarque.update');
+        Route::delete('/dossier-medical/remarque', [DossierMedicalController::class, 'destroyRemarque'])->name('dossier-medical.remarque.destroy');
+
+
+        // Routes certificats
+        Route::get('/certificats', [DocumentController::class, 'showCerts'])->name('certificats');
+        Route::get('/certificat/{id}', [CertificatController::class, 'show'])->name('certificat.show');
+        Route::post('/certificat/store', [CertificatController::class, 'store'])->name('certificat.store');
+
+        // Routes ordonnances
+        Route::get('/ordonnances', [DocumentController::class, 'showOrds'])->name('ordonnances');
+        Route::post('/ordonnance/store', [OrdonnanceController::class, 'store'])->name('ordonnance.store');
+        Route::get('/ordonnance/print/{id}', [OrdonnanceController::class, 'printOrdonnance'])->name('ordonnance.print');
+
+        // Routes remarques
+        Route::get('/remarques', [DocumentController::class, 'showRems'])->name('remarques');
+        Route::post('/remarques', [RemarqueController::class, 'store'])->name('remarques.store');
+        Route::put('/remarques/{id}', [RemarqueController::class, 'update'])->name('remarques.update');
+        Route::delete('/remarques/{id}', [RemarqueController::class, 'destroy'])->name('remarques.destroy');
+
+        // Routes papier
+        Route::get('/papier', [PapierController::class, 'index'])->name('papier');
+        Route::post('/papier/update-selection', [PapierController::class, 'updateSelection'])->name('papier.updateSelection');
+        Route::delete('/papier/delete-template', [PapierController::class, 'deleteTemplate'])->name('papier.deleteTemplate');
+        Route::get('/papier/get-template/{type}/{id}', [PapierController::class, 'getTemplate'])->name('papier.getTemplate');
+        Route::post('/papier/store', [PapierController::class, 'store'])->name('papier.store');
+        Route::post('/papier/createTemplate', [PapierController::class, 'createTemplate'])->name('papier.createTemplate');
+        Route::post('/papier/updateTemplate', [PapierController::class, 'updateTemplate'])->name('papier.updateTemplate');
+        Route::delete('papier/delete-template/{type}/{id}', [PapierController::class, 'deleteTemplate']);
+        Route::get('papier/template/{type}', [PapierController::class, 'getTemplates']);
+
+        // Routes secrétaires management
+        Route::get('/papier/available-secretaires', [PapierController::class, 'getAvailableSecretaires'])->name('papier.getAvailableSecretaires');
+        Route::post('/papier/associate-secretaire', [PapierController::class, 'associateSecretaire'])->name('papier.associateSecretaire');
+        Route::delete('/papier/dissociate-secretaire/{secretaireId}', [PapierController::class, 'dissociateSecretaire'])->name('papier.dissociateSecretaire');
     });
 
-    // CRUD généraux (rendezvous, patients, factures, paiements)
+    // Routes API pour les certificats et ordonnances - accessibles aux médecins uniquement
+    Route::middleware('role:medecin')->group(function () {
+        Route::get('/api/certificat/{id}/data', [CertificatController::class, 'getCertificatData']);
+        Route::get('/api/ordonnance/{id}/data', [OrdonnanceController::class, 'getOrdonnanceData']);
+    });
+
+    // CRUD 
     Route::resource('rendezvous', RendezvousController::class)->except(['index']);
     Route::resource('patients', PatientController::class)->except(['index']);
     Route::resource('factures', FactureController::class)->except(['index']);
