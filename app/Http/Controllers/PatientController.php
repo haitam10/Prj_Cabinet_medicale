@@ -228,11 +228,11 @@ class PatientController extends Controller
         }
     }
 
-    // MÉTHODE CORRIGÉE POUR AFFICHER LES CONSULTATIONS AVEC LES RENDEZ-VOUS
+    // MÉTHODE MISE À JOUR POUR AFFICHER TOUTES LES DONNÉES DU PATIENT
     public function getPatientDetails(Request $request, Patient $patient)
     {
         try {
-            // Charger le patient avec les consultations et leurs relations
+            // Charger le patient avec toutes les relations
             $patient->load([
                 'consultations' => function($query) {
                     $query->with(['medecin', 'rendezvous'])->orderBy('date_consultation', 'desc');
@@ -242,7 +242,7 @@ class PatientController extends Controller
             // Récupérer les consultations avec leurs rendez-vous associés
             $consultations = $patient->consultations;
 
-            // Essayer de récupérer les ordonnances si la relation existe
+            // Récupérer les ordonnances si la relation existe
             $ordonnances = collect();
             if (method_exists($patient, 'ordonnances')) {
                 $ordonnances = $patient->ordonnances()
@@ -251,10 +251,64 @@ class PatientController extends Controller
                     ->get();
             }
 
-            // Essayer de récupérer les certificats si la relation existe
+            // Récupérer les certificats si la relation existe
             $certificats = collect();
             if (method_exists($patient, 'certificats')) {
                 $certificats = $patient->certificats()
+                    ->with('medecin')
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            }
+
+            // Récupérer les remarques si la relation existe
+            $remarques = collect();
+            if (method_exists($patient, 'remarques')) {
+                $remarques = $patient->remarques()
+                    ->with('medecin')
+                    ->orderBy('date_remarque', 'desc')
+                    ->get();
+            }
+
+            // Récupérer les habitudes de vie si la relation existe
+            $habitudesVie = collect();
+            if (method_exists($patient, 'habitudesVie')) {
+                $habitudesVie = $patient->habitudesVie()
+                    ->with('medecin')
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            }
+
+            // Récupérer les examens biologiques si la relation existe
+            $examensBiologiques = collect();
+            if (method_exists($patient, 'examensBiologiques')) {
+                $examensBiologiques = $patient->examensBiologiques()
+                    ->with('medecin')
+                    ->orderBy('date_examen', 'desc')
+                    ->get();
+            }
+
+            // Récupérer l'imagerie médicale si la relation existe
+            $imagerieMedicale = collect();
+            if (method_exists($patient, 'imagerieMedicale')) {
+                $imagerieMedicale = $patient->imagerieMedicale()
+                    ->with('medecin')
+                    ->orderBy('date_examen', 'desc')
+                    ->get();
+            }
+
+            // Récupérer les vaccinations si la relation existe
+            $vaccinations = collect();
+            if (method_exists($patient, 'vaccinations')) {
+                $vaccinations = $patient->vaccinations()
+                    ->with('medecin')
+                    ->orderBy('date_vaccination', 'desc')
+                    ->get();
+            }
+
+            // Récupérer les fichiers médicaux si la relation existe
+            $fichiersMedicaux = collect();
+            if (method_exists($patient, 'fichiersMedicaux')) {
+                $fichiersMedicaux = $patient->fichiersMedicaux()
                     ->with('medecin')
                     ->orderBy('created_at', 'desc')
                     ->get();
@@ -265,7 +319,13 @@ class PatientController extends Controller
                     'patient' => $patient,
                     'consultations' => $consultations,
                     'ordonnances' => $ordonnances,
-                    'certificats' => $certificats
+                    'certificats' => $certificats,
+                    'remarques' => $remarques,
+                    'habitudesVie' => $habitudesVie,
+                    'examensBiologiques' => $examensBiologiques,
+                    'imagerieMedicale' => $imagerieMedicale,
+                    'vaccinations' => $vaccinations,
+                    'fichiersMedicaux' => $fichiersMedicaux
                 ]);
             }
 

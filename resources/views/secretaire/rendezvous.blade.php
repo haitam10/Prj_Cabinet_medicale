@@ -140,10 +140,16 @@
                     <h1 class="text-2xl font-semibold text-gray-900">Rendez-vous</h1>
                     <p class="text-gray-600 text-sm mt-1">Gestion des rendez-vous médicaux</p>
                 </div>
-                <button onclick="openAddModal()"
-                    class="px-4 py-2 bg-cordes-blue text-white rounded-lg hover:bg-cordes-dark transition-colors">
-                    <i class="fas fa-plus mr-2"></i>Nouveau RDV
-                </button>
+                <div class="flex space-x-3">
+                    <button onclick="openDisponibiliteModal()"
+                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-clock mr-2"></i>Disponibilité médecin
+                    </button>
+                    <button onclick="openAddModal()"
+                        class="px-4 py-2 bg-cordes-blue text-white rounded-lg hover:bg-cordes-dark transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Nouveau RDV
+                    </button>
+                </div>
             </div>
         </header>
 
@@ -400,6 +406,153 @@
         </main>
     </div>
 
+    <!-- MODAL DISPONIBILITE -->
+    <div id="disponibiliteModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white w-full max-w-4xl rounded-lg shadow-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">Gestion des disponibilités médecin</h2>
+                <button onclick="closeDisponibiliteModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Formulaire d'ajout -->
+            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                <h3 class="text-lg font-medium text-gray-800 mb-3">Ajouter une disponibilité</h3>
+                <form action="{{ route('secretaire.disponibilite.store') }}" method="POST" class="space-y-4" id="disponibiliteForm">
+                    @csrf
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label for="disp_date" class="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+                            <input type="date" name="date" id="disp_date" required 
+                                min="{{ date('Y-m-d') }}"
+                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+                        </div>
+                        <div>
+                            <label for="disp_heure_entree" class="block text-sm font-medium text-gray-700 mb-1">Heure d'entrée *</label>
+                            <input type="time" name="heure_entree" id="disp_heure_entree" required
+                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+                        </div>
+                        <div>
+                            <label for="disp_heure_sortie" class="block text-sm font-medium text-gray-700 mb-1">Heure de sortie *</label>
+                            <input type="time" name="heure_sortie" id="disp_heure_sortie" required
+                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+                        </div>
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit"
+                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>Ajouter
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Liste des disponibilités existantes -->
+            <div class="bg-white">
+                <h3 class="text-lg font-medium text-gray-800 mb-3">Disponibilités existantes</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Heure d'entrée</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Heure de sortie</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="disponibilitesTableBody">
+                            @forelse ($disponibilites as $disp)
+                                <tr class="hover:bg-gray-50 transition-colors" id="disp-row-{{ $disp->id }}">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ \Carbon\Carbon::parse($disp->date)->format('d/m/Y') }}
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">
+                                            {{ substr($disp->heure_entree, 0, 5) }}
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">
+                                            {{ substr($disp->heure_sortie, 0, 5) }}
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <div class="flex space-x-2">
+                                            <button onclick='openEditDisponibiliteModal(@json($disp))'
+                                                class="text-blue-600 hover:text-blue-800 transition-colors p-1 rounded hover:bg-blue-50"
+                                                title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button onclick="deleteDisponibilite('{{ $disp->id }}')"
+                                                class="text-red-600 hover:text-red-800 transition-colors p-1 rounded hover:bg-red-50"
+                                                title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr id="noDispRow">
+                                    <td colspan="4" class="px-6 py-4 text-center text-gray-500">
+                                        <i class="fas fa-clock text-4xl mb-2 text-gray-300"></i>
+                                        <p>Aucune disponibilité définie</p>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL MODIFIER DISPONIBILITE -->
+    <div id="editDisponibiliteModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white w-full max-w-md rounded-lg shadow-xl p-6 m-4">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">Modifier la disponibilité</h2>
+                <button onclick="closeEditDisponibiliteModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+            <form id="editDisponibiliteForm" method="POST" class="space-y-4">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="id" id="edit_disp_id">
+                
+                <div>
+                    <label for="edit_disp_date" class="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+                    <input type="date" name="date" id="edit_disp_date" required
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+                </div>
+                <div>
+                    <label for="edit_disp_heure_entree" class="block text-sm font-medium text-gray-700 mb-1">Heure d'entrée *</label>
+                    <input type="time" name="heure_entree" id="edit_disp_heure_entree" required
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+                </div>
+                <div>
+                    <label for="edit_disp_heure_sortie" class="block text-sm font-medium text-gray-700 mb-1">Heure de sortie *</label>
+                    <input type="time" name="heure_sortie" id="edit_disp_heure_sortie" required
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeEditDisponibiliteModal()"
+                        class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                        Annuler
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-save mr-2"></i>Mettre à jour
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- MODAL AJOUTER RDV -->
     <div id="addModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white w-full max-w-2xl rounded-lg shadow-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
@@ -440,21 +593,30 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label for="appointment_date" class="block text-sm font-medium text-gray-700 mb-1">Date *</label>
-                        <input type="date" name="appointment_date" id="appointment_date" required 
-                            min="{{ date('Y-m-d') }}" value="{{ old('appointment_date') }}"
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
+                        <select name="appointment_date" id="appointment_date" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                            <option value="">Sélectionnez une date</option>
+                            @foreach ($disponibilites as $disp)
+                                <option value="{{ $disp->date }}" {{ old('appointment_date') == $disp->date ? 'selected' : '' }}>
+                                    {{ \Carbon\Carbon::parse($disp->date)->format('d/m/Y') }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @if($disponibilites->isEmpty())
+                            <p class="text-sm text-red-600 mt-1">Aucune disponibilité définie. Veuillez d'abord créer des disponibilités.</p>
+                        @endif
                     </div>
                     <div>
-                        <label for="appointment_time" class="block text-sm font-medium text-gray-700 mb-1">Heure *</label>
-                        <input type="time" name="appointment_time" id="appointment_time" required 
-                            value="{{ old('appointment_time') }}"
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
+                        <label for="appointment_time" class="block text-sm font-medium text-gray-700 mb-1">Créneau horaire *</label>
+                        <select name="appointment_time" id="appointment_time" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                            <option value="">Sélectionnez d'abord une date</option>
+                        </select>
                     </div>
                     <div>
                         <label for="duration" class="block text-sm font-medium text-gray-700 mb-1">Durée (min)</label>
-                        <input type="number" name="duration" id="duration" min="15" max="180" step="15" 
-                            value="{{ old('duration', 30) }}" placeholder="30"
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
+                        <input type="number" name="duration" id="duration" value="30" readonly
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 text-gray-600 cursor-not-allowed outline-none" />
                     </div>
                 </div>
 
@@ -573,18 +735,27 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label for="edit_appointment_date" class="block text-sm font-medium text-gray-700 mb-1">Date *</label>
-                        <input type="date" name="appointment_date" id="edit_appointment_date" required
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
+                        <select name="appointment_date" id="edit_appointment_date" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                            <option value="">Sélectionnez une date</option>
+                            @foreach ($disponibilites as $disp)
+                                <option value="{{ $disp->date }}">
+                                    {{ \Carbon\Carbon::parse($disp->date)->format('d/m/Y') }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
                     <div>
-                        <label for="edit_appointment_time" class="block text-sm font-medium text-gray-700 mb-1">Heure *</label>
-                        <input type="time" name="appointment_time" id="edit_appointment_time" required
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
+                        <label for="edit_appointment_time" class="block text-sm font-medium text-gray-700 mb-1">Créneau horaire *</label>
+                        <select name="appointment_time" id="edit_appointment_time" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
+                            <option value="">Sélectionnez d'abord une date</option>
+                        </select>
                     </div>
                     <div>
                         <label for="edit_duration" class="block text-sm font-medium text-gray-700 mb-1">Durée (min)</label>
-                        <input type="number" name="duration" id="edit_duration" min="15" max="180" step="15"
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent" />
+                        <input type="number" name="duration" id="edit_duration" value="30" readonly
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 text-gray-600 cursor-not-allowed outline-none" />
                     </div>
                 </div>
 
@@ -666,6 +837,84 @@
         // Configuration CSRF pour les requêtes AJAX
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
+        // Données des disponibilités pour JavaScript
+        const disponibilites = @json($disponibilitesJS);
+
+        // Données des rendez-vous existants pour vérifier les conflits
+        const existingAppointments = @json($existingAppointmentsJS);
+
+        // Fonction pour générer les créneaux horaires de 30 minutes
+        function generateTimeSlots(startTime, endTime) {
+            const slots = [];
+            const start = new Date(`2000-01-01T${startTime}:00`);
+            const end = new Date(`2000-01-01T${endTime}:00`);
+            
+            let current = new Date(start);
+            
+            while (current < end) {
+                const timeString = current.toTimeString().substring(0, 5);
+                const nextSlot = new Date(current.getTime() + 30 * 60000);
+                const nextTimeString = nextSlot.toTimeString().substring(0, 5);
+                
+                if (nextSlot <= end) {
+                    slots.push({
+                        value: timeString,
+                        label: `${timeString} - ${nextTimeString}`
+                    });
+                }
+                
+                current = nextSlot;
+            }
+            
+            return slots;
+        }
+
+        // Fonction pour vérifier si un créneau est occupé
+        function isTimeSlotOccupied(date, time, excludeId = null) {
+            return existingAppointments.some(appointment => {
+                return appointment.date === date && 
+                       appointment.time === time && 
+                       appointment.status !== 'cancelled' &&
+                       appointment.id !== excludeId;
+            });
+        }
+
+        // Fonction pour mettre à jour les créneaux horaires
+        function updateTimeSlots(dateSelect, timeSelect, excludeId = null) {
+            const selectedDate = dateSelect.value;
+            timeSelect.innerHTML = '<option value="">Sélectionnez un créneau</option>';
+            
+            if (!selectedDate) {
+                return;
+            }
+            
+            // Trouver la disponibilité pour cette date
+            const disponibilite = disponibilites.find(disp => disp.date === selectedDate);
+            
+            if (!disponibilite) {
+                timeSelect.innerHTML = '<option value="">Aucune disponibilité pour cette date</option>';
+                return;
+            }
+            
+            // Générer les créneaux
+            const slots = generateTimeSlots(disponibilite.heure_entree, disponibilite.heure_sortie);
+            
+            slots.forEach(slot => {
+                const option = document.createElement('option');
+                option.value = slot.value;
+                option.textContent = slot.label;
+                
+                // Vérifier si le créneau est occupé
+                if (isTimeSlotOccupied(selectedDate, slot.value, excludeId)) {
+                    option.disabled = true;
+                    option.textContent += ' (Occupé)';
+                    option.style.color = '#ef4444';
+                }
+                
+                timeSelect.appendChild(option);
+            });
+        }
+
         // Fonction pour obtenir la date et l'heure actuelles
         function getCurrentDateTime() {
             const now = new Date();
@@ -673,31 +922,6 @@
                 date: now.toISOString().split('T')[0],
                 time: now.toTimeString().substring(0, 5)
             };
-        }
-
-        // Fonction pour valider la date et l'heure
-        function validateDateTime(dateInput, timeInput) {
-            const selectedDate = dateInput.value;
-            const selectedTime = timeInput.value;
-
-            if (!selectedDate || !selectedTime) {
-                return {
-                    valid: false,
-                    message: 'Veuillez sélectionner une date et une heure.'
-                };
-            }
-
-            const selectedDateTime = new Date(selectedDate + 'T' + selectedTime);
-            const currentDateTimeObj = new Date();
-
-            if (selectedDateTime <= currentDateTimeObj) {
-                return {
-                    valid: false,
-                    message: 'La date et l\'heure du rendez-vous doivent être postérieures à maintenant.'
-                };
-            }
-
-            return { valid: true };
         }
 
         // Fonction pour fermer un message spécifique
@@ -828,7 +1052,7 @@
                 `${visibleCount} rendez-vous trouvé${visibleCount !== 1 ? 's' : ''}`;
         }
 
-        // Fonctions pour les modales
+        // Fonctions pour les modales RDV
         function openAddModal() {
             document.getElementById('addModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
@@ -854,17 +1078,21 @@
             if (rdv.appointment_date_formatted) {
                 dateValue = rdv.appointment_date_formatted;
             } else if (rdv.appointment_date) {
-                // Si c'est un objet Carbon de Laravel sérialisé
                 if (typeof rdv.appointment_date === 'object' && rdv.appointment_date.date) {
                     dateValue = rdv.appointment_date.date.split(' ')[0];
                 } else if (typeof rdv.appointment_date === 'string') {
-                    // Si c'est une chaîne de date
                     dateValue = rdv.appointment_date.split(' ')[0];
                 }
             }
             
-            console.log('Setting date to:', dateValue);
             document.getElementById('edit_appointment_date').value = dateValue;
+            
+            // Mettre à jour les créneaux horaires pour la date sélectionnée
+            updateTimeSlots(
+                document.getElementById('edit_appointment_date'),
+                document.getElementById('edit_appointment_time'),
+                rdv.id
+            );
             
             // Gestion correcte de l'heure
             let timeValue = '';
@@ -873,21 +1101,22 @@
             } else if (rdv.appointment_time) {
                 timeValue = rdv.appointment_time;
                 if (typeof timeValue === 'string' && timeValue.length > 5) {
-                    timeValue = timeValue.substring(0, 5); // Get HH:MM format
+                    timeValue = timeValue.substring(0, 5);
                 }
             }
             
-            console.log('Setting time to:', timeValue);
-            document.getElementById('edit_appointment_time').value = timeValue;
+            // Attendre que les options soient chargées avant de définir la valeur
+            setTimeout(() => {
+                document.getElementById('edit_appointment_time').value = timeValue;
+            }, 100);
             
             // Remplir les autres champs
-            document.getElementById('edit_duration').value = parseInt(rdv.duration) || 30;
+            document.getElementById('edit_duration').value = 30; // Toujours 30 minutes
             document.getElementById('edit_status').value = rdv.status;
             document.getElementById('edit_appointment_type').value = rdv.appointment_type;
             document.getElementById('edit_reason').value = rdv.reason || '';
             document.getElementById('edit_patient_notes').value = rdv.patient_notes || '';
             
-            // Notes du médecin seulement si l'élément existe
             const doctorNotesField = document.getElementById('edit_doctor_notes');
             if (doctorNotesField) {
                 doctorNotesField.value = rdv.doctor_notes || '';
@@ -896,7 +1125,6 @@
             document.getElementById('edit_cancellation_reason').value = rdv.cancellation_reason || '';
             document.getElementById('edit_feedback').value = rdv.feedback || '';
 
-            // Show/hide cancellation fields
             toggleCancellationFields();
         }
 
@@ -959,6 +1187,88 @@
             }
         }
 
+        // Fonctions pour les modales de disponibilité
+        function openDisponibiliteModal() {
+            document.getElementById('disponibiliteModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function closeDisponibiliteModal() {
+            document.getElementById('disponibiliteModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function openEditDisponibiliteModal(disp) {
+            console.log('Opening edit disponibilite modal with data:', disp);
+            
+            document.getElementById('editDisponibiliteModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            document.getElementById('editDisponibiliteForm').action = `/secretaire/disponibilite/${disp.id}`;
+            document.getElementById('edit_disp_id').value = disp.id;
+            document.getElementById('edit_disp_date').value = disp.date;
+            
+            let heureEntree = disp.heure_entree;
+            let heureSortie = disp.heure_sortie;
+            
+            if (typeof heureEntree === 'string' && heureEntree.length > 5) {
+                heureEntree = heureEntree.substring(0, 5);
+            }
+            if (typeof heureSortie === 'string' && heureSortie.length > 5) {
+                heureSortie = heureSortie.substring(0, 5);
+            }
+            
+            document.getElementById('edit_disp_heure_entree').value = heureEntree;
+            document.getElementById('edit_disp_heure_sortie').value = heureSortie;
+        }
+
+        function closeEditDisponibiliteModal() {
+            document.getElementById('editDisponibiliteModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function deleteDisponibilite(id) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cette disponibilité ?')) {
+                fetch(`/secretaire/disponibilite/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.message) {
+                            showMessage(data.message, 'success');
+                            const row = document.getElementById(`disp-row-${id}`);
+                            if (row) {
+                                row.remove();
+                            }
+                            
+                            const tableBody = document.getElementById('disponibilitesTableBody');
+                            if (tableBody.children.length === 0) {
+                                const noDispRow = document.createElement('tr');
+                                noDispRow.id = 'noDispRow';
+                                noDispRow.innerHTML = `
+                                    <td colspan="4" class="px-6 py-4 text-center text-gray-500">
+                                        <i class="fas fa-clock text-4xl mb-2 text-gray-300"></i>
+                                        <p>Aucune disponibilité définie</p>
+                                    </td>
+                                `;
+                                tableBody.appendChild(noDispRow);
+                            }
+                        } else if (data.error) {
+                            showMessage(data.error, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur:', error);
+                        showMessage('Erreur lors de la suppression.', 'error');
+                    });
+            }
+        }
+
         // Initialisation au chargement
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM chargé');
@@ -975,22 +1285,50 @@
             document.getElementById('edit_status').addEventListener('change', toggleCancellationFields);
             document.getElementById('status').addEventListener('change', toggleAddCancellationFields);
 
-            // Validation du formulaire d'ajout
+            // Événements pour la sélection de date et heure dans le modal d'ajout
+            document.getElementById('appointment_date').addEventListener('change', function() {
+                updateTimeSlots(this, document.getElementById('appointment_time'));
+            });
+
+            // Événements pour la sélection de date et heure dans le modal de modification
+            document.getElementById('edit_appointment_date').addEventListener('change', function() {
+                const rdvId = document.getElementById('edit_id').value;
+                updateTimeSlots(this, document.getElementById('edit_appointment_time'), rdvId);
+            });
+
+            // Validation du formulaire d'ajout RDV
             const addForm = document.getElementById('addForm');
             if (addForm) {
                 addForm.addEventListener('submit', function(e) {
-                    const dateInput = document.getElementById('appointment_date');
-                    const timeInput = document.getElementById('appointment_time');
-                    
-                    // Seulement valider pour les statuts non-annulés
+                    const dateSelect = document.getElementById('appointment_date');
+                    const timeSelect = document.getElementById('appointment_time');
                     const statusSelect = document.getElementById('status');
-                    if (statusSelect.value !== 'cancelled') {
-                        const validation = validateDateTime(dateInput, timeInput);
-                        if (!validation.valid) {
-                            e.preventDefault();
-                            showMessage(validation.message, 'error');
-                            return false;
-                        }
+                    
+                    if (!dateSelect.value) {
+                        e.preventDefault();
+                        showMessage('Veuillez sélectionner une date.', 'error');
+                        return false;
+                    }
+                    
+                    if (!timeSelect.value && statusSelect.value !== 'cancelled') {
+                        e.preventDefault();
+                        showMessage('Veuillez sélectionner un créneau horaire.', 'error');
+                        return false;
+                    }
+                });
+            }
+
+            // Validation du formulaire de disponibilité
+            const disponibiliteForm = document.getElementById('disponibiliteForm');
+            if (disponibiliteForm) {
+                disponibiliteForm.addEventListener('submit', function(e) {
+                    const heureEntree = document.getElementById('disp_heure_entree').value;
+                    const heureSortie = document.getElementById('disp_heure_sortie').value;
+                    
+                    if (heureEntree && heureSortie && heureEntree >= heureSortie) {
+                        e.preventDefault();
+                        showMessage('L\'heure de sortie doit être après l\'heure d\'entrée.', 'error');
+                        return false;
                     }
                 });
             }
@@ -1013,6 +1351,8 @@
             if (e.key === 'Escape') {
                 closeAddModal();
                 closeEditModal();
+                closeDisponibiliteModal();
+                closeEditDisponibiliteModal();
             }
         });
 
@@ -1026,6 +1366,18 @@
         document.getElementById('editModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeEditModal();
+            }
+        });
+
+        document.getElementById('disponibiliteModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDisponibiliteModal();
+            }
+        });
+
+        document.getElementById('editDisponibiliteModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEditDisponibiliteModal();
             }
         });
     </script>

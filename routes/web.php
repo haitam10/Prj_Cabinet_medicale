@@ -15,6 +15,7 @@ use App\Http\Controllers\OrdonnanceController;
 use App\Http\Controllers\CertificatController;
 use App\Http\Controllers\RemarqueController;
 
+
 // Page de connexion
 Route::get('/', function () {
     return view('auth.login');
@@ -47,7 +48,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/rendezvous', [RendezvousController::class, 'index'])->name('rendezvous');
         Route::get('/paiements', [PaiementController::class, 'index'])->name('paiements');
         Route::get('/docs', [DocumentController::class, 'index'])->name('docs');
-        
+
         // Gestion profil
         Route::get('/profile', [UserController::class, 'profile'])->name('profile');
         Route::put('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
@@ -59,6 +60,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/rendezvous/{rendezvous}/edit', [RendezvousController::class, 'edit'])->name('rendezvous.edit');
         Route::put('/rendezvous/{rendezvous}', [RendezvousController::class, 'update'])->name('rendezvous.update');
         Route::delete('/rendezvous/{rendezvous}', [RendezvousController::class, 'destroy'])->name('rendezvous.destroy');
+
+        // Routes disponibilités - AJOUTEZ CES LIGNES
+        Route::post('/disponibilite', [RendezvousController::class, 'storeDisponibilite'])->name('disponibilite.store');
+        Route::put('/disponibilite/{id}', [RendezvousController::class, 'updateDisponibilite'])->name('disponibilite.update');
+        Route::delete('/disponibilite/{id}', [RendezvousController::class, 'destroyDisponibilite'])->name('disponibilite.destroy');
     });
 
     // Routes dossier médical et calendrier accessibles UNIQUEMENT au médecin

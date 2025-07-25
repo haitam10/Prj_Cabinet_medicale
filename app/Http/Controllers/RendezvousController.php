@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Rendezvous;
 use App\Models\Patient;
 use App\Models\User;
+use App\Models\Disponibilite;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -84,10 +85,45 @@ class RendezvousController extends Controller
             $medecins = collect();
         }
 
+        // Get disponibilites for the current doctor
+        $disponibilites = collect();
+        if ($user->role === 'medecin') {
+            $disponibilites = Disponibilite::where('medecin_id', $user->id)
+                ->where('date', '>=', now()->toDateString()) // Only future dates
+                ->orderBy('date', 'asc')
+                ->get();
+        } elseif ($user->role === 'secretaire' && $user->medecin_id) {
+            $disponibilites = Disponibilite::where('medecin_id', $user->medecin_id)
+                ->where('date', '>=', now()->toDateString()) // Only future dates
+                ->orderBy('date', 'asc')
+                ->get();
+        }
+
+        // Prepare JavaScript data
+        $disponibilitesJS = $disponibilites->map(function($disp) {
+            return [
+                'date' => $disp->date,
+                'heure_entree' => substr($disp->heure_entree, 0, 5),
+                'heure_sortie' => substr($disp->heure_sortie, 0, 5)
+            ];
+        })->toArray();
+
+        $existingAppointmentsJS = $rendezvous->map(function($rdv) {
+            return [
+                'id' => $rdv->id,
+                'date' => $rdv->appointment_date->format('Y-m-d'),
+                'time' => substr($rdv->appointment_time, 0, 5),
+                'status' => $rdv->status
+            ];
+        })->toArray();
+
         return view('secretaire.rendezvous', [
             'latest_rvs' => $rendezvous,
             'patients' => $patients,
             'medecins' => $medecins,
+            'disponibilites' => $disponibilites,
+            'disponibilitesJS' => $disponibilitesJS,
+            'existingAppointmentsJS' => $existingAppointmentsJS,
             'search' => $request->search,
             'status' => $request->status,
             'appointment_type' => $request->appointment_type,
@@ -109,12 +145,12 @@ class RendezvousController extends Controller
                 'request_data' => $request->all()
             ]);
 
-            // Validation des données - CORRECTION ICI
+            // Validation des données
             $validated = $request->validate([
                 'patient_id' => 'required|integer|exists:patients,id',
-                'appointment_date' => 'required|date|after_or_equal:today',
-                'appointment_time' => 'required|date_format:H:i', // LIGNE CORRIGÉE
-                'duration' => 'nullable|integer|min:15|max:180',
+                'appointment_date' => 'required|date',
+                'appointment_time' => 'required|date_format:H:i',
+                'duration' => 'nullable|integer|min:30|max:30', // Force 30 minutes
                 'status' => 'required|string|in:pending,confirmed,completed,cancelled',
                 'appointment_type' => 'required|string|in:consultation,follow_up,emergency,routine',
                 'reason' => 'nullable|string|max:1000',
@@ -126,16 +162,12 @@ class RendezvousController extends Controller
                 'patient_id.required' => 'Veuillez sélectionner un patient.',
                 'patient_id.exists' => 'Le patient sélectionné n\'existe pas.',
                 'appointment_date.required' => 'La date du rendez-vous est obligatoire.',
-                'appointment_date.after_or_equal' => 'La date du rendez-vous ne peut pas être dans le passé.',
                 'appointment_time.required' => 'L\'heure du rendez-vous est obligatoire.',
                 'appointment_time.date_format' => 'Format d\'heure invalide (HH:MM).',
                 'status.required' => 'Le statut est obligatoire.',
                 'status.in' => 'Statut invalide.',
                 'appointment_type.required' => 'Le type de rendez-vous est obligatoire.',
                 'appointment_type.in' => 'Type de rendez-vous invalide.',
-                'duration.integer' => 'La durée doit être un nombre entier.',
-                'duration.min' => 'La durée minimale est de 15 minutes.',
-                'duration.max' => 'La durée maximale est de 180 minutes.',
             ]);
 
             // Déterminer le médecin ID en fonction du rôle de l'utilisateur
@@ -149,8 +181,8 @@ class RendezvousController extends Controller
                     ->withInput();
             }
 
-            // Assurer que duration est un entier
-            $duration = (int) ($validated['duration'] ?? 30);
+            // Force duration to 30 minutes
+            $duration = 30;
 
             // Formater l'heure correctement
             $appointmentTime = $validated['appointment_time'];
@@ -158,24 +190,41 @@ class RendezvousController extends Controller
                 $appointmentTime .= ':00'; // Ajouter les secondes
             }
 
-            // Créer la date/heure complète pour vérifier les conflits
-            $appointmentDateTime = Carbon::createFromFormat('Y-m-d H:i:s', 
-                $validated['appointment_date'] . ' ' . $appointmentTime);
-
-            // Vérifier les conflits d'horaire seulement si non annulé
+            // Vérifier que la date sélectionnée correspond à une disponibilité du médecin
             if ($validated['status'] !== 'cancelled') {
-                // Vérifier que la date/heure n'est pas dans le passé
-                if ($appointmentDateTime->isPast()) {
+                $disponibilite = Disponibilite::where('medecin_id', $medecinId)
+                    ->where('date', $validated['appointment_date'])
+                    ->first();
+
+                if (!$disponibilite) {
                     return back()
-                        ->withErrors(['datetime' => 'La date et l\'heure du rendez-vous ne peuvent pas être dans le passé.'])
+                        ->withErrors(['appointment_date' => 'Aucune disponibilité définie pour cette date.'])
                         ->withInput();
                 }
 
-                $conflictCheck = $this->checkDoctorScheduleConflict($medecinId, $appointmentDateTime, $duration);
-                
+                // Vérifier que l'heure est dans les créneaux de disponibilité
+                $timeSlotValid = $this->validateTimeSlot(
+                    $validated['appointment_time'],
+                    $disponibilite->heure_entree,
+                    $disponibilite->heure_sortie
+                );
+
+                if (!$timeSlotValid) {
+                    return back()
+                        ->withErrors(['appointment_time' => 'L\'heure sélectionnée n\'est pas dans les créneaux de disponibilité.'])
+                        ->withInput();
+                }
+
+                // Vérifier les conflits d'horaire
+                $conflictCheck = $this->checkTimeSlotConflict(
+                    $medecinId,
+                    $validated['appointment_date'],
+                    $validated['appointment_time']
+                );
+
                 if ($conflictCheck['hasConflict']) {
                     return back()
-                        ->withErrors(['schedule' => $conflictCheck['message']])
+                        ->withErrors(['appointment_time' => $conflictCheck['message']])
                         ->withInput();
                 }
             }
@@ -252,8 +301,8 @@ class RendezvousController extends Controller
             $validated = $request->validate([
                 'patient_id' => 'required|exists:patients,id',
                 'appointment_date' => 'required|date',
-                'appointment_time' => 'required|date_format:H:i', // CORRECTION ICI AUSSI
-                'duration' => 'nullable|integer|min:15|max:180',
+                'appointment_time' => 'required|date_format:H:i',
+                'duration' => 'nullable|integer|min:30|max:30', // Force 30 minutes
                 'status' => 'required|string|in:pending,confirmed,completed,cancelled',
                 'appointment_type' => 'required|string|in:consultation,follow_up,emergency,routine',
                 'reason' => 'nullable|string|max:1000',
@@ -263,8 +312,8 @@ class RendezvousController extends Controller
                 'feedback' => 'nullable|string|max:1000',
             ]);
 
-            // Ensure duration is an integer
-            $duration = (int) ($validated['duration'] ?? 30);
+            // Force duration to 30 minutes
+            $duration = 30;
 
             // Format appointment time correctly
             $appointmentTime = $validated['appointment_time'];
@@ -272,35 +321,51 @@ class RendezvousController extends Controller
                 $appointmentTime .= ':00'; // Add seconds if not present
             }
 
-            // Create appointment datetime for conflict checking
-            $appointmentDateTime = Carbon::createFromFormat('Y-m-d H:i:s', 
-                $validated['appointment_date'] . ' ' . $appointmentTime);
-
-            // Only check past datetime if not cancelled
-            if ($validated['status'] !== 'cancelled' && $appointmentDateTime->isPast()) {
-                if ($request->wantsJson()) {
-                    return response()->json(['error' => 'La date et l\'heure du rendez-vous ne peuvent pas être dans le passé.'], 422);
-                }
-                return back()
-                    ->withErrors(['datetime' => 'La date et l\'heure du rendez-vous ne peuvent pas être dans le passé.'])
-                    ->withInput();
-            }
-            
-            // Check for conflicts (excluding current appointment) only if not cancelled
+            // Validate availability and time slot only if not cancelled
             if ($validated['status'] !== 'cancelled') {
-                $conflictCheck = $this->checkDoctorScheduleConflict(
+                $disponibilite = Disponibilite::where('medecin_id', $rendezvous->medecin_id)
+                    ->where('date', $validated['appointment_date'])
+                    ->first();
+
+                if (!$disponibilite) {
+                    if ($request->wantsJson()) {
+                        return response()->json(['error' => 'Aucune disponibilité définie pour cette date.'], 422);
+                    }
+                    return back()
+                        ->withErrors(['appointment_date' => 'Aucune disponibilité définie pour cette date.'])
+                        ->withInput();
+                }
+
+                // Validate time slot
+                $timeSlotValid = $this->validateTimeSlot(
+                    $validated['appointment_time'],
+                    $disponibilite->heure_entree,
+                    $disponibilite->heure_sortie
+                );
+
+                if (!$timeSlotValid) {
+                    if ($request->wantsJson()) {
+                        return response()->json(['error' => 'L\'heure sélectionnée n\'est pas dans les créneaux de disponibilité.'], 422);
+                    }
+                    return back()
+                        ->withErrors(['appointment_time' => 'L\'heure sélectionnée n\'est pas dans les créneaux de disponibilité.'])
+                        ->withInput();
+                }
+
+                // Check for conflicts (excluding current appointment)
+                $conflictCheck = $this->checkTimeSlotConflict(
                     $rendezvous->medecin_id,
-                    $appointmentDateTime,
-                    $duration,
+                    $validated['appointment_date'],
+                    $validated['appointment_time'],
                     $rendezvous->id
                 );
-                
+
                 if ($conflictCheck['hasConflict']) {
                     if ($request->wantsJson()) {
                         return response()->json(['error' => $conflictCheck['message']], 422);
                     }
                     return back()
-                        ->withErrors(['schedule' => $conflictCheck['message']])
+                        ->withErrors(['appointment_time' => $conflictCheck['message']])
                         ->withInput();
                 }
             }
@@ -377,57 +442,192 @@ class RendezvousController extends Controller
     }
 
     /**
-     * Check for doctor schedule conflicts
+     * Store a new disponibilite
      */
-    private function checkDoctorScheduleConflict($medecinId, $appointmentDateTime, $duration, $excludeRendezvousId = null)
+    public function storeDisponibilite(Request $request)
     {
-        // Ensure duration is an integer
-        $duration = (int) $duration;
-        
-        $appointmentEnd = $appointmentDateTime->copy()->addMinutes($duration);
-        $bufferTime = 10; // 10 minutes buffer between appointments
+        try {
+            $user = Auth::user();
+            
+            $validated = $request->validate([
+                'date' => 'required|date|after_or_equal:today',
+                'heure_entree' => 'required|date_format:H:i',
+                'heure_sortie' => 'required|date_format:H:i|after:heure_entree',
+            ], [
+                'date.required' => 'La date est obligatoire.',
+                'date.after_or_equal' => 'La date ne peut pas être dans le passé.',
+                'heure_entree.required' => 'L\'heure d\'entrée est obligatoire.',
+                'heure_sortie.required' => 'L\'heure de sortie est obligatoire.',
+                'heure_sortie.after' => 'L\'heure de sortie doit être après l\'heure d\'entrée.',
+            ]);
 
-        // Look for existing appointments that might conflict
+            // Déterminer le médecin ID
+            if ($user->role === 'medecin') {
+                $medecinId = $user->id;
+                $secretaireId = null;
+            } elseif ($user->role === 'secretaire' && $user->medecin_id) {
+                $medecinId = $user->medecin_id;
+                $secretaireId = $user->id;
+            } else {
+                return back()->withErrors(['authorization' => 'Non autorisé à créer des disponibilités.']);
+            }
+
+            // Vérifier si une disponibilité existe déjà pour cette date
+            $existingDisponibilite = Disponibilite::where('medecin_id', $medecinId)
+                ->where('date', $validated['date'])
+                ->first();
+
+            if ($existingDisponibilite) {
+                return back()->withErrors(['date' => 'Une disponibilité existe déjà pour cette date.']);
+            }
+
+            Disponibilite::create([
+                'medecin_id' => $medecinId,
+                'secretaire_id' => $secretaireId,
+                'date' => $validated['date'],
+                'heure_entree' => $validated['heure_entree'],
+                'heure_sortie' => $validated['heure_sortie'],
+            ]);
+
+            return back()->with('success', 'Disponibilité ajoutée avec succès.');
+            
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la création de la disponibilité: ' . $e->getMessage());
+            return back()->with('error', 'Erreur lors de la création de la disponibilité.');
+        }
+    }
+
+    /**
+     * Update disponibilite
+     */
+    public function updateDisponibilite(Request $request, $id)
+    {
+        try {
+            $user = Auth::user();
+            $disponibilite = Disponibilite::findOrFail($id);
+
+            // Check authorization
+            if ($user->role === 'medecin' && $disponibilite->medecin_id !== $user->id) {
+                throw new \Exception('Non autorisé à modifier cette disponibilité.');
+            } elseif ($user->role === 'secretaire' && $disponibilite->medecin_id !== $user->medecin_id) {
+                throw new \Exception('Non autorisé à modifier cette disponibilité.');
+            }
+
+            $validated = $request->validate([
+                'date' => 'required|date',
+                'heure_entree' => 'required|date_format:H:i',
+                'heure_sortie' => 'required|date_format:H:i|after:heure_entree',
+            ]);
+
+            // Check if another disponibilite exists for this date (excluding current one)
+            $existingDisponibilite = Disponibilite::where('medecin_id', $disponibilite->medecin_id)
+                ->where('date', $validated['date'])
+                ->where('id', '!=', $id)
+                ->first();
+
+            if ($existingDisponibilite) {
+                return back()->withErrors(['date' => 'Une autre disponibilité existe déjà pour cette date.']);
+            }
+
+            $disponibilite->update([
+                'date' => $validated['date'],
+                'heure_entree' => $validated['heure_entree'],
+                'heure_sortie' => $validated['heure_sortie'],
+            ]);
+
+            return back()->with('success', 'Disponibilité mise à jour avec succès.');
+            
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la mise à jour de la disponibilité: ' . $e->getMessage());
+            return back()->with('error', 'Erreur lors de la mise à jour de la disponibilité.');
+        }
+    }
+
+    /**
+     * Delete disponibilite
+     */
+    public function destroyDisponibilite(Request $request, $id)
+    {
+        try {
+            $user = Auth::user();
+            $disponibilite = Disponibilite::findOrFail($id);
+
+            // Check authorization
+            if ($user->role === 'medecin' && $disponibilite->medecin_id !== $user->id) {
+                throw new \Exception('Non autorisé à supprimer cette disponibilité.');
+            } elseif ($user->role === 'secretaire' && $disponibilite->medecin_id !== $user->medecin_id) {
+                throw new \Exception('Non autorisé à supprimer cette disponibilité.');
+            }
+
+            // Check if there are existing appointments for this availability
+            $existingAppointments = Rendezvous::where('medecin_id', $disponibilite->medecin_id)
+                ->whereDate('appointment_date', $disponibilite->date)
+                ->where('status', '!=', 'cancelled')
+                ->count();
+
+            if ($existingAppointments > 0) {
+                if ($request->wantsJson()) {
+                    return response()->json(['error' => 'Impossible de supprimer cette disponibilité car des rendez-vous sont programmés.'], 422);
+                }
+                return back()->withErrors(['delete' => 'Impossible de supprimer cette disponibilité car des rendez-vous sont programmés.']);
+            }
+
+            $disponibilite->delete();
+            
+            if ($request->wantsJson()) {
+                return response()->json(['message' => 'Disponibilité supprimée avec succès.']);
+            }
+            return back()->with('success', 'Disponibilité supprimée avec succès.');
+        } catch (\Exception $e) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Erreur lors de la suppression: ' . $e->getMessage()], 500);
+            }
+            return back()->with('error', 'Erreur lors de la suppression.');
+        }
+    }
+
+    /**
+     * Validate if a time slot is within availability hours
+     */
+    private function validateTimeSlot($appointmentTime, $heureEntree, $heureSortie)
+    {
+        $appointmentTimeObj = Carbon::createFromFormat('H:i', $appointmentTime);
+        $entreeTimeObj = Carbon::createFromFormat('H:i', substr($heureEntree, 0, 5));
+        $sortieTimeObj = Carbon::createFromFormat('H:i', substr($heureSortie, 0, 5));
+        
+        // Check if appointment time is within availability hours
+        // Also check if there's enough time for a 30-minute appointment
+        $appointmentEndTime = $appointmentTimeObj->copy()->addMinutes(30);
+        
+        return $appointmentTimeObj->greaterThanOrEqualTo($entreeTimeObj) && 
+               $appointmentEndTime->lessThanOrEqualTo($sortieTimeObj);
+    }
+
+    /**
+     * Check for time slot conflicts
+     */
+    private function checkTimeSlotConflict($medecinId, $date, $time, $excludeRendezvousId = null)
+    {
         $query = Rendezvous::where('medecin_id', $medecinId)
             ->where('status', '!=', 'cancelled')
-            ->whereDate('appointment_date', $appointmentDateTime->toDateString());
+            ->whereDate('appointment_date', $date)
+            ->where('appointment_time', 'like', $time . '%'); // Match HH:MM format
 
         if ($excludeRendezvousId) {
             $query->where('id', '!=', $excludeRendezvousId);
         }
 
-        $existingAppointments = $query->get();
+        $existingAppointment = $query->first();
 
-        foreach ($existingAppointments as $existing) {
-            // Parse the time properly - appointment_time is a string in HH:MM:SS format
-            $timeString = (string) $existing->appointment_time;
-            if (strlen($timeString) > 5) {
-                $timeString = substr($timeString, 0, 5); // Get HH:MM format
-            }
-            
-            $existingStart = Carbon::createFromFormat('Y-m-d H:i', 
-                $existing->appointment_date->format('Y-m-d') . ' ' . $timeString);
-            
-            // Ensure existing duration is an integer
-            $existingDuration = (int) $existing->duration;
-            $existingEnd = $existingStart->copy()->addMinutes($existingDuration);
+        if ($existingAppointment) {
+            $patientName = $existingAppointment->patient 
+                ? $existingAppointment->patient->nom . ' ' . $existingAppointment->patient->prenom
+                : 'Patient inconnu';
 
-            // Check if appointments overlap (with buffer)
-            $proposedStart = $appointmentDateTime->copy()->subMinutes($bufferTime);
-            $proposedEnd = $appointmentEnd->copy()->addMinutes($bufferTime);
-
-            if ($proposedStart->lt($existingEnd) && $proposedEnd->gt($existingStart)) {
-                $conflictTime = $existingStart->format('H:i');
-                $conflictDate = $existingStart->format('d/m/Y');
-                $patientName = $existing->patient 
-                    ? $existing->patient->nom . ' ' . $existing->patient->prenom
-                    : 'Patient inconnu';
-
-                return [
-                    'hasConflict' => true,
-                    'message' => "Conflit d'horaire détecté ! Le médecin a déjà un rendez-vous le {$conflictDate} à {$conflictTime} avec {$patientName}. Durée: {$existingDuration} minutes."
-                ];
-            }
+            return [
+                'hasConflict' => true,
+                'message' => "Ce créneau horaire est déjà occupé par un rendez-vous avec {$patientName}."
+            ];
         }
 
         return ['hasConflict' => false];

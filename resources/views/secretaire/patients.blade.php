@@ -929,6 +929,66 @@
                     <!-- Les certificats seront injectés ici via JavaScript -->
                 </div>
             </div>
+
+            <!-- Remarques -->
+            <div class="bg-yellow-50 p-6 rounded-lg mb-6">
+                <h3 class="text-xl font-bold text-yellow-800 mb-4 flex items-center">
+                    <i class="fas fa-sticky-note mr-3"></i>Remarques
+                </h3>
+                <div id="remarquesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Les remarques seront injectées ici via JavaScript -->
+                </div>
+            </div>
+
+            <!-- Habitudes de Vie -->
+            <div class="bg-indigo-50 p-6 rounded-lg mb-6">
+                <h3 class="text-xl font-bold text-indigo-800 mb-4 flex items-center">
+                    <i class="fas fa-heart mr-3"></i>Habitudes de Vie
+                </h3>
+                <div id="habitudesVieList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Les habitudes de vie seront injectées ici via JavaScript -->
+                </div>
+            </div>
+
+            <!-- Examens Biologiques -->
+            <div class="bg-red-50 p-6 rounded-lg mb-6">
+                <h3 class="text-xl font-bold text-red-800 mb-4 flex items-center">
+                    <i class="fas fa-vial mr-3"></i>Examens Biologiques
+                </h3>
+                <div id="examensBiologiquesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Les examens biologiques seront injectés ici via JavaScript -->
+                </div>
+            </div>
+
+            <!-- Imagerie Médicale -->
+            <div class="bg-teal-50 p-6 rounded-lg mb-6">
+                <h3 class="text-xl font-bold text-teal-800 mb-4 flex items-center">
+                    <i class="fas fa-x-ray mr-3"></i>Imagerie Médicale
+                </h3>
+                <div id="imagerieMedicaleList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- L'imagerie médicale sera injectée ici via JavaScript -->
+                </div>
+            </div>
+
+            <!-- Vaccinations -->
+            <div class="bg-emerald-50 p-6 rounded-lg mb-6">
+                <h3 class="text-xl font-bold text-emerald-800 mb-4 flex items-center">
+                    <i class="fas fa-syringe mr-3"></i>Vaccinations
+                </h3>
+                <div id="vaccinationsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Les vaccinations seront injectées ici via JavaScript -->
+                </div>
+            </div>
+
+            <!-- Fichiers Médicaux -->
+            <div class="bg-gray-50 p-6 rounded-lg mb-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-file-medical-alt mr-3"></i>Fichiers Médicaux
+                </h3>
+                <div id="fichiersMedicauxList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Les fichiers médicaux seront injectés ici via JavaScript -->
+                </div>
+            </div>
         </div>
     </div>
 
@@ -993,6 +1053,12 @@
             const consultations = data.consultations || [];
             const ordonnances = data.ordonnances || [];
             const certificats = data.certificats || [];
+            const remarques = data.remarques || [];
+            const habitudesVie = data.habitudesVie || [];
+            const examensBiologiques = data.examensBiologiques || [];
+            const imagerieMedicale = data.imagerieMedicale || [];
+            const vaccinations = data.vaccinations || [];
+            const fichiersMedicaux = data.fichiersMedicaux || [];
 
             // Afficher les informations globales
             const globalInfoHtml = `
@@ -1094,6 +1160,144 @@
                 certificatsHtml = '<div class="col-span-full text-center text-gray-500 py-8"><i class="fas fa-certificate text-4xl mb-2"></i><p>Aucun certificat trouvé</p></div>';
             }
             document.getElementById('certificatsList').innerHTML = certificatsHtml;
+
+            // Afficher les remarques
+            let remarquesHtml = '';
+            if (remarques.length > 0) {
+                remarques.forEach(remarque => {
+                    const date = remarque.date_remarque || remarque.created_at;
+                    const medecinNom = remarque.medecin ? remarque.medecin.nom : 'Non renseigné';
+                    
+                    remarquesHtml += `
+                        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-yellow-500">
+                            <h4 class="font-semibold text-gray-800 mb-2">Remarque du ${new Date(date).toLocaleDateString('fr-FR')}</h4>
+                            <p><strong>Médecin:</strong> ${medecinNom}</p>
+                            <p><strong>Remarque:</strong> ${remarque.remarque || 'Non renseigné'}</p>
+                        </div>
+                    `;
+                });
+            } else {
+                remarquesHtml = '<div class="col-span-full text-center text-gray-500 py-8"><i class="fas fa-sticky-note text-4xl mb-2"></i><p>Aucune remarque trouvée</p></div>';
+            }
+            document.getElementById('remarquesList').innerHTML = remarquesHtml;
+
+            // Afficher les habitudes de vie
+            let habitudesVieHtml = '';
+            if (habitudesVie.length > 0) {
+                habitudesVie.forEach(habitude => {
+                    const dateDebut = habitude.date_debut ? new Date(habitude.date_debut).toLocaleDateString('fr-FR') : 'Non renseignée';
+                    const dateFin = habitude.date_fin ? new Date(habitude.date_fin).toLocaleDateString('fr-FR') : 'En cours';
+                    const medecinNom = habitude.medecin ? habitude.medecin.nom : 'Non renseigné';
+                    
+                    habitudesVieHtml += `
+                        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-indigo-500">
+                            <h4 class="font-semibold text-gray-800 mb-2">${habitude.type || 'Habitude de vie'}</h4>
+                            <p><strong>Médecin:</strong> ${medecinNom}</p>
+                            <p><strong>Description:</strong> ${habitude.description || 'Non renseignée'}</p>
+                            <p><strong>Fréquence:</strong> ${habitude.frequence || 'Non renseignée'}</p>
+                            <p><strong>Quantité:</strong> ${habitude.quantite || 'Non renseignée'}</p>
+                            <p><strong>Période:</strong> ${dateDebut} - ${dateFin}</p>
+                            ${habitude.commentaire ? `<p><strong>Commentaire:</strong> ${habitude.commentaire}</p>` : ''}
+                        </div>
+                    `;
+                });
+            } else {
+                habitudesVieHtml = '<div class="col-span-full text-center text-gray-500 py-8"><i class="fas fa-heart text-4xl mb-2"></i><p>Aucune habitude de vie trouvée</p></div>';
+            }
+            document.getElementById('habitudesVieList').innerHTML = habitudesVieHtml;
+
+            // Afficher les examens biologiques
+            let examensBiologiquesHtml = '';
+            if (examensBiologiques.length > 0) {
+                examensBiologiques.forEach(examen => {
+                    const dateExamen = examen.date_examen ? new Date(examen.date_examen).toLocaleDateString('fr-FR') : 'Non renseignée';
+                    const medecinNom = examen.medecin ? examen.medecin.nom : 'Non renseigné';
+                    
+                    examensBiologiquesHtml += `
+                        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-red-500">
+                            <h4 class="font-semibold text-gray-800 mb-2">Examen du ${dateExamen}</h4>
+                            <p><strong>Médecin:</strong> ${medecinNom}</p>
+                            <p><strong>Type:</strong> ${examen.type || 'Non renseigné'}</p>
+                            <p><strong>Résultat:</strong> ${examen.resultat || 'Non renseigné'}</p>
+                            <p><strong>Unité:</strong> ${examen.unite || 'Non renseignée'}</p>
+                            <p><strong>Valeurs de référence:</strong> ${examen.valeurs_reference || 'Non renseignées'}</p>
+                            ${examen.commentaire ? `<p><strong>Commentaire:</strong> ${examen.commentaire}</p>` : ''}
+                        </div>
+                    `;
+                });
+            } else {
+                examensBiologiquesHtml = '<div class="col-span-full text-center text-gray-500 py-8"><i class="fas fa-vial text-4xl mb-2"></i><p>Aucun examen biologique trouvé</p></div>';
+            }
+            document.getElementById('examensBiologiquesList').innerHTML = examensBiologiquesHtml;
+
+            // Afficher l'imagerie médicale
+            let imagerieMedicaleHtml = '';
+            if (imagerieMedicale.length > 0) {
+                imagerieMedicale.forEach(imagerie => {
+                    const dateExamen = imagerie.date_examen ? new Date(imagerie.date_examen).toLocaleDateString('fr-FR') : 'Non renseignée';
+                    const medecinNom = imagerie.medecin ? imagerie.medecin.nom : 'Non renseigné';
+                    
+                    imagerieMedicaleHtml += `
+                        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-teal-500">
+                            <h4 class="font-semibold text-gray-800 mb-2">Imagerie du ${dateExamen}</h4>
+                            <p><strong>Médecin:</strong> ${medecinNom}</p>
+                            <p><strong>Type:</strong> ${imagerie.type || 'Non renseigné'}</p>
+                            <p><strong>Zone examinée:</strong> ${imagerie.zone_examinee || 'Non renseignée'}</p>
+                            <p><strong>Résultat:</strong> ${imagerie.resultat || 'Non renseigné'}</p>
+                            ${imagerie.commentaire ? `<p><strong>Commentaire:</strong> ${imagerie.commentaire}</p>` : ''}
+                        </div>
+                    `;
+                });
+            } else {
+                imagerieMedicaleHtml = '<div class="col-span-full text-center text-gray-500 py-8"><i class="fas fa-x-ray text-4xl mb-2"></i><p>Aucune imagerie médicale trouvée</p></div>';
+            }
+            document.getElementById('imagerieMedicaleList').innerHTML = imagerieMedicaleHtml;
+
+            // Afficher les vaccinations
+            let vaccinationsHtml = '';
+            if (vaccinations.length > 0) {
+                vaccinations.forEach(vaccination => {
+                    const dateVaccination = vaccination.date_vaccination ? new Date(vaccination.date_vaccination).toLocaleDateString('fr-FR') : 'Non renseignée';
+                    const dateRappel = vaccination.date_rappel ? new Date(vaccination.date_rappel).toLocaleDateString('fr-FR') : 'Non prévue';
+                    const medecinNom = vaccination.medecin ? vaccination.medecin.nom : 'Non renseigné';
+                    
+                    vaccinationsHtml += `
+                        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-emerald-500">
+                            <h4 class="font-semibold text-gray-800 mb-2">${vaccination.nom || 'Vaccination'}</h4>
+                            <p><strong>Médecin:</strong> ${medecinNom}</p>
+                            <p><strong>Date de vaccination:</strong> ${dateVaccination}</p>
+                            <p><strong>Date de rappel:</strong> ${dateRappel}</p>
+                            ${vaccination.commentaire ? `<p><strong>Commentaire:</strong> ${vaccination.commentaire}</p>` : ''}
+                        </div>
+                    `;
+                });
+            } else {
+                vaccinationsHtml = '<div class="col-span-full text-center text-gray-500 py-8"><i class="fas fa-syringe text-4xl mb-2"></i><p>Aucune vaccination trouvée</p></div>';
+            }
+            document.getElementById('vaccinationsList').innerHTML = vaccinationsHtml;
+
+            // Afficher les fichiers médicaux
+            let fichiersMedicauxHtml = '';
+            if (fichiersMedicaux.length > 0) {
+                fichiersMedicaux.forEach(fichier => {
+                    const medecinNom = fichier.medecin ? fichier.medecin.nom : 'Non renseigné';
+                    const tailleFichier = fichier.taille ? (fichier.taille / 1024).toFixed(2) + ' KB' : 'Inconnue';
+                    
+                    fichiersMedicauxHtml += `
+                        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-gray-500">
+                            <h4 class="font-semibold text-gray-800 mb-2">${fichier.nom || 'Fichier médical'}</h4>
+                            <p><strong>Médecin:</strong> ${medecinNom}</p>
+                            <p><strong>Type:</strong> ${fichier.type || 'Non renseigné'}</p>
+                            <p><strong>Taille:</strong> ${tailleFichier}</p>
+                            ${fichier.commentaire ? `<p><strong>Commentaire:</strong> ${fichier.commentaire}</p>` : ''}
+                            <p><strong>Ajouté le:</strong> ${new Date(fichier.created_at).toLocaleDateString('fr-FR')}</p>
+                        </div>
+                    `;
+                });
+            } else {
+                fichiersMedicauxHtml = '<div class="col-span-full text-center text-gray-500 py-8"><i class="fas fa-file-medical-alt text-4xl mb-2"></i><p>Aucun fichier médical trouvé</p></div>';
+            }
+            document.getElementById('fichiersMedicauxList').innerHTML = fichiersMedicauxHtml;
         }
 
         function closeViewDetailsModal() {
