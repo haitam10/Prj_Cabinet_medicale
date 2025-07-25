@@ -41,17 +41,24 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('secretaire')->name('secretaire.')->middleware('role:secretaire|medecin')->group(function () {
         Route::get('/dashboard', [AuthController::class, 'secretDash'])->name('dashboard');
         Route::get('/patients', [PatientController::class, 'index'])->name('patients');
-        // Route pour récupérer les détails du patient (nouvelle route ajoutée)
         Route::get('/patients/{patient}/details', [PatientController::class, 'getPatientDetails'])->name('patients.details');
-
         Route::get('/factures', [FactureController::class, 'index'])->name('factures');
         Route::get('/factures/print/{facture}', [FactureController::class, 'print'])->name('factures.print');
         Route::get('/rendezvous', [RendezvousController::class, 'index'])->name('rendezvous');
         Route::get('/paiements', [PaiementController::class, 'index'])->name('paiements');
         Route::get('/docs', [DocumentController::class, 'index'])->name('docs');
+        
         // Gestion profil
         Route::get('/profile', [UserController::class, 'profile'])->name('profile');
         Route::put('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
+
+        // Routes rendez-vous - accessibles aux secrétaires ET médecins
+        Route::post('/rendezvous', [RendezvousController::class, 'store'])->name('rendezvous.store');
+        Route::get('/rendezvous/create', [RendezvousController::class, 'create'])->name('rendezvous.create');
+        Route::get('/rendezvous/{rendezvous}', [RendezvousController::class, 'show'])->name('rendezvous.show');
+        Route::get('/rendezvous/{rendezvous}/edit', [RendezvousController::class, 'edit'])->name('rendezvous.edit');
+        Route::put('/rendezvous/{rendezvous}', [RendezvousController::class, 'update'])->name('rendezvous.update');
+        Route::delete('/rendezvous/{rendezvous}', [RendezvousController::class, 'destroy'])->name('rendezvous.destroy');
     });
 
     // Routes dossier médical et calendrier accessibles UNIQUEMENT au médecin
@@ -90,7 +97,6 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/dossier-medical/remarque', [DossierMedicalController::class, 'storeRemarque'])->name('dossier-medical.remarque.store');
         Route::put('/dossier-medical/remarque', [DossierMedicalController::class, 'updateRemarque'])->name('dossier-medical.remarque.update');
         Route::delete('/dossier-medical/remarque', [DossierMedicalController::class, 'destroyRemarque'])->name('dossier-medical.remarque.destroy');
-
 
         // Routes certificats
         Route::get('/certificats', [DocumentController::class, 'showCerts'])->name('certificats');
@@ -131,17 +137,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/api/ordonnance/{id}/data', [OrdonnanceController::class, 'getOrdonnanceData']);
     });
 
-    // CRUD pour rendez-vous - accessible aux secrétaires ET médecins
-    Route::middleware('role:secretaire|medecin')->group(function () {
-        Route::resource('rendezvous', RendezvousController::class)->except(['index']);
-    });
-
-    // CRUD pour les autres ressources - accessible aux secrétaires ET médecins  
-    Route::middleware('role:secretaire|medecin')->group(function () {
-        Route::resource('patients', PatientController::class)->except(['index']);
-        Route::resource('factures', FactureController::class)->except(['index']);
-        Route::resource('paiements', PaiementController::class)->except(['index']);
-    });
+    // pour maintenir les noms de routes et URLs originaux
+    Route::resource('patients', PatientController::class)->except(['index']);
+    Route::resource('factures', FactureController::class)->except(['index']);
+    Route::resource('paiements', PaiementController::class)->except(['index']);
 
     // Gestion des utilisateurs, admin uniquement
     Route::resource('users', UserController::class)->middleware('role:admin');

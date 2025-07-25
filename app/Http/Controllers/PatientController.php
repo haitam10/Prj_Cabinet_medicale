@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Patient;
+use App\Models\Consultation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
@@ -227,35 +228,56 @@ class PatientController extends Controller
         }
     }
 
-    // NOUVELLE MÉTHODE AJOUTÉE
+    // MÉTHODE CORRIGÉE POUR AFFICHER LES CONSULTATIONS AVEC LES RENDEZ-VOUS
     public function getPatientDetails(Request $request, Patient $patient)
     {
         try {
-            // Charger le patient avec ses relations
+            // Charger le patient avec les consultations et leurs relations
             $patient->load([
                 'consultations' => function($query) {
-                    $query->with('medecin')->orderBy('date_consultation', 'desc');
-                },
-                'ordonnances' => function($query) {
-                    $query->with('medecin')->orderBy('date_ordonance', 'desc');
-                },
-                'certificats' => function($query) {
-                    $query->with('medecin')->orderBy('date_certificat', 'desc');
+                    $query->with(['medecin', 'rendezvous'])->orderBy('date_consultation', 'desc');
                 }
             ]);
+
+            // Récupérer les consultations avec leurs rendez-vous associés
+            $consultations = $patient->consultations;
+
+            // Essayer de récupérer les ordonnances si la relation existe
+            $ordonnances = collect();
+            if (method_exists($patient, 'ordonnances')) {
+                $ordonnances = $patient->ordonnances()
+                    ->with('medecin')
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            }
+
+            // Essayer de récupérer les certificats si la relation existe
+            $certificats = collect();
+            if (method_exists($patient, 'certificats')) {
+                $certificats = $patient->certificats()
+                    ->with('medecin')
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            }
 
             if ($request->wantsJson()) {
                 return response()->json([
                     'patient' => $patient,
-                    'consultations' => $patient->consultations,
-                    'ordonnances' => $patient->ordonnances,
-                    'certificats' => $patient->certificats
+                    'consultations' => $consultations,
+                    'ordonnances' => $ordonnances,
+                    'certificats' => $certificats
                 ]);
             }
 
             return response()->json(['error' => 'Requête non valide'], 400);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Erreur lors de la récupération des données'], 500);
+            Log::error('Erreur lors de la récupération des détails du patient', [
+                'patient_id' => $patient->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json(['error' => 'Erreur lors de la récupération des données: ' . $e->getMessage()], 500);
         }
     }
 }

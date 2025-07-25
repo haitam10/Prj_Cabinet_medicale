@@ -109,11 +109,11 @@ class RendezvousController extends Controller
                 'request_data' => $request->all()
             ]);
 
-            // Validation des données
+            // Validation des données - CORRECTION ICI
             $validated = $request->validate([
                 'patient_id' => 'required|integer|exists:patients,id',
                 'appointment_date' => 'required|date|after_or_equal:today',
-                'appointment_time' => 'required|regex:/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/',
+                'appointment_time' => 'required|date_format:H:i', // LIGNE CORRIGÉE
                 'duration' => 'nullable|integer|min:15|max:180',
                 'status' => 'required|string|in:pending,confirmed,completed,cancelled',
                 'appointment_type' => 'required|string|in:consultation,follow_up,emergency,routine',
@@ -128,7 +128,7 @@ class RendezvousController extends Controller
                 'appointment_date.required' => 'La date du rendez-vous est obligatoire.',
                 'appointment_date.after_or_equal' => 'La date du rendez-vous ne peut pas être dans le passé.',
                 'appointment_time.required' => 'L\'heure du rendez-vous est obligatoire.',
-                'appointment_time.regex' => 'Format d\'heure invalide (HH:MM).',
+                'appointment_time.date_format' => 'Format d\'heure invalide (HH:MM).',
                 'status.required' => 'Le statut est obligatoire.',
                 'status.in' => 'Statut invalide.',
                 'appointment_type.required' => 'Le type de rendez-vous est obligatoire.',
@@ -252,7 +252,7 @@ class RendezvousController extends Controller
             $validated = $request->validate([
                 'patient_id' => 'required|exists:patients,id',
                 'appointment_date' => 'required|date',
-                'appointment_time' => 'required',
+                'appointment_time' => 'required|date_format:H:i', // CORRECTION ICI AUSSI
                 'duration' => 'nullable|integer|min:15|max:180',
                 'status' => 'required|string|in:pending,confirmed,completed,cancelled',
                 'appointment_type' => 'required|string|in:consultation,follow_up,emergency,routine',
@@ -266,12 +266,8 @@ class RendezvousController extends Controller
             // Ensure duration is an integer
             $duration = (int) ($validated['duration'] ?? 30);
 
-            // Validate and format appointment time
+            // Format appointment time correctly
             $appointmentTime = $validated['appointment_time'];
-            if (!preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $appointmentTime)) {
-                throw new \Exception('Format d\'heure invalide.');
-            }
-            
             if (strlen($appointmentTime) === 5) {
                 $appointmentTime .= ':00'; // Add seconds if not present
             }

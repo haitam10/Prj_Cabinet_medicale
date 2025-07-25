@@ -970,7 +970,7 @@
             })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`Erreur HTTP: ${response.status}`);
                 }
                 return response.json();
             })
@@ -983,8 +983,8 @@
                 }
             })
             .catch(error => {
-                console.error('Erreur:', error);
-                showErrorMessage('Erreur lors de la récupération des détails du patient.');
+                console.error('Erreur lors de la récupération des détails:', error);
+                showErrorMessage('Erreur lors de la récupération des détails du patient: ' + error.message);
             });
         }
 
@@ -1023,19 +1023,32 @@
             let consultationsHtml = '';
             if (consultations.length > 0) {
                 consultations.forEach(consultation => {
+                    const dateConsultation = consultation.date_consultation;
+                    const medecinNom = consultation.medecin ? consultation.medecin.nom : 'Non renseigné';
+                    const motif = consultation.motif || 'Non renseigné';
+                    const diagnostic = consultation.diagnostic || 'Pas encore de diagnostic';
+                    const traitement = consultation.traitement || 'Pas encore de traitement';
+                    const status = consultation.status || 'En cours';
+                    const symptomes = consultation.symptomes || 'Non renseignés';
+                    const rendezvousInfo = consultation.rendezvous ? 
+                        `<p><strong>Rendez-vous initial:</strong> ${new Date(consultation.rendezvous.appointment_date).toLocaleDateString('fr-FR')} à ${consultation.rendezvous.appointment_time}</p>` : 
+                        '';
+                    
                     consultationsHtml += `
                         <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-green-500">
-                            <h4 class="font-semibold text-gray-800 mb-2">Consultation du ${new Date(consultation.date_consultation).toLocaleDateString('fr-FR')}</h4>
-                            <p><strong>Médecin:</strong> ${consultation.medecin ? consultation.medecin.nom : 'Non renseigné'}</p>
-                            <p><strong>Motif:</strong> ${consultation.motif || 'Non renseigné'}</p>
-                            <p><strong>Diagnostic:</strong> ${consultation.diagnostic || 'Non renseigné'}</p>
-                            <p><strong>Traitement:</strong> ${consultation.traitement || 'Non renseigné'}</p>
-                            <p><strong>Statut:</strong> <span class="px-2 py-1 rounded text-xs ${consultation.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${consultation.status}</span></p>
+                            <h4 class="font-semibold text-gray-800 mb-2">Consultation du ${new Date(dateConsultation).toLocaleDateString('fr-FR')}</h4>
+                            <p><strong>Médecin:</strong> ${medecinNom}</p>
+                            <p><strong>Motif:</strong> ${motif}</p>
+                            <p><strong>Symptômes:</strong> ${symptomes}</p>
+                            <p><strong>Diagnostic:</strong> ${diagnostic}</p>
+                            <p><strong>Traitement:</strong> ${traitement}</p>
+                            <p><strong>Statut:</strong> <span class="px-2 py-1 rounded text-xs ${status === 'completed' ? 'bg-green-100 text-green-800' : status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}">${status}</span></p>
+                            ${rendezvousInfo}
                         </div>
                     `;
                 });
             } else {
-                consultationsHtml = '<div class="col-span-full text-center text-gray-500 py-8"><i class="fas fa-calendar-times text-4xl mb-2"></i><p>Aucune consultation trouvée</p></div>';
+                consultationsHtml = '<div class="col-span-full text-center text-gray-500 py-8"><i class="fas fa-stethoscope text-4xl mb-2"></i><p>Aucune consultation trouvée</p></div>';
             }
             document.getElementById('consultationsList').innerHTML = consultationsHtml;
 
@@ -1043,10 +1056,13 @@
             let ordonnancesHtml = '';
             if (ordonnances.length > 0) {
                 ordonnances.forEach(ordonnance => {
+                    const date = ordonnance.date_ordonance || ordonnance.created_at;
+                    const medecinNom = ordonnance.medecin ? ordonnance.medecin.nom : 'Non renseigné';
+                    
                     ordonnancesHtml += `
                         <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-purple-500">
-                            <h4 class="font-semibold text-gray-800 mb-2">Ordonnance du ${new Date(ordonnance.date_ordonance).toLocaleDateString('fr-FR')}</h4>
-                            <p><strong>Médecin:</strong> ${ordonnance.medecin ? ordonnance.medecin.nom : 'Non renseigné'}</p>
+                            <h4 class="font-semibold text-gray-800 mb-2">Ordonnance du ${new Date(date).toLocaleDateString('fr-FR')}</h4>
+                            <p><strong>Médecin:</strong> ${medecinNom}</p>
                             <p><strong>Médicaments:</strong> ${ordonnance.medicaments || 'Non renseigné'}</p>
                             <p><strong>Durée:</strong> ${ordonnance.duree_traitement || 'Non renseignée'}</p>
                             <p><strong>Instructions:</strong> ${ordonnance.instructions || 'Aucune'}</p>
@@ -1062,10 +1078,13 @@
             let certificatsHtml = '';
             if (certificats.length > 0) {
                 certificats.forEach(certificat => {
+                    const date = certificat.date_certificat || certificat.created_at;
+                    const medecinNom = certificat.medecin ? certificat.medecin.nom : 'Non renseigné';
+                    
                     certificatsHtml += `
                         <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-orange-500">
-                            <h4 class="font-semibold text-gray-800 mb-2">Certificat du ${new Date(certificat.date_certificat).toLocaleDateString('fr-FR')}</h4>
-                            <p><strong>Médecin:</strong> ${certificat.medecin ? certificat.medecin.nom : 'Non renseigné'}</p>
+                            <h4 class="font-semibold text-gray-800 mb-2">Certificat du ${new Date(date).toLocaleDateString('fr-FR')}</h4>
+                            <p><strong>Médecin:</strong> ${medecinNom}</p>
                             <p><strong>Type:</strong> ${certificat.type || 'Non renseigné'}</p>
                             <p><strong>Contenu:</strong> ${certificat.contenu || 'Non renseigné'}</p>
                         </div>

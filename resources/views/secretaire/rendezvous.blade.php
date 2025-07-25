@@ -409,7 +409,7 @@
                     <i class="fas fa-times text-lg"></i>
                 </button>
             </div>
-            <form action="{{ route('rendezvous.store') }}" method="POST" class="space-y-4" id="addForm">
+            <form action="{{ route('secretaire.rendezvous.store') }}" method="POST" class="space-y-4" id="addForm">
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -845,7 +845,7 @@
             
             document.getElementById('editModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
-            document.getElementById('editForm').action = `/rendezvous/${rdv.id}`;
+            document.getElementById('editForm').action = `/secretaire/rendezvous/${rdv.id}`;
             document.getElementById('edit_id').value = rdv.id;
             document.getElementById('edit_patient_id').value = rdv.patient_id;
 
@@ -933,7 +933,7 @@
 
         function deleteRendezVous(id) {
             if (confirm('Êtes-vous sûr de vouloir supprimer ce rendez-vous ?')) {
-                fetch(`/rendezvous/${id}`, {
+                fetch(`/secretaire/rendezvous/${id}`, {
                         method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': csrfToken,

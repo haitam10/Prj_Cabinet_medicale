@@ -638,8 +638,8 @@
                 }
 
                 .caduceus-icon {
-                    width: 80%; /* Bigger */
-                    height: 80%; /* Bigger */
+                    width: 120px; /* Logo taille fixe réduite */
+                    height: 90px; /* Logo taille fixe réduite */
                     opacity: 0.8;
                     /* Removed absolute positioning to work with flexbox */
                     /* Removed left, transform, top */
@@ -652,8 +652,8 @@
                     top: 50%;
                     left: 50%;
                     transform: translate(-50%, -50%);
-                    width: 400px; /* Much Bigger */
-                    height: 400px; /* Much Bigger */
+                    width: 200px; /* Filigrane taille réduite */
+                    height: 200px; /* Filigrane taille réduite */
                     opacity: 0.06; /* Slightly more faint for a watermark effect */
                     z-index: 0;
                 }

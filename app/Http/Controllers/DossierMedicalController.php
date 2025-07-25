@@ -31,21 +31,30 @@ class DossierMedicalController extends Controller
         // Récupérer les patients avec rendez-vous pour le médecin connecté
         $patientsAvecRendezVous = collect();
         if ($isCurrentUserMedecin) {
-            $patientsAvecRendezVous = Patient::whereHas('rendezvous', function($query) use ($currentUser) {
+            $patientsAvecRendezVous = Patient::whereHas('rendezvous', function ($query) use ($currentUser) {
                 $query->where('medecin_id', $currentUser->id);
             })
-            ->with(['rendezvous' => function($query) use ($currentUser) {
-                $query->where('medecin_id', $currentUser->id)
-                      ->where('date', '>=', now())
-                      ->orderBy('date', 'asc')
-                      ->limit(1);
-            }])
-            ->orderBy('nom')
-            ->get()
-            ->map(function($patient) {
-                $patient->prochain_rdv = $patient->rendezvous->first()?->date;
-                return $patient;
-            });
+                ->with(['rendezvous' => function ($query) use ($currentUser) {
+                    $query->where('medecin_id', $currentUser->id)
+                        ->where('appointment_date', '>=', now()->format('Y-m-d'))
+                        ->orderBy('appointment_date', 'asc')
+                        ->orderBy('appointment_time', 'asc')
+                        ->limit(1);
+                }])
+                ->orderBy('nom')
+                ->get()
+                ->map(function ($patient) {
+                    $rdv = $patient->rendezvous->first();
+                    if ($rdv) {
+                        // Formater correctement la date avant la concaténation
+                        $appointmentDate = $rdv->appointment_date->format('Y-m-d');
+                        $appointmentTime = $rdv->appointment_time ?: '00:00:00';
+                        $patient->prochain_rdv = $appointmentDate . ' ' . $appointmentTime;
+                    } else {
+                        $patient->prochain_rdv = null;
+                    }
+                    return $patient;
+                });
         }
 
         $medecins = User::where('role', 'medecin')->get() ?? collect();
@@ -126,7 +135,9 @@ class DossierMedicalController extends Controller
 
                 try {
                     $rendezvous = Rendezvous::where('patient_id', $selectedPatient->id)
-                        ->orderBy('date', 'desc')->get();
+                        ->orderBy('appointment_date', 'desc')
+                        ->orderBy('appointment_time', 'desc')
+                        ->get();
                 } catch (\Exception $e) {
                     $rendezvous = collect();
                 }
@@ -134,9 +145,21 @@ class DossierMedicalController extends Controller
         }
 
         return view('secretaire.dossier-medical', compact(
-            'patientsAvecRendezVous', 'medecins', 'selectedPatient', 'consultations', 'examens', 
-            'imageries', 'vaccinations', 'fichiers', 'habitudes', 'certificats', 'remarques', 'rendezvous',
-            'currentUser', 'isCurrentUserMedecin', 'today'
+            'patientsAvecRendezVous',
+            'medecins',
+            'selectedPatient',
+            'consultations',
+            'examens',
+            'imageries',
+            'vaccinations',
+            'fichiers',
+            'habitudes',
+            'certificats',
+            'remarques',
+            'rendezvous',
+            'currentUser',
+            'isCurrentUserMedecin',
+            'today'
         ));
     }
 
@@ -187,7 +210,7 @@ class DossierMedicalController extends Controller
                     'duree_traitement' => $validated['duree_traitement'],
                     'instructions' => $validated['follow_up_instructions']
                 ]);
-                
+
                 return redirect()->back()->with('success', 'Consultation ajoutée avec succès. Une ordonnance a été générée automatiquement.');
             }
 
@@ -497,7 +520,7 @@ class DossierMedicalController extends Controller
                         'instructions' => $validated['follow_up_instructions']
                     ]);
                 }
-                
+
                 return redirect()->back()->with('success', 'Consultation modifiée avec succès. L\'ordonnance associée a été mise à jour.');
             }
 
@@ -736,7 +759,7 @@ class DossierMedicalController extends Controller
                 $extension = $fichier->getClientOriginalExtension();
                 $fileName = $originalName . '_' . time() . '.' . $extension;
                 $chemin = $fichier->storeAs($patientFolder, $fileName, 'public');
-                
+
                 $dataToUpdate['chemin'] = $chemin;
                 $dataToUpdate['taille'] = $fichier->getSize();
             }

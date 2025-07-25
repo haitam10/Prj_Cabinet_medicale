@@ -58,4 +58,9 @@ class Patient extends Model
     {
         return $this->hasMany(Facture::class);
     }
+
+        public function consultations()
+    {
+        return $this->hasMany(Consultation::class);
+    }
 }

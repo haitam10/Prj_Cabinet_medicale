@@ -251,36 +251,35 @@
                                 @forelse ($dayData['appointments'] as $appointment)
                                     <div class="appointment-item">
                                         <span class="appointment-time">
-                                            <i
-                                                class="fas fa-clock mr-1"></i>{{ \Carbon\Carbon::parse($appointment->date)->format('H:i') }}
+                                            <i class="fas fa-clock mr-1"></i>{{ \Carbon\Carbon::parse($appointment->appointment_time)->format('H:i') }}
                                         </span>
                                         <span class="appointment-patient">
                                             <i class="fas fa-user mr-1"></i>{{ $appointment->patient->nom ?? 'N/A' }}
                                             {{ $appointment->patient->prenom ?? '' }}
                                         </span>
                                         <span class="appointment-motif">
-                                            <i class="fas fa-info-circle mr-1"></i>{{ $appointment->motif }}
+                                            <i class="fas fa-info-circle mr-1"></i>{{ $appointment->reason ?? 'Aucun motif spécifié' }}
                                         </span>
                                         <span
                                             class="appointment-status
-                                            @if ($appointment->statut === 'confirmé') status-confirmed
-                                            @elseif($appointment->statut === 'en_attente') status-pending
-                                            @elseif($appointment->statut === 'annulé') status-cancelled @endif">
-                                            @switch($appointment->statut)
-                                                @case('confirmé')
+                                            @if ($appointment->status === 'confirmed') status-confirmed
+                                            @elseif($appointment->status === 'pending') status-pending
+                                            @elseif($appointment->status === 'cancelled') status-cancelled @endif">
+                                            @switch($appointment->status)
+                                                @case('confirmed')
                                                     <i class="fas fa-check-circle"></i>Confirmé
                                                 @break
 
-                                                @case('en_attente')
+                                                @case('pending')
                                                     <i class="fas fa-hourglass-half"></i>En attente
                                                 @break
 
-                                                @case('annulé')
+                                                @case('cancelled')
                                                     <i class="fas fa-times-circle"></i>Annulé
                                                 @break
 
                                                 @default
-                                                    {{ ucfirst($appointment->statut) }}
+                                                    <i class="fas fa-question-circle"></i>{{ ucfirst($appointment->status ?? 'Non défini') }}
                                             @endswitch
                                         </span>
                                     </div>

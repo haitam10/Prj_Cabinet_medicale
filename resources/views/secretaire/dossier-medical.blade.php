@@ -298,7 +298,7 @@
                                         <option value="">-- Aucun rendez-vous --</option>
                                         @foreach ($rendezvous as $rdv)
                                             <option value="{{ $rdv->id }}">
-                                                {{ \Carbon\Carbon::parse($rdv->date)->format('d/m/Y H:i') }} - {{ $rdv->motif }}
+                                                {{ \Carbon\Carbon::parse($rdv->appointment_date->format('Y-m-d') . ' ' . ($rdv->appointment_time ?: '00:00:00'))->format('d/m/Y H:i') }} - {{ $rdv->reason }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -1389,7 +1389,7 @@
                                                 <option value="">-- Aucun rendez-vous --</option>
                                                 @foreach ($rendezvous as $rdv)
                                                     <option value="{{ $rdv->id }}">
-                                                        {{ \Carbon\Carbon::parse($rdv->date)->format('d/m/Y H:i') }} - {{ $rdv->motif }}
+                                                        {{ \Carbon\Carbon::parse($rdv->appointment_date->format('Y-m-d') . ' ' . ($rdv->appointment_time ?: '00:00:00'))->format('d/m/Y H:i') }} - {{ $rdv->reason }}
                                                     </option>
                                                 @endforeach
                                             </select>
