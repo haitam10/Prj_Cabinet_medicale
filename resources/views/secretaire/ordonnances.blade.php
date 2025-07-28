@@ -43,18 +43,63 @@
                 display: none !important;
             }
         }
+
+        /* Style pour les nouvelles ordonnances */
+        .nouvelle-ordonnance {
+            background-color: #dcfce7 !important;
+            border-left: 4px solid #16a34a !important;
+            animation: pulseGreen 2s infinite;
+        }
+
+        .nouvelle-ordonnance:hover {
+            background-color: #bbf7d0 !important;
+        }
+
+        @keyframes pulseGreen {
+
+            0%,
+            100% {
+                background-color: #dcfce7;
+            }
+
+            50% {
+                background-color: #bbf7d0;
+            }
+        }
+
+        /* Style pour l'indicateur "Nouveau" */
+        .badge-nouveau {
+            background-color: #16a34a;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 8px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
     </style>
 </head>
 
 <body class="bg-gray-100 min-h-screen">
     <!-- SIDEBAR -->
     <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50">
-        <div class="flex items-center justify-center h-16 bg-cordes-blue">
+        <div class="flex items-center justify-center h-16 bg-cordes-light">
             <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                    <i class="fas fa-cube text-cordes-blue text-lg"></i>
-                </div>
-                <span class="text-white text-xl font-bold">Espace Secrétaire</span>
+
+                <img style="width: 180px; height:160px" src="{{ url('storage/uploads/logo_miacex.png') }}" />
+
             </div>
         </div>
         <nav class="mt-8 px-4">
@@ -88,7 +133,7 @@
                     <a href="{{ route('secretaire.dossier-medical') }}"
                         class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                         <i class="fas fa-file-medical mr-3 text-white"></i>
-                        Consultations 
+                        Consultations
                     </a>
                     <a href="{{ route('secretaire.calendrier') }}"
                         class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
@@ -125,7 +170,8 @@
         </nav>
         <!-- Section utilisateur avec bouton de déconnexion -->
         <div class="absolute bottom-4 left-4 right-4">
-            <div class="bg-gray-800 rounded-lg p-4 group cursor-pointer hover:bg-red-600 transition-colors duration-200">
+            <div
+                class="bg-gray-800 rounded-lg p-4 group cursor-pointer hover:bg-red-600 transition-colors duration-200">
                 <form method="POST" action="{{ route('logout') }}" id="logout-form">
                     @csrf
                     <div class="flex items-center space-x-3" onclick="document.getElementById('logout-form').submit();">
@@ -222,12 +268,16 @@
                             <tr class="hover:bg-gray-50 transition-colors document-row"
                                 data-cin="{{ $doc['patient_cin'] ?? '' }}"
                                 data-patient="{{ $doc['patient_nom'] ?? '' }}"
-                                data-medecin="{{ $doc['medecin_nom'] ?? '' }}">
+                                data-medecin="{{ $doc['medecin_nom'] ?? '' }}"
+                                data-ordonnance-id="{{ $doc['id'] }}"
+                                onclick="marquerOrdonnanceCommeVue({{ $doc['id'] }})">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {{ $doc['patient_cin'] ?? '' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {{ $doc['patient_nom'] ?? '' }}
+                                    <span class="badge-nouveau" id="badge-{{ $doc['id'] }}"
+                                        style="display: none;">NOUVEAU</span>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
                                     {{ Str::limit($doc['medicaments'] ?? 'Non spécifié', 50) }}
@@ -240,12 +290,14 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex space-x-2">
-                                        <button onclick='openViewModal(@json($doc))'
+                                        <button
+                                            onclick='openViewModal(@json($doc)); event.stopPropagation();'
                                             class="text-blue-600 hover:text-blue-800 transition-colors p-2 rounded hover:bg-blue-50"
                                             title="Voir">
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <button onclick='openPrintModal(@json($doc))'
+                                        <button
+                                            onclick='openPrintModal(@json($doc)); event.stopPropagation();'
                                             class="text-green-600 hover:text-green-800 transition-colors p-2 rounded hover:bg-green-50"
                                             title="Imprimer">
                                             <i class="fas fa-print"></i>
@@ -301,7 +353,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             <i class="fas fa-user-md mr-1"></i>Médecin
                         </label>
-                         <input type="hidden" name="medecin_id" value="{{ Auth::id() }}">
+                        <input type="hidden" name="medecin_id" value="{{ Auth::id() }}">
 
                         <input type="text" value="Dr. {{ Auth::user()->nom ?? 'Médecin non défini' }}" readonly
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed outline-none">
@@ -444,6 +496,58 @@
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         let currentDocument = null;
 
+        // Clé pour le localStorage
+        const STORAGE_KEY = 'ordonnances_vues';
+
+        // Fonction pour obtenir les ordonnances vues depuis le localStorage
+        function getOrdonnancesVues() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            return stored ? JSON.parse(stored) : [];
+        }
+
+        // Fonction pour sauvegarder les ordonnances vues dans le localStorage
+        function saveOrdonnancesVues(ordonnancesVues) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(ordonnancesVues));
+        }
+
+        // Fonction pour marquer une ordonnance comme vue
+        function marquerOrdonnanceCommeVue(ordonnanceId) {
+            const ordonnancesVues = getOrdonnancesVues();
+            if (!ordonnancesVues.includes(ordonnanceId)) {
+                ordonnancesVues.push(ordonnanceId);
+                saveOrdonnancesVues(ordonnancesVues);
+            }
+
+            // Retirer la classe "nouvelle-ordonnance" et masquer le badge
+            const row = document.querySelector(`tr[data-ordonnance-id="${ordonnanceId}"]`);
+            const badge = document.getElementById(`badge-${ordonnanceId}`);
+
+            if (row) {
+                row.classList.remove('nouvelle-ordonnance');
+            }
+            if (badge) {
+                badge.style.display = 'none';
+            }
+        }
+
+        // Fonction pour marquer les nouvelles ordonnances au chargement de la page
+        function marquerNouvellesOrdonnances() {
+            const ordonnancesVues = getOrdonnancesVues();
+            const rows = document.querySelectorAll('.document-row');
+
+            rows.forEach(row => {
+                const ordonnanceId = parseInt(row.getAttribute('data-ordonnance-id'));
+                if (!ordonnancesVues.includes(ordonnanceId)) {
+                    // Marquer comme nouvelle ordonnance
+                    row.classList.add('nouvelle-ordonnance');
+                    const badge = document.getElementById(`badge-${ordonnanceId}`);
+                    if (badge) {
+                        badge.style.display = 'inline';
+                    }
+                }
+            });
+        }
+
         function autoHideMessages() {
             const messages = [
                 document.getElementById('successMessage'),
@@ -485,6 +589,9 @@
         }
 
         function openViewModal(docData) {
+            // Marquer l'ordonnance comme vue quand on ouvre la modal
+            marquerOrdonnanceCommeVue(docData.id);
+
             // Fetch the complete data from the new API endpoint to ensure template info is available
             fetch(`/api/ordonnance/${docData.id}/data`)
                 .then(response => {
@@ -531,6 +638,9 @@
         }
 
         function openPrintModal(docData) {
+            // Marquer l'ordonnance comme vue quand on imprime
+            marquerOrdonnanceCommeVue(docData.id);
+
             // docData from the table might not have the full template info.
             // Fetch the complete data from the new API endpoint.
             fetch(`/api/ordonnance/${docData.id}/data`)
@@ -546,7 +656,7 @@
                 })
                 .catch(error => {
                     console.error('Erreur lors de la récupération des données de l\'ordonnance pour impression:',
-                    error);
+                        error);
                     alert('Erreur lors de la récupération des données de l\'ordonnance pour impression.');
                 });
         }
@@ -870,6 +980,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             autoHideMessages();
             setupSearchAndFilter();
+            marquerNouvellesOrdonnances(); // Nouvelle fonction pour marquer les ordonnances
 
             // Set current date
             const today = new Date().toISOString().split('T')[0];

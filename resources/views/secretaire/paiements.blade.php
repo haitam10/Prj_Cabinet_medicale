@@ -30,21 +30,67 @@
         .modal.show {
             display: flex;
         }
+
+        /* Styles pour les nouveaux paiements */
+        .nouveau-paiement {
+            background-color: #dcfce7 !important;
+            border-left: 4px solid #16a34a !important;
+            animation: pulse-green 2s infinite;
+        }
+
+        .nouveau-paiement:hover {
+            background-color: #bbf7d0 !important;
+        }
+
+        @keyframes pulse-green {
+
+            0%,
+            100% {
+                background-color: #dcfce7;
+            }
+
+            50% {
+                background-color: #bbf7d0;
+            }
+        }
+
+        .badge-nouveau {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 6px;
+            background-color: #16a34a;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            border-radius: 9999px;
+            margin-left: 6px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
     </style>
 </head>
 
 <body class="bg-gray-100 min-h-screen">
     <!-- SIDEBAR -->
     <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50">
-        <div class="flex items-center justify-center h-16 bg-cordes-blue">
+        <div class="flex items-center justify-center h-16 bg-cordes-light">
             <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                    <i class="fas fa-cube text-cordes-blue text-lg"></i>
-                </div>
-                <span class="text-white text-xl font-bold">C-M</span>
+
+                <img style="width: 180px; height:160px" src="{{ url('storage/uploads/logo_miacex.png') }}" />
+
             </div>
         </div>
-
         <nav class="mt-8 px-4">
             <div class="space-y-2">
                 <a href="{{ route('secretaire.dashboard') }}"
@@ -81,7 +127,7 @@
                     <a href="{{ route('secretaire.dossier-medical') }}"
                         class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                         <i class="fas fa-file-medical mr-3 text-white"></i>
-                        Consultations 
+                        Consultations
                     </a>
                     <a href="{{ route('secretaire.calendrier') }}"
                         class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
@@ -232,9 +278,11 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200" id="paiementsTableBody">
                         @forelse($paiements as $paiement)
-                            <tr class="hover:bg-gray-50 transition-colors paiement-row"
+                            <tr class="hover:bg-gray-50 transition-colors paiement-row cursor-pointer"
                                 data-search="{{ strtolower($paiement->facture->patient->nom ?? '') }}"
-                                data-statut="{{ $paiement->statut }}" data-date="{{ $paiement->date_paiement }}">
+                                data-statut="{{ $paiement->statut }}" data-date="{{ $paiement->date_paiement }}"
+                                data-paiement-id="{{ $paiement->id }}"
+                                onclick="marquerPaiementCommeVu({{ $paiement->id }})">
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div
@@ -245,6 +293,10 @@
                                             <div class="text-sm font-medium text-gray-900">
                                                 {{ $paiement->facture->patient->nom ?? 'N/A' }}
                                                 {{ $paiement->facture->patient->prenom ?? '' }}
+                                                <span class="badge-nouveau" id="badge-{{ $paiement->id }}"
+                                                    style="display: none;">
+                                                    NOUVEAU
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -325,19 +377,21 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex space-x-2">
-                                        <button onclick="showPaiement({{ $paiement->id }})"
+                                        <button onclick="event.stopPropagation(); showPaiement({{ $paiement->id }})"
                                             class="text-blue-600 hover:text-blue-800 transition-colors p-1 rounded hover:bg-blue-50"
                                             title="Voir les détails">
                                             <i class="fas fa-eye"></i>
                                         </button>
 
                                         @if ($paiement->statut !== 'paye')
-                                            <button onclick="editPaiement({{ $paiement->id }})"
+                                            <button
+                                                onclick="event.stopPropagation(); editPaiement({{ $paiement->id }})"
                                                 class="text-yellow-600 hover:text-yellow-800 transition-colors p-1 rounded hover:bg-yellow-50"
                                                 title="Modifier le paiement">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <button onclick="deletePaiement({{ $paiement->id }})"
+                                            <button
+                                                onclick="event.stopPropagation(); deletePaiement({{ $paiement->id }})"
                                                 class="text-red-600 hover:text-red-800 transition-colors p-1 rounded hover:bg-red-50"
                                                 title="Supprimer le paiement">
                                                 <i class="fas fa-trash"></i>
@@ -347,7 +401,8 @@
                                                 title="Paiement payé - Non modifiable">
                                                 <i class="fas fa-lock"></i>
                                             </span>
-                                            <button onclick="deletePaiement({{ $paiement->id }})"
+                                            <button
+                                                onclick="event.stopPropagation(); deletePaiement({{ $paiement->id }})"
                                                 class="text-red-600 hover:text-red-800 transition-colors p-1 rounded hover:bg-red-50"
                                                 title="Supprimer le paiement">
                                                 <i class="fas fa-trash"></i>
@@ -621,6 +676,43 @@
             // Configuration CSRF pour les requêtes AJAX
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
+            // Gestion des nouveaux paiements
+            function marquerNouveauxPaiements() {
+                const paiementsVus = JSON.parse(localStorage.getItem('paiementsVus') || '[]');
+                const lignesPaiements = document.querySelectorAll('.paiement-row');
+
+                lignesPaiements.forEach(ligne => {
+                    const paiementId = ligne.getAttribute('data-paiement-id');
+                    const badge = document.getElementById(`badge-${paiementId}`);
+
+                    if (!paiementsVus.includes(paiementId)) {
+                        ligne.classList.add('nouveau-paiement');
+                        if (badge) {
+                            badge.style.display = 'inline-flex';
+                        }
+                    }
+                });
+            }
+
+            function marquerPaiementCommeVu(paiementId) {
+                const paiementsVus = JSON.parse(localStorage.getItem('paiementsVus') || '[]');
+
+                if (!paiementsVus.includes(paiementId.toString())) {
+                    paiementsVus.push(paiementId.toString());
+                    localStorage.setItem('paiementsVus', JSON.stringify(paiementsVus));
+                }
+
+                const ligne = document.querySelector(`[data-paiement-id="${paiementId}"]`);
+                const badge = document.getElementById(`badge-${paiementId}`);
+
+                if (ligne) {
+                    ligne.classList.remove('nouveau-paiement');
+                }
+                if (badge) {
+                    badge.style.display = 'none';
+                }
+            }
+
             // Fonctions pour gérer les modals
             function openModal(modalId) {
                 const modal = document.getElementById(modalId);
@@ -806,6 +898,9 @@
 
             // Initialiser les événements au chargement de la page
             document.addEventListener('DOMContentLoaded', function() {
+                // Marquer les nouveaux paiements
+                marquerNouveauxPaiements();
+
                 // Ajouter les événements de filtrage
                 document.getElementById('searchInput').addEventListener('input', filterPaiements);
                 document.getElementById('statutFilter').addEventListener('change', filterPaiements);

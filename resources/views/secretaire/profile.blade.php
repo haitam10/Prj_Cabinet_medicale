@@ -130,12 +130,11 @@
 <body class="bg-gray-100 min-h-screen">
     <!-- SIDEBAR -->
     <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50">
-        <div class="flex items-center justify-center h-16 bg-cordes-blue">
+        <div class="flex items-center justify-center h-16 bg-cordes-light">
             <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                    <i class="fas fa-cube text-cordes-blue text-lg"></i>
-                </div>
-                <span class="text-white text-xl font-bold">C-M</span>
+              
+                   <img  style="width: 180px; height:160px" src="{{ url('storage/uploads/logo_miacex.png') }}"/>
+                
             </div>
         </div>
         <nav class="mt-8 px-4">

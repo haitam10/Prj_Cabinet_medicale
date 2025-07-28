@@ -21,21 +21,20 @@ class RendezvousController extends Controller
         $user = Auth::user();
         $query = Rendezvous::with(['patient', 'medecin', 'secretaire']);
 
-        // Filter appointments based on user role
         if ($user->role === 'medecin') {
-            // Show doctor's own appointments
+
             $query->where('medecin_id', $user->id);
         } elseif ($user->role === 'secretaire') {
-            // Show appointments of the doctor associated with this secretary
+
             if ($user->medecin_id) {
                 $query->where('medecin_id', $user->medecin_id);
             } else {
-                // If secretary has no associated doctor, show no appointments
+
                 $query->where('id', null);
             }
         }
 
-        // Search by patient name
+
         if ($request->has('search') && !empty($request->search)) {
             $search = $request->search;
             $query->whereHas('patient', function($q) use ($search) {
@@ -44,17 +43,17 @@ class RendezvousController extends Controller
             });
         }
 
-        // Filter by status
+
         if ($request->has('status') && !empty($request->status)) {
             $query->where('status', $request->status);
         }
 
-        // Filter by appointment type
+
         if ($request->has('appointment_type') && !empty($request->appointment_type)) {
             $query->where('appointment_type', $request->appointment_type);
         }
 
-        // Filter by date
+
         if ($request->has('date') && !empty($request->date)) {
             $query->whereDate('appointment_date', $request->date);
         }
@@ -63,7 +62,7 @@ class RendezvousController extends Controller
                            ->orderBy('appointment_time', 'desc')
                            ->paginate(10);
 
-        // Format data for JavaScript consumption
+        
         $rendezvous->getCollection()->transform(function ($rdv) {
             $rdv->appointment_date_formatted = $rdv->appointment_date->format('Y-m-d');
             $rdv->appointment_time_formatted = substr($rdv->appointment_time, 0, 5);
@@ -76,7 +75,6 @@ class RendezvousController extends Controller
 
         $patients = Patient::all();
         
-        // Get doctors based on user role
         if ($user->role === 'medecin') {
             $medecins = User::where('id', $user->id)->get();
         } elseif ($user->role === 'secretaire' && $user->medecin_id) {
@@ -85,21 +83,20 @@ class RendezvousController extends Controller
             $medecins = collect();
         }
 
-        // Get disponibilites for the current doctor
+
         $disponibilites = collect();
         if ($user->role === 'medecin') {
             $disponibilites = Disponibilite::where('medecin_id', $user->id)
-                ->where('date', '>=', now()->toDateString()) // Only future dates
+                ->where('date', '>=', now()->toDateString()) 
                 ->orderBy('date', 'asc')
                 ->get();
         } elseif ($user->role === 'secretaire' && $user->medecin_id) {
             $disponibilites = Disponibilite::where('medecin_id', $user->medecin_id)
-                ->where('date', '>=', now()->toDateString()) // Only future dates
+                ->where('date', '>=', now()->toDateString()) 
                 ->orderBy('date', 'asc')
                 ->get();
         }
 
-        // Prepare JavaScript data
         $disponibilitesJS = $disponibilites->map(function($disp) {
             return [
                 'date' => $disp->date,
@@ -145,12 +142,11 @@ class RendezvousController extends Controller
                 'request_data' => $request->all()
             ]);
 
-            // Validation des données
             $validated = $request->validate([
                 'patient_id' => 'required|integer|exists:patients,id',
                 'appointment_date' => 'required|date',
                 'appointment_time' => 'required|date_format:H:i',
-                'duration' => 'nullable|integer|min:30|max:30', // Force 30 minutes
+                'duration' => 'nullable|integer|min:30|max:30', 
                 'status' => 'required|string|in:pending,confirmed,completed,cancelled',
                 'appointment_type' => 'required|string|in:consultation,follow_up,emergency,routine',
                 'reason' => 'nullable|string|max:1000',
@@ -170,7 +166,7 @@ class RendezvousController extends Controller
                 'appointment_type.in' => 'Type de rendez-vous invalide.',
             ]);
 
-            // Déterminer le médecin ID en fonction du rôle de l'utilisateur
+
             if ($user->role === 'medecin') {
                 $medecinId = $user->id;
             } elseif ($user->role === 'secretaire' && $user->medecin_id) {
@@ -181,16 +177,16 @@ class RendezvousController extends Controller
                     ->withInput();
             }
 
-            // Force duration to 30 minutes
+
             $duration = 30;
 
-            // Formater l'heure correctement
+
             $appointmentTime = $validated['appointment_time'];
             if (strlen($appointmentTime) === 5) {
-                $appointmentTime .= ':00'; // Ajouter les secondes
+                $appointmentTime .= ':00'; 
             }
 
-            // Vérifier que la date sélectionnée correspond à une disponibilité du médecin
+
             if ($validated['status'] !== 'cancelled') {
                 $disponibilite = Disponibilite::where('medecin_id', $medecinId)
                     ->where('date', $validated['appointment_date'])
@@ -202,7 +198,7 @@ class RendezvousController extends Controller
                         ->withInput();
                 }
 
-                // Vérifier que l'heure est dans les créneaux de disponibilité
+
                 $timeSlotValid = $this->validateTimeSlot(
                     $validated['appointment_time'],
                     $disponibilite->heure_entree,
@@ -215,7 +211,7 @@ class RendezvousController extends Controller
                         ->withInput();
                 }
 
-                // Vérifier les conflits d'horaire
+
                 $conflictCheck = $this->checkTimeSlotConflict(
                     $medecinId,
                     $validated['appointment_date'],
@@ -229,7 +225,7 @@ class RendezvousController extends Controller
                 }
             }
 
-            // Préparer les données pour la création
+
             $createData = [
                 'patient_id' => (int) $validated['patient_id'],
                 'medecin_id' => (int) $medecinId,
@@ -246,17 +242,22 @@ class RendezvousController extends Controller
                 'feedback' => $validated['feedback'],
             ];
 
-            // Ajouter cancelled_at si le statut est annulé
+
             if ($validated['status'] === 'cancelled') {
                 $createData['cancelled_at'] = now();
             }
 
             Log::info('Données pour création de rendez-vous', $createData);
 
-            // Créer le rendez-vous
+
             $rendezvous = Rendezvous::create($createData);
 
             Log::info('Rendez-vous créé avec succès', ['id' => $rendezvous->id]);
+
+
+            $newRendezvous = session('new_rendezvous', []);
+            $newRendezvous[] = $rendezvous->id;
+            session(['new_rendezvous' => $newRendezvous]);
 
             return redirect()->route('secretaire.rendezvous')
                 ->with('success', 'Rendez-vous créé avec succès.');
@@ -283,6 +284,20 @@ class RendezvousController extends Controller
     }
 
     /**
+     * Marquer un rendez-vous comme vu (enlever le surlignage vert)
+     */
+    public function markAsViewed(Request $request, $id)
+    {
+        $newRendezvous = session('new_rendezvous', []);
+        $newRendezvous = array_filter($newRendezvous, function($rdvId) use ($id) {
+            return $rdvId != $id;
+        });
+        session(['new_rendezvous' => array_values($newRendezvous)]);
+        
+        return response()->json(['success' => true]);
+    }
+
+    /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, $id)
@@ -291,7 +306,7 @@ class RendezvousController extends Controller
             $user = Auth::user();
             $rendezvous = Rendezvous::findOrFail($id);
 
-            // Check if user can edit this appointment
+
             if ($user->role === 'medecin' && $rendezvous->medecin_id !== $user->id) {
                 throw new \Exception('Non autorisé à modifier ce rendez-vous.');
             } elseif ($user->role === 'secretaire' && $rendezvous->medecin_id !== $user->medecin_id) {
@@ -302,7 +317,7 @@ class RendezvousController extends Controller
                 'patient_id' => 'required|exists:patients,id',
                 'appointment_date' => 'required|date',
                 'appointment_time' => 'required|date_format:H:i',
-                'duration' => 'nullable|integer|min:30|max:30', // Force 30 minutes
+                'duration' => 'nullable|integer|min:30|max:30', 
                 'status' => 'required|string|in:pending,confirmed,completed,cancelled',
                 'appointment_type' => 'required|string|in:consultation,follow_up,emergency,routine',
                 'reason' => 'nullable|string|max:1000',
@@ -312,16 +327,14 @@ class RendezvousController extends Controller
                 'feedback' => 'nullable|string|max:1000',
             ]);
 
-            // Force duration to 30 minutes
+
             $duration = 30;
 
-            // Format appointment time correctly
             $appointmentTime = $validated['appointment_time'];
             if (strlen($appointmentTime) === 5) {
-                $appointmentTime .= ':00'; // Add seconds if not present
+                $appointmentTime .= ':00'; 
             }
 
-            // Validate availability and time slot only if not cancelled
             if ($validated['status'] !== 'cancelled') {
                 $disponibilite = Disponibilite::where('medecin_id', $rendezvous->medecin_id)
                     ->where('date', $validated['appointment_date'])
@@ -336,7 +349,6 @@ class RendezvousController extends Controller
                         ->withInput();
                 }
 
-                // Validate time slot
                 $timeSlotValid = $this->validateTimeSlot(
                     $validated['appointment_time'],
                     $disponibilite->heure_entree,
@@ -352,7 +364,6 @@ class RendezvousController extends Controller
                         ->withInput();
                 }
 
-                // Check for conflicts (excluding current appointment)
                 $conflictCheck = $this->checkTimeSlotConflict(
                     $rendezvous->medecin_id,
                     $validated['appointment_date'],
@@ -370,7 +381,6 @@ class RendezvousController extends Controller
                 }
             }
 
-            // Update cancellation timestamp if status changed to cancelled
             $updateData = [
                 'patient_id' => $validated['patient_id'],
                 'appointment_date' => $validated['appointment_date'],
@@ -420,7 +430,6 @@ class RendezvousController extends Controller
             $user = Auth::user();
             $rendezvous = Rendezvous::findOrFail($id);
 
-            // Check if user can delete this appointment
             if ($user->role === 'medecin' && $rendezvous->medecin_id !== $user->id) {
                 throw new \Exception('Non autorisé à supprimer ce rendez-vous.');
             } elseif ($user->role === 'secretaire' && $rendezvous->medecin_id !== $user->medecin_id) {
@@ -461,7 +470,6 @@ class RendezvousController extends Controller
                 'heure_sortie.after' => 'L\'heure de sortie doit être après l\'heure d\'entrée.',
             ]);
 
-            // Déterminer le médecin ID
             if ($user->role === 'medecin') {
                 $medecinId = $user->id;
                 $secretaireId = null;
@@ -472,7 +480,6 @@ class RendezvousController extends Controller
                 return back()->withErrors(['authorization' => 'Non autorisé à créer des disponibilités.']);
             }
 
-            // Vérifier si une disponibilité existe déjà pour cette date
             $existingDisponibilite = Disponibilite::where('medecin_id', $medecinId)
                 ->where('date', $validated['date'])
                 ->first();
@@ -506,7 +513,6 @@ class RendezvousController extends Controller
             $user = Auth::user();
             $disponibilite = Disponibilite::findOrFail($id);
 
-            // Check authorization
             if ($user->role === 'medecin' && $disponibilite->medecin_id !== $user->id) {
                 throw new \Exception('Non autorisé à modifier cette disponibilité.');
             } elseif ($user->role === 'secretaire' && $disponibilite->medecin_id !== $user->medecin_id) {
@@ -519,7 +525,6 @@ class RendezvousController extends Controller
                 'heure_sortie' => 'required|date_format:H:i|after:heure_entree',
             ]);
 
-            // Check if another disponibilite exists for this date (excluding current one)
             $existingDisponibilite = Disponibilite::where('medecin_id', $disponibilite->medecin_id)
                 ->where('date', $validated['date'])
                 ->where('id', '!=', $id)
@@ -552,14 +557,12 @@ class RendezvousController extends Controller
             $user = Auth::user();
             $disponibilite = Disponibilite::findOrFail($id);
 
-            // Check authorization
             if ($user->role === 'medecin' && $disponibilite->medecin_id !== $user->id) {
                 throw new \Exception('Non autorisé à supprimer cette disponibilité.');
             } elseif ($user->role === 'secretaire' && $disponibilite->medecin_id !== $user->medecin_id) {
                 throw new \Exception('Non autorisé à supprimer cette disponibilité.');
             }
 
-            // Check if there are existing appointments for this availability
             $existingAppointments = Rendezvous::where('medecin_id', $disponibilite->medecin_id)
                 ->whereDate('appointment_date', $disponibilite->date)
                 ->where('status', '!=', 'cancelled')
@@ -595,8 +598,7 @@ class RendezvousController extends Controller
         $entreeTimeObj = Carbon::createFromFormat('H:i', substr($heureEntree, 0, 5));
         $sortieTimeObj = Carbon::createFromFormat('H:i', substr($heureSortie, 0, 5));
         
-        // Check if appointment time is within availability hours
-        // Also check if there's enough time for a 30-minute appointment
+
         $appointmentEndTime = $appointmentTimeObj->copy()->addMinutes(30);
         
         return $appointmentTimeObj->greaterThanOrEqualTo($entreeTimeObj) && 
@@ -611,7 +613,7 @@ class RendezvousController extends Controller
         $query = Rendezvous::where('medecin_id', $medecinId)
             ->where('status', '!=', 'cancelled')
             ->whereDate('appointment_date', $date)
-            ->where('appointment_time', 'like', $time . '%'); // Match HH:MM format
+            ->where('appointment_time', 'like', $time . '%'); 
 
         if ($excludeRendezvousId) {
             $query->where('id', '!=', $excludeRendezvousId);
@@ -662,7 +664,6 @@ class RendezvousController extends Controller
     {
         $user = Auth::user();
         
-        // Check authorization
         if ($user->role === 'medecin' && $rendezvous->medecin_id !== $user->id) {
             abort(403, 'Non autorisé à voir ce rendez-vous.');
         } elseif ($user->role === 'secretaire' && $rendezvous->medecin_id !== $user->medecin_id) {
@@ -688,7 +689,6 @@ class RendezvousController extends Controller
         
         $user = Auth::user();
         
-        // Check authorization
         if ($user->role === 'medecin' && $rendezvous->medecin_id !== $user->id) {
             abort(403, 'Non autorisé à modifier ce rendez-vous.');
         } elseif ($user->role === 'secretaire' && $rendezvous->medecin_id !== $user->medecin_id) {

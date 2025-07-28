@@ -22,17 +22,57 @@
             },
         };
     </script>
+    <style>
+        /* Style pour les nouveaux patients */
+        .nouveau-patient {
+            background-color: #dcfce7 !important;
+            border-left: 4px solid #16a34a !important;
+            animation: pulseGreen 2s infinite;
+        }
+
+        .nouveau-patient:hover {
+            background-color: #bbf7d0 !important;
+        }
+
+        @keyframes pulseGreen {
+            0%, 100% {
+                background-color: #dcfce7;
+            }
+            50% {
+                background-color: #bbf7d0;
+            }
+        }
+
+        /* Style pour l'indicateur "Nouveau" */
+        .badge-nouveau {
+            background-color: #16a34a;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 8px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+    </style>
 </head>
 
 <body class="bg-gray-100 min-h-screen">
     <!-- SIDEBAR -->
     <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50">
-        <div class="flex items-center justify-center h-16 bg-cordes-blue">
+        <div class="flex items-center justify-center h-16 bg-cordes-light">
             <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                    <i class="fas fa-cube text-cordes-blue text-lg"></i>
-                </div>
-                <span class="text-white text-xl font-bold">C-M</span>
+              
+                   <img  style="width: 180px; height:160px" src="{{ url('storage/uploads/logo_miacex.png') }}"/>
+                
             </div>
         </div>
         <nav class="mt-8 px-4">
@@ -71,7 +111,7 @@
                     <a href="{{ route('secretaire.dossier-medical') }}"
                         class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                         <i class="fas fa-file-medical mr-3 text-white"></i>
-                        Consultations
+                         Consultations
                     </a>
                     <a href="{{ route('secretaire.calendrier') }}"
                         class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
@@ -264,7 +304,9 @@
                         @forelse ($patients as $patient)
                             <tr class="hover:bg-gray-50 transition-colors patient-row"
                                 data-search="{{ strtolower($patient->nom . ' ' . $patient->cin) }}"
-                                data-sexe="{{ $patient->sexe }}">
+                                data-sexe="{{ $patient->sexe }}"
+                                data-patient-id="{{ $patient->id }}"
+                                onclick="marquerPatientCommeVu({{ $patient->id }})">
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
                                         @if($patient->profile_image && Storage::disk('public')->exists($patient->profile_image))
@@ -286,6 +328,7 @@
                                         <div>
                                             <div class="text-sm font-medium text-gray-900">
                                                 {{ $patient->nom }}
+                                                <span class="badge-nouveau" id="badge-{{ $patient->id }}" style="display: none;">NOUVEAU</span>
                                             </div>
                                             <div class="text-sm text-gray-500">
                                                 {{ \Carbon\Carbon::parse($patient->date_naissance)->format('d/m/Y') }}
@@ -343,17 +386,17 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex space-x-2">
                                         @if (Auth::check() && Auth::user()->role === 'medecin')
-                                            <button onclick="viewPatientDetails({{ $patient->id }})"
+                                            <button onclick="viewPatientDetails({{ $patient->id }}); event.stopPropagation();"
                                                 class="text-yellow-600 hover:text-yellow-800 transition-colors p-1 rounded hover:bg-yellow-50"
                                                 title="Voir les détails du patient">
                                                 <i class="fas fa-eye"></i>
                                             </button>
                                         @endif
-                                        <button onclick='openEditModal({{ $patient->id }})'
+                                        <button onclick='openEditModal({{ $patient->id }}); event.stopPropagation();'
                                             class="text-blue-600 hover:text-blue-800 transition-colors p-1 rounded hover:bg-blue-50">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button onclick="deletePatient({{ $patient->id }})"
+                                        <button onclick="deletePatient({{ $patient->id }}); event.stopPropagation();"
                                             class="text-red-600 hover:text-red-800 transition-colors p-1 rounded hover:bg-red-50">
                                             <i class="fas fa-trash"></i>
                                         </button>
@@ -1000,6 +1043,58 @@
         // Cela évite d'injecter de gros objets JSON directement dans les attributs onclick et résout l'erreur 'eval'.
         window.allPatients = @json($patients->keyBy('id')->toArray());
 
+        // Clé pour le localStorage - système des nouveaux patients
+        const STORAGE_KEY = 'patients_vus';
+
+        // Fonction pour obtenir les patients vus depuis le localStorage
+        function getPatientsVus() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            return stored ? JSON.parse(stored) : [];
+        }
+
+        // Fonction pour sauvegarder les patients vus dans le localStorage
+        function savePatientsVus(patientsVus) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(patientsVus));
+        }
+
+        // Fonction pour marquer un patient comme vu
+        function marquerPatientCommeVu(patientId) {
+            const patientsVus = getPatientsVus();
+            if (!patientsVus.includes(patientId)) {
+                patientsVus.push(patientId);
+                savePatientsVus(patientsVus);
+            }
+            
+            // Retirer la classe "nouveau-patient" et masquer le badge
+            const row = document.querySelector(`tr[data-patient-id="${patientId}"]`);
+            const badge = document.getElementById(`badge-${patientId}`);
+            
+            if (row) {
+                row.classList.remove('nouveau-patient');
+            }
+            if (badge) {
+                badge.style.display = 'none';
+            }
+        }
+
+        // Fonction pour marquer les nouveaux patients au chargement de la page
+        function marquerNouveauxPatients() {
+            const patientsVus = getPatientsVus();
+            const rows = document.querySelectorAll('.patient-row');
+            
+            rows.forEach(row => {
+                const patientId = parseInt(row.getAttribute('data-patient-id'));
+                if (!patientsVus.includes(patientId)) {
+                    // Marquer comme nouveau patient
+                    row.classList.add('nouveau-patient');
+                    const badge = document.getElementById(`badge-${patientId}`);
+                    if (badge) {
+                        badge.style.display = 'inline';
+                    }
+                }
+            });
+        }
+
         // Fonction pour prévisualiser l'image
         function previewImage(input, previewId) {
             const preview = document.getElementById(previewId);
@@ -1019,6 +1114,9 @@
 
         // FONCTION CORRIGÉE POUR VOIR LES DÉTAILS DU PATIENT
         function viewPatientDetails(patientId) {
+            // Marquer le patient comme vu quand on voit ses détails
+            marquerPatientCommeVu(patientId);
+            
             // Correction: utiliser l'URL correcte avec le préfixe 'secretaire'
             fetch(`/secretaire/patients/${patientId}/details`, {
                 method: 'GET',
@@ -1431,6 +1529,9 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Masquer automatiquement les messages
             autoHideMessages();
+
+            // Marquer les nouveaux patients
+            marquerNouveauxPatients();
 
             // Ouvrir automatiquement le modal si il y a des erreurs de validation
             @if ($errors->any())

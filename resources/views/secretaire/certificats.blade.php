@@ -86,19 +86,59 @@
             align-items: center;
             gap: 6px;
         }
+
+        /* Style pour les nouveaux certificats */
+        .nouveau-certificat {
+            background-color: #dcfce7 !important;
+            border-left: 4px solid #16a34a !important;
+            animation: pulseGreen 2s infinite;
+        }
+
+        .nouveau-certificat:hover {
+            background-color: #bbf7d0 !important;
+        }
+
+        @keyframes pulseGreen {
+            0%, 100% {
+                background-color: #dcfce7;
+            }
+            50% {
+                background-color: #bbf7d0;
+            }
+        }
+
+        /* Style pour l'indicateur "Nouveau" */
+        .badge-nouveau {
+            background-color: #16a34a;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 8px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
     </style>
 </head>
 
 <body class="bg-gray-100 min-h-screen">
     <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50">
-        <div class="flex items-center justify-center h-16 bg-cordes-blue">
+    <div class="flex items-center justify-center h-16 bg-cordes-light">
             <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                    <i class="fas fa-cube text-cordes-blue text-lg"></i>
-                </div>
-                <span class="text-white text-xl font-bold">Espace Secrétaire</span>
+              
+                   <img  style="width: 180px; height:160px" src="{{ url('storage/uploads/logo_miacex.png') }}"/>
+                
             </div>
         </div>
+
         <nav class="mt-8 px-4">
             <div class="space-y-2">
                 <a href="{{ route('secretaire.dashboard') }}"
@@ -264,12 +304,15 @@
                             <tr class="hover:bg-gray-50 transition-colors document-row"
                                 data-cin="{{ $doc['patient_cin'] ?? '' }}"
                                 data-patient="{{ $doc['patient_nom'] ?? '' }}"
-                                data-medecin="{{ $doc['medecin_nom'] ?? '' }}">
+                                data-medecin="{{ $doc['medecin_nom'] ?? '' }}"
+                                data-certificat-id="{{ $doc['id'] }}"
+                                onclick="marquerCertificatCommeVu({{ $doc['id'] }})">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {{ $doc['patient_cin'] ?? '' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {{ $doc['patient_nom'] ?? '' }}
+                                    <span class="badge-nouveau" id="badge-{{ $doc['id'] }}" style="display: none;">NOUVEAU</span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                                     <span
@@ -287,12 +330,14 @@
                                     <div class="flex space-x-2">
                                         <button
                                             class="text-blue-600 hover:text-blue-800 transition-colors p-2 rounded hover:bg-blue-50 view-certificat-btn"
-                                            title="Voir" data-doc-id="{{ $doc['id'] }}">
+                                            title="Voir" data-doc-id="{{ $doc['id'] }}"
+                                            onclick="event.stopPropagation();">
                                             <i class="fas fa-eye"></i>
                                         </button>
                                         <button
                                             class="text-green-600 hover:text-green-800 transition-colors p-2 rounded hover:bg-green-50 print-certificat-btn"
-                                            title="Imprimer" data-doc-id="{{ $doc['id'] }}">
+                                            title="Imprimer" data-doc-id="{{ $doc['id'] }}"
+                                            onclick="event.stopPropagation();">
                                             <i class="fas fa-print"></i>
                                         </button>
                                     </div>
@@ -537,6 +582,58 @@
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         let currentDocument = null;
         let availableTemplates = [];
+
+        // Clé pour le localStorage
+        const STORAGE_KEY = 'certificats_vus';
+
+        // Fonction pour obtenir les certificats vus depuis le localStorage
+        function getCertificatsVus() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            return stored ? JSON.parse(stored) : [];
+        }
+
+        // Fonction pour sauvegarder les certificats vus dans le localStorage
+        function saveCertificatsVus(certificatsVus) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(certificatsVus));
+        }
+
+        // Fonction pour marquer un certificat comme vu
+        function marquerCertificatCommeVu(certificatId) {
+            const certificatsVus = getCertificatsVus();
+            if (!certificatsVus.includes(certificatId)) {
+                certificatsVus.push(certificatId);
+                saveCertificatsVus(certificatsVus);
+            }
+            
+            // Retirer la classe "nouveau-certificat" et masquer le badge
+            const row = document.querySelector(`tr[data-certificat-id="${certificatId}"]`);
+            const badge = document.getElementById(`badge-${certificatId}`);
+            
+            if (row) {
+                row.classList.remove('nouveau-certificat');
+            }
+            if (badge) {
+                badge.style.display = 'none';
+            }
+        }
+
+        // Fonction pour marquer les nouveaux certificats au chargement de la page
+        function marquerNouveauxCertificats() {
+            const certificatsVus = getCertificatsVus();
+            const rows = document.querySelectorAll('.document-row');
+            
+            rows.forEach(row => {
+                const certificatId = parseInt(row.getAttribute('data-certificat-id'));
+                if (!certificatsVus.includes(certificatId)) {
+                    // Marquer comme nouveau certificat
+                    row.classList.add('nouveau-certificat');
+                    const badge = document.getElementById(`badge-${certificatId}`);
+                    if (badge) {
+                        badge.style.display = 'inline';
+                    }
+                }
+            });
+        }
 
         // Default template as requested
         const defaultTemplate = {
@@ -1065,6 +1162,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             autoHideMessages();
             setupSearchAndFilter();
+            marquerNouveauxCertificats(); // Nouvelle fonction pour marquer les certificats
 
             // Set current date
             const today = new Date().toISOString().split('T')[0];

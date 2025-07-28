@@ -47,18 +47,57 @@
                 margin: 1cm;
             }
         }
+
+        /* Style pour les nouvelles remarques */
+        .nouvelle-remarque {
+            background-color: #dcfce7 !important;
+            border-left: 4px solid #16a34a !important;
+            animation: pulseGreen 2s infinite;
+        }
+
+        .nouvelle-remarque:hover {
+            background-color: #bbf7d0 !important;
+        }
+
+        @keyframes pulseGreen {
+            0%, 100% {
+                background-color: #dcfce7;
+            }
+            50% {
+                background-color: #bbf7d0;
+            }
+        }
+
+        /* Style pour l'indicateur "Nouveau" */
+        .badge-nouveau {
+            background-color: #16a34a;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 8px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
     </style>
 </head>
 
 <body class="bg-gray-100 min-h-screen">
     <!-- SIDEBAR -->
     <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50">
-        <div class="flex items-center justify-center h-16 bg-cordes-blue">
+        <<div class="flex items-center justify-center h-16 bg-cordes-light">
             <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                    <i class="fas fa-cube text-cordes-blue text-lg"></i>
-                </div>
-                <span class="text-white text-xl font-bold">C-M</span>
+              
+                   <img  style="width: 180px; height:160px" src="{{ url('storage/uploads/logo_miacex.png') }}"/>
+                
             </div>
         </div>
         <nav class="mt-8 px-4">
@@ -219,12 +258,15 @@
                             <tr class="hover:bg-gray-50 transition-colors document-row" 
                                 data-cin="{{ $doc['patient_cin'] ?? '' }}" 
                                 data-patient="{{ $doc['patient_nom'] ?? '' }}" 
-                                data-medecin="{{ $doc['medecin_nom'] ?? '' }}">
+                                data-medecin="{{ $doc['medecin_nom'] ?? '' }}"
+                                data-remarque-id="{{ $doc['id'] }}"
+                                onclick="marquerRemarqueCommeVue({{ $doc['id'] }})">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {{ $doc['patient_cin'] ?? '' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {{ $doc['patient_nom'] ?? '' }}
+                                    <span class="badge-nouveau" id="badge-{{ $doc['id'] }}" style="display: none;">NOUVEAU</span>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
                                     {{ Str::limit($doc['remarque'] ?? 'Non spécifié', 50) }}
@@ -237,17 +279,17 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex space-x-2">
-                                        <button onclick='openViewModal(@json($doc))'
+                                        <button onclick='openViewModal(@json($doc)); event.stopPropagation();'
                                             class="text-blue-600 hover:text-blue-800 transition-colors p-2 rounded hover:bg-blue-50"
                                             title="Voir">
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <button onclick='openEditModal(@json($doc))'
+                                        <button onclick='openEditModal(@json($doc)); event.stopPropagation();'
                                             class="text-yellow-600 hover:text-yellow-800 transition-colors p-2 rounded hover:bg-yellow-50"
                                             title="Éditer">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button onclick='openDeleteModal(@json($doc))'
+                                        <button onclick='openDeleteModal(@json($doc)); event.stopPropagation();'
                                             class="text-red-600 hover:text-red-800 transition-colors p-2 rounded hover:bg-red-50"
                                             title="Supprimer">
                                             <i class="fas fa-trash"></i>
@@ -524,6 +566,58 @@
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         let currentDocument = null;
 
+        // Clé pour le localStorage
+        const STORAGE_KEY = 'remarques_vues';
+
+        // Fonction pour obtenir les remarques vues depuis le localStorage
+        function getRemarquesVues() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            return stored ? JSON.parse(stored) : [];
+        }
+
+        // Fonction pour sauvegarder les remarques vues dans le localStorage
+        function saveRemarquesVues(remarquesVues) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(remarquesVues));
+        }
+
+        // Fonction pour marquer une remarque comme vue
+        function marquerRemarqueCommeVue(remarqueId) {
+            const remarquesVues = getRemarquesVues();
+            if (!remarquesVues.includes(remarqueId)) {
+                remarquesVues.push(remarqueId);
+                saveRemarquesVues(remarquesVues);
+            }
+            
+            // Retirer la classe "nouvelle-remarque" et masquer le badge
+            const row = document.querySelector(`tr[data-remarque-id="${remarqueId}"]`);
+            const badge = document.getElementById(`badge-${remarqueId}`);
+            
+            if (row) {
+                row.classList.remove('nouvelle-remarque');
+            }
+            if (badge) {
+                badge.style.display = 'none';
+            }
+        }
+
+        // Fonction pour marquer les nouvelles remarques au chargement de la page
+        function marquerNouvellesRemarques() {
+            const remarquesVues = getRemarquesVues();
+            const rows = document.querySelectorAll('.document-row');
+            
+            rows.forEach(row => {
+                const remarqueId = parseInt(row.getAttribute('data-remarque-id'));
+                if (!remarquesVues.includes(remarqueId)) {
+                    // Marquer comme nouvelle remarque
+                    row.classList.add('nouvelle-remarque');
+                    const badge = document.getElementById(`badge-${remarqueId}`);
+                    if (badge) {
+                        badge.style.display = 'inline';
+                    }
+                }
+            });
+        }
+
         function autoHideMessages() {
             const messages = [
                 document.getElementById('successMessage'),
@@ -564,6 +658,9 @@
         }
 
         function openViewModal(docData) {
+            // Marquer la remarque comme vue quand on ouvre la modal
+            marquerRemarqueCommeVue(docData.id);
+            
             currentDocument = docData;
             
             document.getElementById('patientInfo').textContent = `${docData.patient_cin || ''} - ${docData.patient_nom || ''}`;
@@ -649,6 +746,9 @@
 
         // CORRECTED Edit Modal Function - Fix patient selection
         function openEditModal(docData) {
+            // Marquer la remarque comme vue quand on édite
+            marquerRemarqueCommeVue(docData.id);
+            
             console.log('Opening edit modal with data:', docData);
             
             // Reset form first
@@ -703,6 +803,9 @@
         }
 
         function openDeleteModal(docData) {
+            // Marquer la remarque comme vue quand on supprime
+            marquerRemarqueCommeVue(docData.id);
+            
             document.getElementById('delete_remarque_id').value = docData.id || '';
             document.getElementById('deleteRemarqueForm').action = '/secretaire/remarques/' + (docData.id || '');
             document.getElementById('deleteModal').classList.remove('hidden');
@@ -751,6 +854,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             autoHideMessages();
             setupSearchAndFilter();
+            marquerNouvellesRemarques(); // Nouvelle fonction pour marquer les remarques
             
             // Set current date for new remarks
             const today = new Date().toISOString().split('T')[0];

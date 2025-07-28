@@ -112,14 +112,14 @@
 <body class="bg-gray-100 min-h-screen">
     <!-- SIDEBAR -->
     <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50">
-        <div class="flex items-center justify-center h-16 bg-cordes-blue">
+        <div class="flex items-center justify-center h-16 bg-cordes-light">
             <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                    <i class="fas fa-cube text-cordes-blue text-lg"></i>
-                </div>
-                <span class="text-white text-xl font-bold">C-M</span>
+
+                <img style="width: 180px; height:160px" src="{{ url('storage/uploads/logo_miacex.png') }}" />
+
             </div>
         </div>
+
         <nav class="mt-8 px-4">
             <div class="space-y-2">
                 <a href="{{ route('secretaire.dashboard') }}"
@@ -251,14 +251,16 @@
                                 @forelse ($dayData['appointments'] as $appointment)
                                     <div class="appointment-item">
                                         <span class="appointment-time">
-                                            <i class="fas fa-clock mr-1"></i>{{ \Carbon\Carbon::parse($appointment->appointment_time)->format('H:i') }}
+                                            <i
+                                                class="fas fa-clock mr-1"></i>{{ \Carbon\Carbon::parse($appointment->appointment_time)->format('H:i') }}
                                         </span>
                                         <span class="appointment-patient">
                                             <i class="fas fa-user mr-1"></i>{{ $appointment->patient->nom ?? 'N/A' }}
                                             {{ $appointment->patient->prenom ?? '' }}
                                         </span>
                                         <span class="appointment-motif">
-                                            <i class="fas fa-info-circle mr-1"></i>{{ $appointment->reason ?? 'Aucun motif spécifié' }}
+                                            <i
+                                                class="fas fa-info-circle mr-1"></i>{{ $appointment->reason ?? 'Aucun motif spécifié' }}
                                         </span>
                                         <span
                                             class="appointment-status
@@ -279,7 +281,8 @@
                                                 @break
 
                                                 @default
-                                                    <i class="fas fa-question-circle"></i>{{ ucfirst($appointment->status ?? 'Non défini') }}
+                                                    <i
+                                                        class="fas fa-question-circle"></i>{{ ucfirst($appointment->status ?? 'Non défini') }}
                                             @endswitch
                                         </span>
                                     </div>

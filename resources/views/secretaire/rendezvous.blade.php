@@ -25,14 +25,13 @@
 </head>
 
 <body class="bg-gray-100 min-h-screen">
-    <!-- SIDEBAR -->
+
     <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50">
-        <div class="flex items-center justify-center h-16 bg-cordes-blue">
+        <div class="flex items-center justify-center h-16 bg-cordes-light">
             <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                    <i class="fas fa-cube text-cordes-blue text-lg"></i>
-                </div>
-                <span class="text-white text-xl font-bold">C-M</span>
+              
+                   <img  style="width: 180px; height:160px" src="{{ url('storage/uploads/logo_miacex.png') }}"/>
+                
             </div>
         </div>
 
@@ -108,7 +107,6 @@
             </div>
         </nav>
 
-        <!-- Section utilisateur avec bouton de déconnexion -->
         <div class="absolute bottom-4 left-4 right-4">
             <div
                 class="bg-gray-800 rounded-lg p-4 group cursor-pointer hover:bg-red-600 transition-colors duration-200">
@@ -132,7 +130,6 @@
         </div>
     </div>
 
-    <!-- CONTENU PRINCIPAL -->
     <div class="ml-64">
         <header class="bg-white shadow-sm border-b border-gray-200">
             <div class="px-6 py-4 flex items-center justify-between">
@@ -154,7 +151,7 @@
         </header>
 
         <main class="p-6">
-            <!-- ZONE DES MESSAGES -->
+
             <div id="messages-container" class="space-y-4 mb-6">
                 @if (session('success'))
                     <div id="successMessage"
@@ -220,7 +217,7 @@
                 @endif
             </div>
 
-            <!-- Filtres et recherche -->
+
             <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
                 <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                     <div class="relative">
@@ -262,7 +259,7 @@
                 </div>
             </div>
 
-            <!-- Tableau des rendez-vous -->
+
             <div class="overflow-x-auto bg-white shadow rounded-xl">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
@@ -285,11 +282,17 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200" id="rdvsTableBody">
                         @forelse ($latest_rvs as $rdv)
-                            <tr class="hover:bg-gray-50 transition-colors rdv-row"
+                            @php
+                                $newRendezvousIds = session('new_rendezvous', []);
+                                $isNewRendezvous = in_array($rdv->id, $newRendezvousIds);
+                            @endphp
+                            <tr class="hover:bg-gray-50 transition-colors rdv-row {{ $isNewRendezvous ? 'bg-green-100 border-l-4 border-green-500' : '' }}"
+                                data-rdv-id="{{ $rdv->id }}"
                                 data-search="{{ strtolower($rdv->patient->nom ?? '') }} {{ strtolower($rdv->patient->prenom ?? '') }}"
                                 data-status="{{ $rdv->status }}"
                                 data-type="{{ $rdv->appointment_type }}"
-                                data-date="{{ $rdv->appointment_date->format('Y-m-d') }}">
+                                data-date="{{ $rdv->appointment_date->format('Y-m-d') }}"
+                                onclick="markRendezvousAsViewed({{ $rdv->id }})">
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm font-medium text-gray-900">
                                         {{ $rdv->appointment_date->format('d/m/Y') }}
@@ -367,18 +370,18 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex space-x-2">
-                                        <button onclick='openEditModal(@json($rdv))'
+                                        <button onclick='openEditModal(@json($rdv)); event.stopPropagation();'
                                             class="text-blue-600 hover:text-blue-800 transition-colors p-1 rounded hover:bg-blue-50"
                                             title="Modifier">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button onclick="deleteRendezVous('{{ $rdv->id }}')"
+                                        <button onclick="deleteRendezVous('{{ $rdv->id }}'); event.stopPropagation();"
                                             class="text-red-600 hover:text-red-800 transition-colors p-1 rounded hover:bg-red-50"
                                             title="Supprimer">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                         @if($rdv->status === 'cancelled' && $rdv->cancelled_at)
-                                            <button onclick="showCancellationInfo('{{ $rdv->cancelled_at->format('d/m/Y H:i') }}', '{{ $rdv->cancellation_reason ?? 'Aucune raison spécifiée' }}')"
+                                            <button onclick="showCancellationInfo('{{ $rdv->cancelled_at->format('d/m/Y H:i') }}', '{{ $rdv->cancellation_reason ?? 'Aucune raison spécifiée' }}'); event.stopPropagation();"
                                                 class="text-gray-600 hover:text-gray-800 transition-colors p-1 rounded hover:bg-gray-50"
                                                 title="Info annulation">
                                                 <i class="fas fa-info-circle"></i>
@@ -406,7 +409,7 @@
         </main>
     </div>
 
-    <!-- MODAL DISPONIBILITE -->
+
     <div id="disponibiliteModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white w-full max-w-4xl rounded-lg shadow-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
@@ -416,7 +419,7 @@
                 </button>
             </div>
 
-            <!-- Formulaire d'ajout -->
+
             <div class="bg-gray-50 rounded-lg p-4 mb-6">
                 <h3 class="text-lg font-medium text-gray-800 mb-3">Ajouter une disponibilité</h3>
                 <form action="{{ route('secretaire.disponibilite.store') }}" method="POST" class="space-y-4" id="disponibiliteForm">
@@ -448,7 +451,7 @@
                 </form>
             </div>
 
-            <!-- Liste des disponibilités existantes -->
+
             <div class="bg-white">
                 <h3 class="text-lg font-medium text-gray-800 mb-3">Disponibilités existantes</h3>
                 <div class="overflow-x-auto">
@@ -509,7 +512,7 @@
         </div>
     </div>
 
-    <!-- MODAL MODIFIER DISPONIBILITE -->
+
     <div id="editDisponibiliteModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white w-full max-w-md rounded-lg shadow-xl p-6 m-4">
             <div class="flex justify-between items-center mb-4">
@@ -553,7 +556,7 @@
         </div>
     </div>
 
-    <!-- MODAL AJOUTER RDV -->
+
     <div id="addModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white w-full max-w-2xl rounded-lg shadow-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
@@ -694,7 +697,7 @@
         </div>
     </div>
 
-    <!-- MODAL MODIFIER RDV -->
+
     <div id="editModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white w-full max-w-2xl rounded-lg shadow-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
@@ -834,16 +837,39 @@
     </div>
 
     <script>
-        // Configuration CSRF pour les requêtes AJAX
+
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-        // Données des disponibilités pour JavaScript
         const disponibilites = @json($disponibilitesJS);
 
-        // Données des rendez-vous existants pour vérifier les conflits
         const existingAppointments = @json($existingAppointmentsJS);
 
-        // Fonction pour générer les créneaux horaires de 30 minutes
+        function markRendezvousAsViewed(rdvId) {
+            const row = document.querySelector(`tr[data-rdv-id="${rdvId}"]`);
+            if (row && row.classList.contains('bg-green-100')) {
+
+                fetch(`/secretaire/rendezvous/${rdvId}/mark-viewed`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+
+                        row.classList.remove('bg-green-100', 'border-l-4', 'border-green-500');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors du marquage:', error);
+                });
+            }
+        }
+
+
         function generateTimeSlots(startTime, endTime) {
             const slots = [];
             const start = new Date(`2000-01-01T${startTime}:00`);
@@ -869,7 +895,7 @@
             return slots;
         }
 
-        // Fonction pour vérifier si un créneau est occupé
+
         function isTimeSlotOccupied(date, time, excludeId = null) {
             return existingAppointments.some(appointment => {
                 return appointment.date === date && 
@@ -879,7 +905,7 @@
             });
         }
 
-        // Fonction pour mettre à jour les créneaux horaires
+
         function updateTimeSlots(dateSelect, timeSelect, excludeId = null) {
             const selectedDate = dateSelect.value;
             timeSelect.innerHTML = '<option value="">Sélectionnez un créneau</option>';
@@ -888,7 +914,7 @@
                 return;
             }
             
-            // Trouver la disponibilité pour cette date
+
             const disponibilite = disponibilites.find(disp => disp.date === selectedDate);
             
             if (!disponibilite) {
@@ -896,7 +922,7 @@
                 return;
             }
             
-            // Générer les créneaux
+
             const slots = generateTimeSlots(disponibilite.heure_entree, disponibilite.heure_sortie);
             
             slots.forEach(slot => {
@@ -904,7 +930,7 @@
                 option.value = slot.value;
                 option.textContent = slot.label;
                 
-                // Vérifier si le créneau est occupé
+
                 if (isTimeSlotOccupied(selectedDate, slot.value, excludeId)) {
                     option.disabled = true;
                     option.textContent += ' (Occupé)';
@@ -915,7 +941,7 @@
             });
         }
 
-        // Fonction pour obtenir la date et l'heure actuelles
+
         function getCurrentDateTime() {
             const now = new Date();
             return {
@@ -924,7 +950,7 @@
             };
         }
 
-        // Fonction pour fermer un message spécifique
+
         function closeMessage(messageId) {
             const message = document.getElementById(messageId);
             if (message) {
@@ -936,7 +962,7 @@
             }
         }
 
-        // Fonction pour afficher un message temporaire (AJAX)
+
         function showMessage(text, type = 'success') {
             const existingTemp = document.querySelector('.temp-message');
             if (existingTemp) {
@@ -989,7 +1015,7 @@
             }, 5000);
         }
 
-        // Fonction pour l'auto-fermeture des messages
+
         function setupAutoCloseMessages() {
             const messages = document.querySelectorAll('.alert-message');
             messages.forEach(message => {
@@ -1014,7 +1040,7 @@
             });
         }
 
-        // Fonction de recherche et filtrage
+
         function filterRendezVous() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const statusFilter = document.getElementById('statusFilter').value;
@@ -1052,7 +1078,7 @@
                 `${visibleCount} rendez-vous trouvé${visibleCount !== 1 ? 's' : ''}`;
         }
 
-        // Fonctions pour les modales RDV
+
         function openAddModal() {
             document.getElementById('addModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
@@ -1073,7 +1099,7 @@
             document.getElementById('edit_id').value = rdv.id;
             document.getElementById('edit_patient_id').value = rdv.patient_id;
 
-            // Gestion correcte de la date
+
             let dateValue = '';
             if (rdv.appointment_date_formatted) {
                 dateValue = rdv.appointment_date_formatted;
@@ -1087,14 +1113,14 @@
             
             document.getElementById('edit_appointment_date').value = dateValue;
             
-            // Mettre à jour les créneaux horaires pour la date sélectionnée
+
             updateTimeSlots(
                 document.getElementById('edit_appointment_date'),
                 document.getElementById('edit_appointment_time'),
                 rdv.id
             );
             
-            // Gestion correcte de l'heure
+
             let timeValue = '';
             if (rdv.appointment_time_formatted) {
                 timeValue = rdv.appointment_time_formatted;
@@ -1105,13 +1131,12 @@
                 }
             }
             
-            // Attendre que les options soient chargées avant de définir la valeur
             setTimeout(() => {
                 document.getElementById('edit_appointment_time').value = timeValue;
             }, 100);
             
-            // Remplir les autres champs
-            document.getElementById('edit_duration').value = 30; // Toujours 30 minutes
+
+            document.getElementById('edit_duration').value = 30; 
             document.getElementById('edit_status').value = rdv.status;
             document.getElementById('edit_appointment_type').value = rdv.appointment_type;
             document.getElementById('edit_reason').value = rdv.reason || '';
@@ -1187,7 +1212,7 @@
             }
         }
 
-        // Fonctions pour les modales de disponibilité
+
         function openDisponibiliteModal() {
             document.getElementById('disponibiliteModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
@@ -1269,34 +1294,29 @@
             }
         }
 
-        // Initialisation au chargement
+
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM chargé');
 
             setupAutoCloseMessages();
 
-            // Événements de filtrage
             document.getElementById('searchInput').addEventListener('input', filterRendezVous);
             document.getElementById('statusFilter').addEventListener('change', filterRendezVous);
             document.getElementById('typeFilter').addEventListener('change', filterRendezVous);
             document.getElementById('dateFilter').addEventListener('change', filterRendezVous);
 
-            // Toggle cancellation fields when status changes
             document.getElementById('edit_status').addEventListener('change', toggleCancellationFields);
             document.getElementById('status').addEventListener('change', toggleAddCancellationFields);
 
-            // Événements pour la sélection de date et heure dans le modal d'ajout
             document.getElementById('appointment_date').addEventListener('change', function() {
                 updateTimeSlots(this, document.getElementById('appointment_time'));
             });
 
-            // Événements pour la sélection de date et heure dans le modal de modification
             document.getElementById('edit_appointment_date').addEventListener('change', function() {
                 const rdvId = document.getElementById('edit_id').value;
                 updateTimeSlots(this, document.getElementById('edit_appointment_time'), rdvId);
             });
 
-            // Validation du formulaire d'ajout RDV
             const addForm = document.getElementById('addForm');
             if (addForm) {
                 addForm.addEventListener('submit', function(e) {
@@ -1318,7 +1338,6 @@
                 });
             }
 
-            // Validation du formulaire de disponibilité
             const disponibiliteForm = document.getElementById('disponibiliteForm');
             if (disponibiliteForm) {
                 disponibiliteForm.addEventListener('submit', function(e) {
@@ -1333,7 +1352,6 @@
                 });
             }
 
-            // Vérifier s'il y a des erreurs pour rouvrir le modal
             @if ($errors->any() && old('_token')) 
                 setTimeout(() => {
                     openAddModal();
@@ -1346,7 +1364,6 @@
             @endif
         });
 
-        // Fermer les modales avec Escape
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeAddModal();
@@ -1356,7 +1373,6 @@
             }
         });
 
-        // Fermer en cliquant à l'extérieur
         document.getElementById('addModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeAddModal();

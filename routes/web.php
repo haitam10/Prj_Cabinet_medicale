@@ -37,7 +37,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard/admin', function () {
         return 'Bienvenue Admin !';
     });
-
     // Espace secrétaire accessible aux secrétaires ET médecins
     Route::prefix('secretaire')->name('secretaire.')->middleware('role:secretaire|medecin')->group(function () {
         Route::get('/dashboard', [AuthController::class, 'secretDash'])->name('dashboard');
@@ -60,6 +59,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/rendezvous/{rendezvous}/edit', [RendezvousController::class, 'edit'])->name('rendezvous.edit');
         Route::put('/rendezvous/{rendezvous}', [RendezvousController::class, 'update'])->name('rendezvous.update');
         Route::delete('/rendezvous/{rendezvous}', [RendezvousController::class, 'destroy'])->name('rendezvous.destroy');
+        Route::post('/rendezvous/{id}/mark-viewed', [RendezvousController::class, 'markAsViewed'])->name('secretaire.rendezvous.mark-viewed');
+
 
         // Routes disponibilités - AJOUTEZ CES LIGNES
         Route::post('/disponibilite', [RendezvousController::class, 'storeDisponibilite'])->name('disponibilite.store');

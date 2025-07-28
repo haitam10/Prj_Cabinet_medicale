@@ -74,18 +74,57 @@
                 display: none !important;
             }
         }
+
+        /* Style pour les nouvelles factures */
+        .nouvelle-facture {
+            background-color: #dcfce7 !important;
+            border-left: 4px solid #16a34a !important;
+            animation: pulseGreen 2s infinite;
+        }
+
+        .nouvelle-facture:hover {
+            background-color: #bbf7d0 !important;
+        }
+
+        @keyframes pulseGreen {
+            0%, 100% {
+                background-color: #dcfce7;
+            }
+            50% {
+                background-color: #bbf7d0;
+            }
+        }
+
+        /* Style pour l'indicateur "Nouvelle" */
+        .badge-nouvelle {
+            background-color: #16a34a;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 8px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
     </style>
 </head>
 
 <body class="bg-gray-100 min-h-screen">
     <!-- SIDEBAR -->
     <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50 no-print">
-        <div class="flex items-center justify-center h-16 bg-cordes-blue">
+        <div class="flex items-center justify-center h-16 bg-cordes-light">
             <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                    <i class="fas fa-cube text-cordes-blue text-lg"></i>
-                </div>
-                <span class="text-white text-xl font-bold">C-M</span>
+              
+                   <img  style="width: 180px; height:160px" src="{{ url('storage/uploads/logo_miacex.png') }}"/>
+                
             </div>
         </div>
 
@@ -150,7 +189,7 @@
                     <a href="{{ route('secretaire.papier') }}"
                         class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                         <i class="fas fa-cog mr-3 text-gray-400 group-hover:text-white"></i>
-                        paramètres
+                        Paramètres
                     </a>
                 @endif
 
@@ -280,7 +319,10 @@
                         @forelse ($factures as $facture)
                             <tr class="hover:bg-gray-50 transition-colors facture-row"
                                 data-search="{{ strtolower($facture->patient->nom ?? '') }}"
-                                data-statut="{{ $facture->statut }}" data-date="{{ $facture->date }}">
+                                data-statut="{{ $facture->statut }}" 
+                                data-date="{{ $facture->date }}"
+                                data-facture-id="{{ $facture->id }}"
+                                onclick="marquerFactureCommeVue({{ $facture->id }})">
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div
@@ -289,7 +331,9 @@
                                         </div>
                                         <div>
                                             <div class="text-sm font-medium text-gray-900">
-                                                {{ $facture->patient->nom ?? 'N/A' }}</div>
+                                                {{ $facture->patient->nom ?? 'N/A' }}
+                                                <span class="badge-nouvelle" id="badge-{{ $facture->id }}" style="display: none;">NOUVELLE</span>
+                                            </div>
                                             <div class="text-sm text-gray-500">
                                                 {{ $facture->patient->cin ?? 'N/A' }}</div>
                                         </div>
@@ -311,12 +355,12 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium no-print">
                                     <div class="flex space-x-2">
                                         @if ($facture->statut !== 'payée')
-                                            <button onclick='openEditModal(@json($facture))'
+                                            <button onclick='event.stopPropagation(); openEditModal(@json($facture))'
                                                 class="text-blue-600 hover:text-blue-800 transition-colors p-1 rounded hover:bg-blue-50"
                                                 title="Modifier la facture">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <button onclick="deleteFacture({{ $facture->id }})"
+                                            <button onclick="event.stopPropagation(); deleteFacture({{ $facture->id }})"
                                                 class="text-red-600 hover:text-red-800 transition-colors p-1 rounded hover:bg-red-50"
                                                 title="Supprimer la facture">
                                                 <i class="fas fa-trash"></i>
@@ -328,12 +372,12 @@
                                         @endif
                                         
                                         @if ($facture->statut === 'payée')
-                                            <button onclick="printFacture({{ $facture->id }})"
+                                            <button onclick="event.stopPropagation(); printFacture({{ $facture->id }})"
                                                 class="text-green-600 hover:text-green-800 transition-colors p-1 rounded hover:bg-green-50"
                                                 title="Imprimer la facture">
                                                 <i class="fas fa-print"></i>
                                             </button>
-                                            <button onclick="deleteFacture({{ $facture->id }})"
+                                            <button onclick="event.stopPropagation(); deleteFacture({{ $facture->id }})"
                                                 class="text-red-600 hover:text-red-800 transition-colors p-1 rounded hover:bg-red-50"
                                                 title="Supprimer la facture">
                                                 <i class="fas fa-trash"></i>
@@ -559,7 +603,59 @@
         // Configuration CSRF pour les requêtes AJAX
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-        // Fonction pour masquer automatiquement les messages après 5 secondes
+        // Clé pour le localStorage
+        const STORAGE_KEY = 'factures_vues';
+
+        // Fonction pour obtenir les factures vues depuis le localStorage
+        function getFacturesVues() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            return stored ? JSON.parse(stored) : [];
+        }
+
+        // Fonction pour sauvegarder les factures vues dans le localStorage
+        function saveFacturesVues(facturesVues) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(facturesVues));
+        }
+
+        // Fonction pour marquer une facture comme vue
+        function marquerFactureCommeVue(factureId) {
+            const facturesVues = getFacturesVues();
+            if (!facturesVues.includes(factureId)) {
+                facturesVues.push(factureId);
+                saveFacturesVues(facturesVues);
+            }
+            
+            // Retirer la classe "nouvelle-facture" et masquer le badge
+            const row = document.querySelector(`tr[data-facture-id="${factureId}"]`);
+            const badge = document.getElementById(`badge-${factureId}`);
+            
+            if (row) {
+                row.classList.remove('nouvelle-facture');
+            }
+            if (badge) {
+                badge.style.display = 'none';
+            }
+        }
+
+        // Fonction pour marquer les nouvelles factures au chargement de la page
+        function marquerNouvellesFactures() {
+            const facturesVues = getFacturesVues();
+            const rows = document.querySelectorAll('.facture-row');
+            
+            rows.forEach(row => {
+                const factureId = parseInt(row.getAttribute('data-facture-id'));
+                if (!facturesVues.includes(factureId)) {
+                    // Marquer comme nouvelle facture
+                    row.classList.add('nouvelle-facture');
+                    const badge = document.getElementById(`badge-${factureId}`);
+                    if (badge) {
+                        badge.style.display = 'inline';
+                    }
+                }
+            });
+        }
+
+        // Fonction pour marquer automatiquement les messages après 5 secondes
         function autoHideMessages() {
             const messages = [
                 document.getElementById('successMessage'),
@@ -926,6 +1022,8 @@
         // Initialiser le masquage automatique au chargement de la page
         document.addEventListener('DOMContentLoaded', function() {
             autoHideMessages();
+            marquerNouvellesFactures(); // Nouvelle fonction pour marquer les factures
+            
             // Ajouter les événements de filtrage
             document.getElementById('searchInput').addEventListener('input', filterFactures);
             document.getElementById('statutFilter').addEventListener('change', filterFactures);
