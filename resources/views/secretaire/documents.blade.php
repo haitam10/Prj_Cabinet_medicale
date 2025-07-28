@@ -100,7 +100,7 @@
                     <a href="{{ route('secretaire.dossier-medical') }}"
                         class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                         <i class="fas fa-file-medical mr-3 text-white"></i>
-                        Dossier Médical
+                        Consultations
                     </a>
                 @endif
             </div>

@@ -69,7 +69,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Routes dossier médical et calendrier accessibles UNIQUEMENT au médecin
     Route::prefix('secretaire')->name('secretaire.')->middleware('role:medecin')->group(function () {
-        Route::get('/dossier-medical', [DossierMedicalController::class, 'index'])->name('dossier-medical');
+        Route::get('/Consultations', [DossierMedicalController::class, 'index'])->name('dossier-medical');
         Route::get('/calendrier', [CalendrierController::class, 'index'])->name('calendrier');
 
         // POST, PUT, DELETE dossier médical
@@ -121,7 +121,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/remarques/{id}', [RemarqueController::class, 'destroy'])->name('remarques.destroy');
 
         // Routes papier
-        Route::get('/papier', [PapierController::class, 'index'])->name('papier');
+        Route::get('/Paramètres', [PapierController::class, 'index'])->name('papier');
         Route::post('/papier/update-selection', [PapierController::class, 'updateSelection'])->name('papier.updateSelection');
         Route::delete('/papier/delete-template', [PapierController::class, 'deleteTemplate'])->name('papier.deleteTemplate');
         Route::get('/papier/get-template/{type}/{id}', [PapierController::class, 'getTemplate'])->name('papier.getTemplate');
