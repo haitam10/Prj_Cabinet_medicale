@@ -547,7 +547,7 @@
                             <option value="">Sélectionner une facture</option>
                             @foreach ($factures ?? [] as $facture)
                                 <option value="{{ $facture->id }}" data-montant="{{ $facture->montant }}">
-                                    Facture #{{ $facture->id }} - {{ $facture->patient->nom ?? 'N/A' }}
+                                    {{ $facture->patient->nom ?? 'N/A' }}
                                     {{ $facture->patient->prenom ?? '' }} ({{ number_format($facture->montant, 2) }} DH)
                                 </option>
                             @endforeach

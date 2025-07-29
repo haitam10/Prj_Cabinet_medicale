@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Espace Secrétaire - Factures</title>
+    <title>Espace Secrétaire - Devis</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -118,121 +118,122 @@
 </head>
 
 <body class="bg-gray-100 min-h-screen">
-    <!-- SIDEBAR -->
-    <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50 no-print">
-        <div class="flex items-center justify-center h-16 bg-cordes-light">
-            <div class="flex items-center space-x-3">
-              
-                   <img  style="width: 180px; height:160px" src="{{ url('storage/uploads/logo_miacex.png') }}"/>
-                
-            </div>
-        </div>
+  <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50 flex flex-col">
 
-        <nav class="mt-8 px-4">
-            <div class="space-y-2">
-                <a href="{{ route('secretaire.dashboard') }}"
-                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-home mr-3 text-cordes-accent group-hover:text-white"></i>
-                    Dashboard
-                </a>
-
-                <a href="{{ route('secretaire.rendezvous') }}"
-                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-calendar-check mr-3 text-white"></i>
-                    Rendez-vous
-                </a>
-
-                <a href="{{ route('secretaire.patients') }}"
-                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-user-injured mr-3 text-gray-400 group-hover:text-white"></i>
-                    Patients
-                </a>
-
-                <a href="{{ route('secretaire.factures') }}"
-                    class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
-                    <i class="fas fa-file-invoice-dollar mr-3 text-gray-400 group-hover:text-white"></i>
-                    Factures
-                </a>
-
-                <a href="{{ route('secretaire.paiements') }}"
-                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-credit-card mr-3 text-gray-400 group-hover:text-white"></i>
-                    Paiements
-                </a>
-
-                @if (Auth::check() && Auth::user()->role === 'medecin')
-                    <a href="{{ route('secretaire.dossier-medical') }}"
-                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                        <i class="fas fa-file-medical mr-3 text-white"></i>
-                        Consultations 
-                    </a>
-                    <a href="{{ route('secretaire.calendrier') }}"
-                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                        <i class="fas fa-calendar-alt mr-3 text-gray-400 group-hover:text-white"></i>
-                        Calendrier
-                    </a>
-                    <a href="{{ route('secretaire.certificats') }}"
-                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                        <i class="fas fa-file-medical mr-3 text-white"></i>
-                        Certificats
-                    </a>
-                    <a href="{{ route('secretaire.ordonnances') }}"
-                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                        <i class="fas fa-prescription-bottle-medical mr-3 text-gray-400 group-hover:text-white"></i>
-                        Ordonnances
-                    </a>
-                    <a href="{{ route('secretaire.remarques') }}"
-                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                        <i class="fas fa-sticky-note mr-3 text-gray-400 group-hover:text-white"></i>
-                        Remarques
-                    </a>
-                    <a href="{{ route('secretaire.papier') }}"
-                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                        <i class="fas fa-cog mr-3 text-gray-400 group-hover:text-white"></i>
-                        Paramètres
-                    </a>
-                @endif
-
-                <a href="{{ route('secretaire.profile') }}"
-                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-user mr-3 text-cordes-accent"></i>
-                    Mon Profil
-                </a>
-            </div>
-        </nav>
-
-        <!-- Section utilisateur avec bouton de déconnexion -->
-        <div class="absolute bottom-4 left-4 right-4">
-            <div
-                class="bg-gray-800 rounded-lg p-4 group cursor-pointer hover:bg-red-600 transition-colors duration-200">
-                <form method="POST" action="{{ route('logout') }}" id="logout-form">
-                    @csrf
-                    <div class="flex items-center space-x-3" onclick="document.getElementById('logout-form').submit();">
-                        <img src="https://cdn-icons-png.flaticon.com/512/17003/17003310.png" alt="User"
-                            class="w-10 h-10 rounded-full">
-                        <div>
-                            <p class="text-white text-sm font-medium">{{ Auth::user()->nom ?? 'Utilisateur' }}</p>
-                            <p class="text-gray-400 text-xs">{{ ucfirst(Auth::user()->role ?? '') }} — <span
-                                    class="text-red-400">Se
-                                    déconnecter</span></p>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
+  <div class="flex items-center justify-center h-16 bg-cordes-light flex-shrink-0">
+    <div class="flex items-center space-x-3">
+      <img style="width: 180px; height:160px" src="{{ url('storage/uploads/logo_miacex.png') }}" />
     </div>
+  </div>
+
+  <!-- Nav scrollable -->
+  <nav class="mt-8 px-4 flex-1 overflow-y-auto pb-28"> <!-- pb-28 = padding bottom important -->
+    <div class="space-y-2">
+
+      <a href="{{ route('secretaire.dashboard') }}"
+          class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+          <i class="fas fa-home mr-3 text-cordes-accent group-hover:text-white"></i>
+          Dashboard
+      </a>
+
+      <a href="{{ route('secretaire.rendezvous') }}"
+          class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+          <i class="fas fa-calendar-check mr-3 text-white"></i>
+          Rendez-vous
+      </a>
+
+      <a href="{{ route('secretaire.patients') }}"
+          class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+          <i class="fas fa-user-injured mr-3 text-gray-400 group-hover:text-white"></i>
+          Patients
+      </a>
+
+      <a href="{{ route('secretaire.factures') }}"
+          class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
+          <i class="fas fa-file-invoice-dollar mr-3 text-gray-400 group-hover:text-white"></i>
+          Devis
+      </a>
+
+      <a href="{{ route('secretaire.paiements') }}"
+          class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+          <i class="fas fa-credit-card mr-3 text-gray-400 group-hover:text-white"></i>
+          Paiements
+      </a>
+
+      @if (Auth::check() && Auth::user()->role === 'medecin')
+          <a href="{{ route('secretaire.dossier-medical') }}"
+              class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+              <i class="fas fa-file-medical mr-3 text-white"></i>
+              Consultations
+          </a>
+          <a href="{{ route('secretaire.calendrier') }}"
+              class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+              <i class="fas fa-calendar-alt mr-3 text-gray-400 group-hover:text-white"></i>
+              Calendrier
+          </a>
+          <a href="{{ route('secretaire.certificats') }}"
+              class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+              <i class="fas fa-file-medical mr-3 text-white"></i>
+              Certificats
+          </a>
+          <a href="{{ route('secretaire.ordonnances') }}"
+              class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+              <i class="fas fa-prescription-bottle-medical mr-3 text-gray-400 group-hover:text-white"></i>
+              Ordonnances
+          </a>
+          <a href="{{ route('secretaire.remarques') }}"
+              class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+              <i class="fas fa-sticky-note mr-3 text-gray-400 group-hover:text-white"></i>
+              Remarques
+          </a>
+          <a href="{{ route('secretaire.papier') }}"
+              class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+              <i class="fas fa-cog mr-3 text-gray-400 group-hover:text-white"></i>
+              Paramètres
+          </a>
+      @endif
+
+      <a href="{{ route('secretaire.profile') }}"
+          class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+          <i class="fas fa-user mr-3 text-cordes-accent group-hover:text-white"></i>
+          Mon Profil
+      </a>
+
+    </div>
+  </nav>
+
+  <!-- User Profile / Logout fixed bottom -->
+  <div class="absolute bottom-4 left-4 right-4">
+    <div
+        class="bg-gray-800 rounded-lg p-4 group cursor-pointer hover:bg-red-600 transition-colors duration-200">
+        <form method="POST" action="{{ route('logout') }}" id="logout-form">
+            @csrf
+            <div class="flex items-center space-x-3" onclick="document.getElementById('logout-form').submit();">
+                <img src="https://cdn-icons-png.flaticon.com/512/17003/17003310.png" alt="User"
+                    class="w-10 h-10 rounded-full">
+                <div>
+                    <p class="text-white text-sm font-medium">{{ Auth::user()->nom ?? 'Utilisateur' }}</p>
+                    <p class="text-gray-400 text-xs">{{ ucfirst(Auth::user()->role ?? '') }} — <span
+                            class="text-red-400">Se déconnecter</span></p>
+                </div>
+            </div>
+        </form>
+    </div>
+  </div>
+
+</div>
 
     <!-- CONTENU PRINCIPAL -->
     <div class="ml-64">
         <header class="bg-white shadow-sm border-b border-gray-200 no-print">
             <div class="px-6 py-4 flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-semibold text-gray-900">Gestion des Factures</h1>
+                    <h1 class="text-2xl font-semibold text-gray-900">Gestion des Devis</h1>
                     <p class="text-gray-600 text-sm mt-1">Liste des factures enregistrées</p>
                 </div>
                 <button onclick="openAddModal()"
                     class="px-4 py-2 bg-cordes-blue text-white rounded-lg hover:bg-cordes-dark transition-colors">
-                    <i class="fas fa-plus mr-2"></i>Ajouter Facture</button>
+                    <i class="fas fa-plus mr-2"></i>Ajouter Devis</button>
             </div>
         </header>
 
@@ -268,7 +269,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div class="relative">
                         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" id="searchInput" placeholder="Rechercher une facture..."
+                        <input type="text" id="searchInput" placeholder="Rechercher un Devis..."
                             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                     </div>
                     <div class="relative">
@@ -288,8 +289,10 @@
                     </div>
                     <div class="flex items-center text-sm text-gray-600">
                         <i class="fas fa-file-invoice-dollar mr-2"></i>
+                        <!--<span id="factureCount">{{ $factures->total() }}-->
+                        <!--    Devis{{ $factures->total() > 1 ? 's' : '' }}</span>-->
                         <span id="factureCount">{{ $factures->total() }}
-                            facture{{ $factures->total() > 1 ? 's' : '' }}</span>
+                            Devis</span>
                     </div>
                 </div>
             </div>
@@ -357,12 +360,12 @@
                                         @if ($facture->statut !== 'payée')
                                             <button onclick='event.stopPropagation(); openEditModal(@json($facture))'
                                                 class="text-blue-600 hover:text-blue-800 transition-colors p-1 rounded hover:bg-blue-50"
-                                                title="Modifier la facture">
+                                                title="Modifier le Devis">
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                             <button onclick="event.stopPropagation(); deleteFacture({{ $facture->id }})"
                                                 class="text-red-600 hover:text-red-800 transition-colors p-1 rounded hover:bg-red-50"
-                                                title="Supprimer la facture">
+                                                title="Supprimer le Devis">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         @else
@@ -374,12 +377,12 @@
                                         @if ($facture->statut === 'payée')
                                             <button onclick="event.stopPropagation(); printFacture({{ $facture->id }})"
                                                 class="text-green-600 hover:text-green-800 transition-colors p-1 rounded hover:bg-green-50"
-                                                title="Imprimer la facture">
+                                                title="Imprimer le Devis">
                                                 <i class="fas fa-print"></i>
                                             </button>
                                             <button onclick="event.stopPropagation(); deleteFacture({{ $facture->id }})"
                                                 class="text-red-600 hover:text-red-800 transition-colors p-1 rounded hover:bg-red-50"
-                                                title="Supprimer la facture">
+                                                title="Supprimer le Devis">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         @else
@@ -391,8 +394,8 @@
                             <tr id="noFactureRow">
                                 <td colspan="7" class="px-6 py-12 text-center text-gray-500">
                                     <i class="fas fa-file-invoice text-4xl mb-2 text-gray-300"></i>
-                                    <p class="text-lg">Aucune facture trouvée</p>
-                                    <p class="text-sm mt-1">Commencez par ajouter une nouvelle facture.</p>
+                                    <p class="text-lg">Aucune Devis trouvé</p>
+                                    <p class="text-sm mt-1">Commencez par ajouter un nouveau Devis.</p>
                                 </td>
                             </tr>
                         @endforelse
@@ -413,7 +416,7 @@
         class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden no-print">
         <div class="bg-white w-full max-w-lg rounded-lg shadow-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-semibold text-gray-800">Ajouter une nouvelle facture</h2>
+                <h2 class="text-xl font-semibold text-gray-800">Ajouter un nouveau Devis</h2>
                 <button onclick="closeAddModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
                     <i class="fas fa-times text-lg"></i>
                 </button>
@@ -505,7 +508,7 @@
         class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden no-print">
         <div class="bg-white w-full max-w-lg rounded-lg shadow-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-semibold text-gray-800">Modifier la facture</h2>
+                <h2 class="text-xl font-semibold text-gray-800">Modifier le Devis</h2>
                 <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
                     <i class="fas fa-times text-lg"></i>
                 </button>
@@ -745,7 +748,7 @@
             }
 
             // Mettre à jour le compteur
-            document.getElementById('factureCount').textContent = visibleCount + ' facture' + (visibleCount > 1 ? 's' : '');
+            document.getElementById('factureCount').textContent = visibleCount + ' Devis';
         }
 
         function openAddModal() {
@@ -773,7 +776,7 @@
         function openEditModal(facture) {
             // Vérifier si la facture est payée
             if (facture.statut === 'payée') {
-                showTemporaryMessage('Impossible de modifier une facture payée.', 'error');
+                showTemporaryMessage('Impossible de modifier un Devis payé.', 'error');
                 return;
             }
 
@@ -807,7 +810,7 @@
         }
 
         function deleteFacture(id) {
-            if (confirm('Êtes-vous sûr de vouloir supprimer cette facture ?')) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce Devis ?')) {
                 fetch('/factures/' + id, {
                         method: 'DELETE',
                         headers: {
@@ -853,8 +856,8 @@
                 generateInvoiceContent(data);
             })
             .catch(error => {
-                console.error('Erreur lors de la récupération de la facture:', error);
-                showTemporaryMessage('Erreur lors de la récupération des données de la facture.', 'error');
+                console.error('Erreur lors de la récupération du Devis:', error);
+                showTemporaryMessage('Erreur lors de la récupération des données du Devis.', 'error');
             });
         }
 
@@ -900,8 +903,8 @@
             const invoiceContent = `
                 <div style="max-width: 800px; margin: 0 auto; padding: 30px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
                     <div style="text-align: center; margin-bottom: 30px;">
-                        <h1 style="font-size: 28px; margin-bottom: 5px; color: #1e40af;">Facture Médicale</h1>
-                        <p style="font-size: 14px; color: #555;">Facture N° ${facture.id} - Date d'émission: ${formattedDate}</p>
+                        <h1 style="font-size: 28px; margin-bottom: 5px; color: #1e40af;">Devis Médical</h1>
+                        <p style="font-size: 14px; color: #555;">Devis N° ${facture.id} - Date d'émission: ${formattedDate}</p>
                     </div>
 
                     <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
@@ -915,7 +918,7 @@
                             </p>
                         </div>
                         <div style="text-align: right;">
-                            <h2 style="font-size: 18px; margin-bottom: 10px; color: #333;">Détails de la Facture</h2>
+                            <h2 style="font-size: 18px; margin-bottom: 10px; color: #333;">Détails du Devis</h2>
                             <p style="font-size: 14px; line-height: 1.6;">
                                 Statut: <span style="font-weight: bold; color: green;">${ucfirst(facture.statut.replace('_', ' '))}</span><br>
                                 Créée le: ${createdAt}<br>
@@ -967,7 +970,7 @@
 
                     <div style="text-align: center; margin-top: 50px; font-size: 12px; color: #777; border-top: 1px solid #eee; padding-top: 20px;">
                         <p><strong>Merci de votre confiance</strong></p>
-                        <p style="margin-top: 10px;">Ce document constitue une facture et fait foi de paiement.</p>
+                        <p style="margin-top: 10px;">Ce document constitue un Devis et fait foi de paiement.</p>
                         <p style="margin-top: 5px;">Pour toute question, n'hésitez pas à nous contacter.</p>
                     </div>
                 </div>
