@@ -15,7 +15,6 @@ use App\Http\Controllers\OrdonnanceController;
 use App\Http\Controllers\CertificatController;
 use App\Http\Controllers\RemarqueController;
 
-
 // Page de connexion
 Route::get('/', function () {
     return view('auth.login');
@@ -37,6 +36,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard/admin', function () {
         return 'Bienvenue Admin !';
     });
+
+
     // Espace secrétaire accessible aux secrétaires ET médecins
     Route::prefix('secretaire')->name('secretaire.')->middleware('role:secretaire|medecin')->group(function () {
         Route::get('/dashboard', [AuthController::class, 'secretDash'])->name('dashboard');
@@ -46,6 +47,33 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/factures/print/{facture}', [FactureController::class, 'print'])->name('factures.print');
         Route::get('/rendezvous', [RendezvousController::class, 'index'])->name('rendezvous');
         Route::get('/paiements', [PaiementController::class, 'index'])->name('paiements');
+        Route::post('/paiements/manual-assignment', [PaiementController::class, 'storeManualAssignment'])->name('paiements.store-manual-assignment');
+        
+                // Route pour récupérer l'historique des paiements d'un patient
+        Route::get('/patients/{patientId}/payment-history', [PaiementController::class, 'getPatientPaymentHistory'])
+             ->name('patients.payment-history');
+        
+        // Route pour récupérer les données d'un paiement (pour l'édition)
+        Route::get('/paiements/{id}', [PaiementController::class, 'show'])
+             ->name('paiements.show');
+        
+        // Route pour mettre à jour un paiement
+        Route::put('/paiements/{id}', [PaiementController::class, 'update'])
+             ->name('paiements.update');
+        
+        // Route pour supprimer un paiement
+        Route::delete('/paiements/{id}', [PaiementController::class, 'destroy'])
+             ->name('paiements.destroy');
+        
+        // Route pour créer un paiement
+        Route::post('/paiements', [PaiementController::class, 'store'])
+             ->name('paiements.store');
+        
+             Route::post('/charges', [PaiementController::class, 'storeCharges'])->name('charges.create');
+        Route::put('/charges/{charge}', [PaiementController::class, 'editCharges'])->name('charges.update');
+        Route::delete('/charges/{charge}', [PaiementController::class, 'deleteCharges'])->name('charges.delete');
+        Route::get('/charges/{charge}', [PaiementController::class, 'showCharge'])->name('charges.show');
+        
         Route::get('/docs', [DocumentController::class, 'index'])->name('docs');
 
         // Gestion profil
@@ -60,7 +88,6 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/rendezvous/{rendezvous}', [RendezvousController::class, 'update'])->name('rendezvous.update');
         Route::delete('/rendezvous/{rendezvous}', [RendezvousController::class, 'destroy'])->name('rendezvous.destroy');
         Route::post('/rendezvous/{id}/mark-viewed', [RendezvousController::class, 'markAsViewed'])->name('secretaire.rendezvous.mark-viewed');
-
 
         // Routes disponibilités - AJOUTEZ CES LIGNES
         Route::post('/disponibilite', [RendezvousController::class, 'storeDisponibilite'])->name('disponibilite.store');
@@ -148,7 +175,6 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('patients', PatientController::class)->except(['index']);
     Route::resource('factures', FactureController::class)->except(['index']);
     Route::resource('paiements', PaiementController::class)->except(['index']);
-
     // Gestion des utilisateurs, admin uniquement
     Route::resource('users', UserController::class)->middleware('role:admin');
 });

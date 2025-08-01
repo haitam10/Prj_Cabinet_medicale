@@ -14,35 +14,50 @@ class FactureController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
-    {
-        try {
-            $factures = Facture::with(['patient', 'medecin', 'secretaire', 'utilisateur'])->paginate(10);
-        } catch (\Exception $e) {
-            $factures = new \Illuminate\Pagination\LengthAwarePaginator(
-                collect([]), 0, 10, 1, ['path' => request()->url()]
-            );
+public function index(Request $request)
+{
+    try {
+        $user = Auth::user();
+        $query = Facture::with(['patient', 'medecin', 'secretaire', 'utilisateur']);
+
+        if ($user->role === 'medecin') {
+            $query->where('medecin_id', $user->id);
+        } elseif ($user->role === 'secretaire') {
+            if ($user->medecin_id) {
+                $query->where('medecin_id', $user->medecin_id);
+            } else {
+                // Sécretaire sans medecin associé ne voit rien
+                $query->whereNull('id'); 
+            }
         }
 
-        $patients = Patient::all();
-        $medecins = User::where('role', 'medecin')->where('statut', 'actif')->get();
-        $secretaires = User::where('role', 'secretaire')->where('statut', 'actif')->get();
-        $users = User::all();
-
-        // Récupérer les informations du cabinet pour l'utilisateur connecté
-        $cabinet = Cabinet::where('id_docteur', Auth::id())->first();
-
-        // Si pas de cabinet pour l'utilisateur connecté, prendre le premier cabinet disponible
-        if (!$cabinet) {
-            $cabinet = Cabinet::first();
-        }
-
-        if ($request->wantsJson()) {
-            return response()->json($factures);
-        }
-
-        return view('secretaire.factures', compact('factures', 'patients', 'medecins', 'secretaires', 'users', 'cabinet'));
+        $factures = $query->paginate(10);
+    } catch (\Exception $e) {
+        $factures = new \Illuminate\Pagination\LengthAwarePaginator(
+            collect([]), 0, 10, 1, ['path' => request()->url()]
+        );
     }
+
+    $patients = Patient::all();
+    $medecins = User::where('role', 'medecin')->where('statut', 'actif')->get();
+    $secretaires = User::where('role', 'secretaire')->where('statut', 'actif')->get();
+    $users = User::all();
+
+    // Récupérer les informations du cabinet pour l'utilisateur connecté
+    $cabinet = Cabinet::where('id_docteur', Auth::id())->first();
+
+    // Si pas de cabinet pour l'utilisateur connecté, prendre le premier cabinet disponible
+    if (!$cabinet) {
+        $cabinet = Cabinet::first();
+    }
+
+    if ($request->wantsJson()) {
+        return response()->json($factures);
+    }
+
+    return view('secretaire.factures', compact('factures', 'patients', 'medecins', 'secretaires', 'users', 'cabinet'));
+}
+
 
     /**
      * Show the form for creating a new resource.

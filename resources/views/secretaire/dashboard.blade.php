@@ -36,6 +36,7 @@
             }
         }
     </script>
+
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -307,7 +308,7 @@
                 <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-gray-100">
                     <div class="flex items-center justify-between mb-6">
                         <div>
-                            <h3 class="text-lg font-semibold text-gray-900">Rendez-vous Statistics</h3>
+                            <h3 class="text-lg font-semibold text-gray-900">Rendez-vous</h3>
                         </div>
                         <div class="flex items-center space-x-4">
                             <div class="flex items-center space-x-2">
@@ -328,7 +329,7 @@
 
                 <div class="bg-white rounded-2xl p-6 border border-gray-100">
                     <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-semibold text-gray-900">Paiements Statistics</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">Factures</h3>
                         <button id="period_butt"
                             class="bg-primary text-white px-3 py-1 rounded-lg text-sm">{{ ucfirst($period) }}</button>
                     </div>
@@ -337,6 +338,50 @@
                     </div>
                 </div>
             </div>
+
+           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                {{-- Main chart for payments statistics (now a line chart) --}}
+                <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-gray-100">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Paiements</h3>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            {{-- Legend for the line chart --}}
+                            <div class="flex items-center space-x-2">
+                                <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                                <span class="text-sm text-gray-600">Payé</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="w-3 h-3 bg-yellow-400 rounded-full"></span>
+                                <span class="text-sm text-gray-600">En attente</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="w-3 h-3 bg-red-500 rounded-full"></span>
+                                <span class="text-sm text-gray-600">Échoué</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="h-80">
+                        {{-- Canvas for the Paiements Line Chart --}}
+                        <canvas id="paiementsLineChart"></canvas>
+                    </div>
+                </div>
+
+                {{-- New chart for charges statistics (a doughnut chart) --}}
+                <div class="bg-white rounded-2xl p-6 border border-gray-100">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">Charges</h3>
+                        <button id="period_butt"
+                            class="bg-primary text-white px-3 py-1 rounded-lg text-sm">{{ ucfirst($period) }}</button>
+                    </div>
+                    <div class="h-80 flex items-center justify-center">
+                        {{-- Canvas for the Charges Doughnut Chart --}}
+                        <canvas id="chargesDoughnutChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
 
             <!-- Latest Factures Table -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -1469,6 +1514,8 @@
             });
         }
 
+
+
         // Function to update dashboard card values
         function updateDashboardCards(data) {
             // Update counts
@@ -1506,6 +1553,164 @@
             if (rvsBar) rvsBar.style.width = `${Math.min(Math.abs(data.rvs_diff_percent), 100)}%`;
         }
 
+        let paiementsLineChartInstance = null;
+        let chargesDoughnutChartInstance = null;
+
+        // Function to update the payments line chart
+        function updatePaiementsLineChart(labels, payeData, attenteData, echoueData, maxYValue) {
+            if (paiementsLineChartInstance) {
+                paiementsLineChartInstance.destroy();
+            }
+            
+            const ctx = document.getElementById('paiementsLineChart').getContext('2d');
+            paiementsLineChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Payé',
+                            data: payeData,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#10b981',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2,
+                            pointRadius: 5
+                        },
+                        {
+                            label: 'En attente',
+                            data: attenteData,
+                            borderColor: '#fbbf24',
+                            backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#fbbf24',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2,
+                            pointRadius: 5
+                        },
+                        {
+                            label: 'Échoué',
+                            data: echoueData,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#ef4444',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2,
+                            pointRadius: 5
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false // Legend is handled by the HTML
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            borderColor: '#e5e7eb',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                display: true,
+                                color: '#f3f4f6'
+                            },
+                            ticks: {
+                                color: '#6b7280'
+                            },
+                            ...(maxYValue && {
+                                max: maxYValue
+                            })
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#6b7280'
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        }
+
+        // Function to update the charges doughnut chart
+        function updateChargesDoughnutChart(labels, data, colors, hoverData) {
+            if (chargesDoughnutChartInstance) {
+                chargesDoughnutChartInstance.destroy();
+            }
+            
+            const ctx = document.getElementById('chargesDoughnutChart').getContext('2d');
+            chargesDoughnutChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderColor: '#ffffff',
+                        borderWidth: 3,
+                        hoverBorderWidth: 4,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false // We'll create custom legend
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            borderColor: '#e5e7eb',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const hoverValue = hoverData[context.dataIndex] || '';
+                                    return `${label}: ${value}% (${hoverValue})`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '60%',
+                    animation: {
+                        animateRotate: true,
+                        animateScale: true
+                    }
+                }
+            });
+        }
+
+        // Update the fetchDashboardData function to handle new charts
         function fetchDashboardData(period) {
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
@@ -1537,15 +1742,26 @@
                     // Update dashboard cards with new data
                     updateDashboardCards(data);
 
-                    // Update Rendez-vous Chart
-                    updateRdvChart(data.rdv_chart_labels, data.rdv_chart_confirmed_data, data.rdv_chart_pending_data,
-                        data.rdv_chart_max_y);
+                    // Update existing charts
+                    updateRdvChart(data.rdv_chart_labels, data.rdv_chart_confirmed_data, data.rdv_chart_pending_data, data.rdv_chart_max_y);
+                    updateFinancialChart(data.financial_chart_labels, data.financial_chart_data, data.financial_chart_max_y);
 
-                    // Update Financial Chart
-                    updateFinancialChart(data.financial_chart_labels, data.financial_chart_data, data
-                        .financial_chart_max_y);
+                    // Update new charts
+                    updatePaiementsLineChart(
+                        data.payment_line_labels, 
+                        data.payment_line_paye_data, 
+                        data.payment_line_attente_data, 
+                        data.payment_line_echoue_data, 
+                        data.payment_line_chart_max_y
+                    );
+                    
+                    updateChargesDoughnutChart(
+                        data.charges_labels, 
+                        data.charges_data, 
+                        data.charges_colors, 
+                        data.charges_hover_data
+                    );
 
-                    // showTemporaryMessage('Dashboard data updated for ' + period + ' timeframe!', 'success');
                 })
                 .catch(error => {
                     console.error('Error fetching dashboard data:', error);
@@ -1553,6 +1769,39 @@
                 });
         }
 
+        // Initialize the new charts on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // ... existing DOMContentLoaded code ...
+            
+            // Initialize new charts with initial data
+            const initialPaymentLineLabels = @json($payment_line_labels ?? []);
+            const initialPaymentLinePayeData = @json($payment_line_paye_data ?? []);
+            const initialPaymentLineAttenteData = @json($payment_line_attente_data ?? []);
+            const initialPaymentLineEchoueData = @json($payment_line_echoue_data ?? []);
+            const initialPaymentLineMaxY = @json($payment_line_chart_max_y ?? 10);
+            
+            const initialChargesLabels = @json($charges_labels ?? []);
+            const initialChargesData = @json($charges_data ?? []);
+            const initialChargesColors = @json($charges_colors ?? []);
+            const initialChargesHoverData = @json($charges_hover_data ?? []);
+            
+            // Initialize the new charts
+            updatePaiementsLineChart(
+                initialPaymentLineLabels,
+                initialPaymentLinePayeData,
+                initialPaymentLineAttenteData,
+                initialPaymentLineEchoueData,
+                initialPaymentLineMaxY
+            );
+            
+            updateChargesDoughnutChart(
+                initialChargesLabels,
+                initialChargesData,
+                initialChargesColors,
+                initialChargesHoverData
+            );
+        });
+                
         document.addEventListener('DOMContentLoaded', function() {
             autoHideMessages();
 

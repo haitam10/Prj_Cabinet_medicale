@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Log; // Cette ligne est cruciale pour Intelephense
+use Illuminate\Support\Facades\Auth;
 
 class DocumentController extends Controller
 {
@@ -22,10 +23,21 @@ class DocumentController extends Controller
             $documents = null;
             
             try {
+                $user = Auth::user();
                 $search = $request->query('search');
                 $medecinFilter = $request->query('medecin');
                 
                 $certificatsQuery = Certificat::with(['patient', 'medecin']);
+                
+                // Filtrer par médecin selon le rôle de l'utilisateur connecté
+                if ($user->role === 'medecin') {
+                    $certificatsQuery->where('medecin_id', $user->id);
+                } elseif ($user->role === 'secretaire' && $user->medecin_id) {
+                    $certificatsQuery->where('medecin_id', $user->medecin_id);
+                } else {
+                    // Si pas de médecin assigné, aucun résultat
+                    $certificatsQuery->where('id', null);
+                }
                 
                 // Apply filters
                 if ($search) {
@@ -70,14 +82,26 @@ class DocumentController extends Controller
                     $currentPage,
                     ['path' => $request->url(), 'query' => $request->query()]
                 );
-                $patients = Patient::all();
-                $medecins = User::where('role', 'medecin')->get();
+                
+                // Filtrer les patients et médecins selon l'utilisateur connecté
+                if ($user->role === 'medecin') {
+                    $patients = Patient::all();
+                    $medecins = User::where('id', $user->id)->get();
+                } elseif ($user->role === 'secretaire' && $user->medecin_id) {
+                    $patients = Patient::all();
+                    $medecins = User::where('id', $user->medecin_id)->get();
+                } else {
+                    $patients = collect();
+                    $medecins = collect();
+                }
                 
             } catch (\Exception $e) {
                 $documents = new LengthAwarePaginator(
                     collect([]), 0, 10, 1,
                     ['path' => $request->url(), 'query' => $request->query()]
                 );
+                $patients = collect();
+                $medecins = collect();
                 Log::error("Erreur dans DocumentController@showCerts: " . $e->getMessage());
             }
             
@@ -100,10 +124,21 @@ class DocumentController extends Controller
             $documents = null;
             
             try {
+                $user = Auth::user();
                 $search = $request->query('search');
                 $medecinFilter = $request->query('medecin');
                 
                 $ordonnancesQuery = Ordonnance::with(['patient', 'medecin']);
+                
+                // Filtrer par médecin selon le rôle de l'utilisateur connecté
+                if ($user->role === 'medecin') {
+                    $ordonnancesQuery->where('medecin_id', $user->id);
+                } elseif ($user->role === 'secretaire' && $user->medecin_id) {
+                    $ordonnancesQuery->where('medecin_id', $user->medecin_id);
+                } else {
+                    // Si pas de médecin assigné, aucun résultat
+                    $ordonnancesQuery->where('id', null);
+                }
                 
                 // Apply filters
                 if ($search) {
@@ -150,14 +185,25 @@ class DocumentController extends Controller
                     ['path' => $request->url(), 'query' => $request->query()]
                 );
 
-                $patients = Patient::all();
-                $medecins = User::where('role', 'medecin')->get();
+                // Filtrer les patients et médecins selon l'utilisateur connecté
+                if ($user->role === 'medecin') {
+                    $patients = Patient::all();
+                    $medecins = User::where('id', $user->id)->get();
+                } elseif ($user->role === 'secretaire' && $user->medecin_id) {
+                    $patients = Patient::all();
+                    $medecins = User::where('id', $user->medecin_id)->get();
+                } else {
+                    $patients = collect();
+                    $medecins = collect();
+                }
                 
             } catch (\Exception $e) {
                 $documents = new LengthAwarePaginator(
                     collect([]), 0, 10, 1,
                     ['path' => $request->url(), 'query' => $request->query()]
                 );
+                $patients = collect();
+                $medecins = collect();
                 Log::error("Erreur dans DocumentController@showOrds: " . $e->getMessage());
             }
             
@@ -180,10 +226,21 @@ class DocumentController extends Controller
             $documents = null;
             
             try {
+                $user = Auth::user();
                 $search = $request->query('search');
                 $medecinFilter = $request->query('medecin');
                 
                 $remarquesQuery = Remarque::with(['patient', 'medecin']);
+                
+                // Filtrer par médecin selon le rôle de l'utilisateur connecté
+                if ($user->role === 'medecin') {
+                    $remarquesQuery->where('medecin_id', $user->id);
+                } elseif ($user->role === 'secretaire' && $user->medecin_id) {
+                    $remarquesQuery->where('medecin_id', $user->medecin_id);
+                } else {
+                    // Si pas de médecin assigné, aucun résultat
+                    $remarquesQuery->where('id', null);
+                }
                 
                 // Apply filters
                 if ($search) {
@@ -227,14 +284,26 @@ class DocumentController extends Controller
                     $currentPage,
                     ['path' => $request->url(), 'query' => $request->query()]
                 );
-                $patients = Patient::all();
-                $medecins = User::where('role', 'medecin')->get();
+                
+                // Filtrer les patients et médecins selon l'utilisateur connecté
+                if ($user->role === 'medecin') {
+                    $patients = Patient::all();
+                    $medecins = User::where('id', $user->id)->get();
+                } elseif ($user->role === 'secretaire' && $user->medecin_id) {
+                    $patients = Patient::all();
+                    $medecins = User::where('id', $user->medecin_id)->get();
+                } else {
+                    $patients = collect();
+                    $medecins = collect();
+                }
                 
             } catch (\Exception $e) {
                 $documents = new LengthAwarePaginator(
                     collect([]), 0, 10, 1,
                     ['path' => $request->url(), 'query' => $request->query()]
                 );
+                $patients = collect();
+                $medecins = collect();
                 Log::error("Erreur dans DocumentController@showRems: " . $e->getMessage());
             }
             

@@ -31,7 +31,8 @@ class Patient extends Model
         'emergency_contact_name',
         'emergency_contact_phone',
         'is_active',
-        'profile_image'
+        'profile_image',
+        'medecin_id'
     ];
 
     public function rendezvous()
@@ -59,8 +60,14 @@ class Patient extends Model
         return $this->hasMany(Facture::class);
     }
 
-        public function consultations()
+    public function consultations()
     {
         return $this->hasMany(Consultation::class);
     }
+
+    public function medecin()
+{
+    return $this->belongsTo(User::class, 'medecin_id');
+}
+
 }

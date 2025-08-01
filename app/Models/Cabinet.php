@@ -18,9 +18,12 @@ class Cabinet extends Model
         'addr_cabinet',
         'tel_cabinet',
         'descr_cabinet',
+        'charges',
+    ];
+    protected $casts = [
+        'charges' => 'array', 
     ];
 
-    // Relation hasMany vers DocModel
     public function docs()
     {
         return $this->hasMany(DocModel::class, 'id_cabinet');

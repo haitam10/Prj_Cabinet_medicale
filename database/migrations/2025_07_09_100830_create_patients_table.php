@@ -38,6 +38,9 @@ return new class extends Migration
             $table->string('profile_image', 500)->nullable();
             $table->boolean('is_active')->default(true);
 
+            $table->unsignedBigInteger('medecin_id')->nullable();
+            $table->foreign('medecin_id')->references('id')->on('users')->onDelete('set null');
+
             $table->timestamps();
         });
     }

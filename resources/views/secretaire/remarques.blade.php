@@ -95,9 +95,7 @@
     <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50">
         <div class="flex items-center justify-center h-16 bg-cordes-light">
             <div class="flex items-center space-x-3">
-              
-                   <img  style="width: 180px; height:160px" src="{{ url('storage/uploads/logo_miacex.png') }}"/>
-                
+                <img style="width: 180px; height:160px" src="{{ url('storage/uploads/logo_miacex.png') }}"/>
             </div>
         </div>
         <nav class="mt-8 px-4">
@@ -191,12 +189,24 @@
             <div class="px-6 py-4 flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-semibold text-gray-900">Gestion des Remarques</h1>
-                    <p class="text-gray-600 text-sm mt-1">Liste des remarques médicales générées</p>
+                    <p class="text-gray-600 text-sm mt-1">
+                        @if(Auth::user()->role === 'medecin')
+                            Mes remarques médicales
+                        @elseif(Auth::user()->role === 'secretaire')
+                            @if(Auth::user()->medecin_id)
+                                Aucune remarque trouvée pour le Dr. {{ optional(Auth::user()->medecin)->nom ?? 'votre médecin' }}
+                            @else
+                                Vous n'êtes assigné(e) à aucun médecin
+                            @endif
+                        @endif
+                    </p>
                 </div>
-                <button onclick="openGenerateModal()"
-                    class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-                    <i class="fas fa-plus mr-2"></i>Ajouter Remarque
-                </button>
+                @if(Auth::user()->role === 'medecin' || (Auth::user()->role === 'secretaire' && Auth::user()->medecin_id))
+                    <button onclick="openGenerateModal()"
+                        class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Ajouter Remarque
+                    </button>
+                @endif
             </div>
         </header>
 
@@ -223,12 +233,9 @@
                     </div>
                     
                     <div class="relative">
-                        <i class="fas fa-user-md absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        <select id="medecinFilter"
-                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent appearance-none">
-                            <option value="">Tous les médecins</option>
-                            {{-- Options dynamiques ajoutées par JavaScript --}}
-                        </select>
+                        <i class="fas fa-calendar absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input type="date" id="dateFilter"
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                     </div>
                     
                     <div class="flex items-center text-sm text-gray-600">
@@ -237,6 +244,11 @@
                             {{ count($documents ?? []) }} 
                             Remarque{{ count($documents ?? []) > 1 ? 's' : '' }}
                         </span>
+                        @if(Auth::user()->role === 'medecin')
+                            <span class="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                Mes remarques uniquement
+                            </span>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -259,6 +271,7 @@
                                 data-cin="{{ $doc['patient_cin'] ?? '' }}" 
                                 data-patient="{{ $doc['patient_nom'] ?? '' }}" 
                                 data-medecin="{{ $doc['medecin_nom'] ?? '' }}"
+                                data-date="{{ $doc['date'] ?? '' }}"
                                 data-remarque-id="{{ $doc['id'] }}"
                                 onclick="marquerRemarqueCommeVue({{ $doc['id'] }})">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -272,7 +285,12 @@
                                     {{ Str::limit($doc['remarque'] ?? 'Non spécifié', 50) }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    Dr. {{ $doc['medecin_nom'] ?? '' }}
+                                    <div class="flex items-center">
+                                        <span>Dr. {{ $doc['medecin_nom'] ?? '' }}</span>
+                                        @if(Auth::user()->role === 'medecin' && isset($doc['medecin_id']) && $doc['medecin_id'] == Auth::id())
+                                            <span class="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Vous</span>
+                                        @endif
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {{ isset($doc['date']) ? \Carbon\Carbon::parse($doc['date'])->format('d/m/Y') : '' }}
@@ -301,7 +319,20 @@
                             <tr id="emptyRow">
                                 <td colspan="6" class="px-6 py-12 text-center text-gray-500">
                                     <i class="fas fa-sticky-note text-4xl mb-2 text-gray-300"></i>
-                                    <p class="text-lg">Aucune remarque trouvée</p>
+                                    <p class="text-lg">
+                                        @if(Auth::user()->role === 'medecin')
+                                            Vous n'avez créé aucune remarque pour le moment
+                                        @elseif(Auth::user()->role === 'secretaire')
+                                            Aucune remarque trouvée pour votre médecin
+                                        @else
+                                            Aucune remarque disponible
+                                        @endif
+                                    </p>
+                                    <p class="text-sm text-gray-400 mt-1">
+                                        @if(Auth::user()->role === 'medecin' || (Auth::user()->role === 'secretaire' && Auth::user()->medecin_id))
+                                            Cliquez sur "Ajouter Remarque" pour commencer
+                                        @endif
+                                    </p>
                                 </td>
                             </tr>
                         @endforelse
@@ -312,6 +343,7 @@
     </div>
 
     <!-- MODAL AJOUTER REMARQUE -->
+    @if(Auth::user()->role === 'medecin' || (Auth::user()->role === 'secretaire' && Auth::user()->medecin_id))
     <div id="generateModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white w-full max-w-2xl rounded-lg shadow-xl m-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center p-6 border-b border-gray-200">
@@ -342,10 +374,17 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             <i class="fas fa-user-md mr-1"></i>Médecin
                         </label>
-                        <input type="text" value="Dr. {{ Auth::user()->nom }}" readonly 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed outline-none">
-                        <input type="hidden" name="medecin_id" value="{{ Auth::id() }}">
-                        <p class="text-xs text-gray-500 mt-1">Le médecin est automatiquement défini par votre session</p>
+                        @if(Auth::user()->role === 'medecin')
+                            <input type="text" value="Dr. {{ Auth::user()->nom }}" readonly 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed outline-none">
+                            <input type="hidden" name="medecin_id" value="{{ Auth::id() }}">
+                            <p class="text-xs text-gray-500 mt-1">Vous êtes automatiquement défini comme médecin</p>
+                        @elseif(Auth::user()->role === 'secretaire' && Auth::user()->medecin_id)
+                            <input type="text" value="Dr. {{ Auth::user()->medecin->nom ?? 'Non défini' }}" readonly 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed outline-none">
+                            <input type="hidden" name="medecin_id" value="{{ Auth::user()->medecin_id ?? '' }}">
+                            <p class="text-xs text-gray-500 mt-1">Remarque créée pour le compte de votre médecin</p>
+                        @endif
                     </div>
                     
                     <div>
@@ -374,6 +413,7 @@
             </form>
         </div>
     </div>
+    @endif
 
     <!-- MODAL VISUALISATION REMARQUE -->
     <div id="viewModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
@@ -387,7 +427,6 @@
             
             <div class="p-6">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <!-- Left Side - Patient & Doctor Info -->
                     <div class="space-y-6">
                         <div class="bg-gray-50 p-4 rounded-lg">
                             <h3 class="text-lg font-semibold text-gray-800 mb-4">Informations Patient</h3>
@@ -408,7 +447,6 @@
                         </div>
                     </div>
                     
-                    <!-- Right Side - Document Content -->
                     <div class="space-y-6">
                         <div class="bg-gray-50 p-4 rounded-lg">
                             <h3 class="text-lg font-semibold text-gray-800 mb-4">Contenu de la Remarque</h3>
@@ -569,18 +607,15 @@
         // Clé pour le localStorage
         const STORAGE_KEY = 'remarques_vues';
 
-        // Fonction pour obtenir les remarques vues depuis le localStorage
         function getRemarquesVues() {
             const stored = localStorage.getItem(STORAGE_KEY);
             return stored ? JSON.parse(stored) : [];
         }
 
-        // Fonction pour sauvegarder les remarques vues dans le localStorage
         function saveRemarquesVues(remarquesVues) {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(remarquesVues));
         }
 
-        // Fonction pour marquer une remarque comme vue
         function marquerRemarqueCommeVue(remarqueId) {
             const remarquesVues = getRemarquesVues();
             if (!remarquesVues.includes(remarqueId)) {
@@ -588,7 +623,6 @@
                 saveRemarquesVues(remarquesVues);
             }
             
-            // Retirer la classe "nouvelle-remarque" et masquer le badge
             const row = document.querySelector(`tr[data-remarque-id="${remarqueId}"]`);
             const badge = document.getElementById(`badge-${remarqueId}`);
             
@@ -600,7 +634,6 @@
             }
         }
 
-        // Fonction pour marquer les nouvelles remarques au chargement de la page
         function marquerNouvellesRemarques() {
             const remarquesVues = getRemarquesVues();
             const rows = document.querySelectorAll('.document-row');
@@ -608,7 +641,6 @@
             rows.forEach(row => {
                 const remarqueId = parseInt(row.getAttribute('data-remarque-id'));
                 if (!remarquesVues.includes(remarqueId)) {
-                    // Marquer comme nouvelle remarque
                     row.classList.add('nouvelle-remarque');
                     const badge = document.getElementById(`badge-${remarqueId}`);
                     if (badge) {
@@ -648,7 +680,6 @@
             }
         }
 
-        // Generate Modal Functions
         function openGenerateModal() {
             document.getElementById('generateModal').classList.remove('hidden');
         }
@@ -658,7 +689,6 @@
         }
 
         function openViewModal(docData) {
-            // Marquer la remarque comme vue quand on ouvre la modal
             marquerRemarqueCommeVue(docData.id);
             
             currentDocument = docData;
@@ -674,12 +704,6 @@
         function closeViewModal() {
             document.getElementById('viewModal').classList.add('hidden');
             currentDocument = null;
-        }
-
-        function openPrintModal(docData) {
-            currentDocument = docData;
-            preparePrintContent();
-            window.print();
         }
 
         function printCurrentDocument() {
@@ -698,27 +722,26 @@
             document.getElementById('printRemarque').textContent = currentDocument.remarque || 'Non spécifié';
         }
 
-        // FIXED Search and Filter Functions
         function setupSearchAndFilter() {
             const searchInput = document.getElementById('searchInput');
-            const medecinFilter = document.getElementById('medecinFilter');
+            const dateFilter = document.getElementById('dateFilter');
             const tableRows = document.querySelectorAll('.document-row');
             const emptyRow = document.getElementById('emptyRow');
 
             function filterTable() {
                 const searchTerm = searchInput.value.toLowerCase();
-                const selectedMedecin = medecinFilter.value.toLowerCase();
+                const selectedDate = dateFilter.value;
                 let visibleCount = 0;
 
                 tableRows.forEach(row => {
                     const cin = (row.getAttribute('data-cin') || '').toLowerCase();
                     const patientName = (row.getAttribute('data-patient') || '').toLowerCase();
-                    const medecinName = (row.getAttribute('data-medecin') || '').toLowerCase();
+                    const rowDate = row.getAttribute('data-date') || '';
                     
                     const matchesSearch = cin.includes(searchTerm) || patientName.includes(searchTerm);
-                    const matchesMedecin = !selectedMedecin || medecinName.includes(selectedMedecin);
+                    const matchesDate = !selectedDate || rowDate === selectedDate;
                     
-                    if (matchesSearch && matchesMedecin) {
+                    if (matchesSearch && matchesDate) {
                         row.style.display = '';
                         visibleCount++;
                     } else {
@@ -726,7 +749,6 @@
                     }
                 });
 
-                // Handle empty state
                 if (emptyRow) {
                     if (visibleCount === 0 && tableRows.length > 0) {
                         emptyRow.style.display = '';
@@ -736,74 +758,48 @@
                     }
                 }
 
-                // Update count
                 document.getElementById('documentCount').textContent = `${visibleCount} Remarque${visibleCount > 1 ? 's' : ''}`;
             }
 
             if (searchInput) searchInput.addEventListener('input', filterTable);
-            if (medecinFilter) medecinFilter.addEventListener('change', filterTable);
+            if (dateFilter) dateFilter.addEventListener('change', filterTable);
         }
 
-        // CORRECTED Edit Modal Function - Fix patient selection
         function openEditModal(docData) {
-            // Marquer la remarque comme vue quand on édite
             marquerRemarqueCommeVue(docData.id);
             
-            console.log('Opening edit modal with data:', docData);
-            
-            // Reset form first
             document.getElementById('editRemarqueForm').reset();
             
-            // Set basic fields
             document.getElementById('edit_remarque_id').value = docData.id || '';
             document.getElementById('edit_medecin_id').value = docData.medecin_id || '';
             document.getElementById('edit_medecin_name').value = 'Dr. ' + (docData.medecin_nom || '');
             document.getElementById('edit_remarque').value = docData.remarque || '';
             document.getElementById('edit_date_remarque').value = docData.date ? new Date(docData.date).toISOString().split('T')[0] : '';
             
-            // FIXED: Properly select patient in dropdown using a more reliable method
             const patientSelect = document.getElementById('edit_patient_id');
             if (patientSelect && docData.patient_id) {
-                console.log('Trying to select patient ID:', docData.patient_id);
-                
-                // Method 1: Direct value assignment
                 patientSelect.value = docData.patient_id;
-                
-                // Method 2: If direct assignment doesn't work, iterate through options
                 if (patientSelect.value != docData.patient_id) {
-                    console.log('Direct assignment failed, trying manual selection');
                     for (let i = 0; i < patientSelect.options.length; i++) {
                         if (patientSelect.options[i].value == docData.patient_id) {
                             patientSelect.selectedIndex = i;
-                            console.log('Patient selected at index:', i);
                             break;
                         }
                     }
                 }
-                
-                // Method 3: Force trigger change event to ensure selection is registered
                 patientSelect.dispatchEvent(new Event('change'));
-                
-                console.log('Final selected value:', patientSelect.value);
-            } else {
-                console.warn('Patient select element or patient_id not found');
             }
             
-            // Set form action
             document.getElementById('editRemarqueForm').action = '/secretaire/remarques/' + (docData.id || '');
-            
-            // Show modal
             document.getElementById('editModal').classList.remove('hidden');
         }
 
         function closeEditModal() {
             document.getElementById('editModal').classList.add('hidden');
-            // Reset form completely
             document.getElementById('editRemarqueForm').reset();
         }
 
         function openDeleteModal(docData) {
-            // Marquer la remarque comme vue quand on supprime
             marquerRemarqueCommeVue(docData.id);
             
             document.getElementById('delete_remarque_id').value = docData.id || '';
@@ -815,32 +811,18 @@
             document.getElementById('deleteModal').classList.add('hidden');
         }
 
-        // Modal event listeners for clicking outside to close
-        document.getElementById('generateModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeGenerateModal();
+        // Event listeners for modals
+        ['generateModal', 'viewModal', 'editModal', 'deleteModal'].forEach(modalId => {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.add('hidden');
+                    }
+                });
             }
         });
 
-        document.getElementById('viewModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeViewModal();
-            }
-        });
-
-        document.getElementById('editModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeEditModal();
-            }
-        });
-
-        document.getElementById('deleteModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeDeleteModal();
-            }
-        });
-
-        // Keyboard event listeners
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeGenerateModal();
@@ -850,49 +832,17 @@
             }
         });
 
-        // Initialize everything when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             autoHideMessages();
             setupSearchAndFilter();
-            marquerNouvellesRemarques(); // Nouvelle fonction pour marquer les remarques
+            marquerNouvellesRemarques();
             
-            // Set current date for new remarks
             const today = new Date().toISOString().split('T')[0];
             const dateInput = document.querySelector('input[name="date_remarque"]');
             if (dateInput) {
                 dateInput.value = today;
             }
-
-            // Populate medecin filter options
-            populateMedecinFilter();
         });
-
-        // Function to populate medecin filter from table data
-        function populateMedecinFilter() {
-            const medecinFilter = document.getElementById('medecinFilter');
-            const tableRows = document.querySelectorAll('.document-row');
-            const medecins = new Set();
-
-            tableRows.forEach(row => {
-                const medecinName = row.getAttribute('data-medecin');
-                if (medecinName && medecinName.trim()) {
-                    medecins.add(medecinName.trim());
-                }
-            });
-
-            // Clear existing options except the first one
-            while (medecinFilter.children.length > 1) {
-                medecinFilter.removeChild(medecinFilter.lastChild);
-            }
-
-            // Add medecin options
-            medecins.forEach(medecin => {
-                const option = document.createElement('option');
-                option.value = medecin;
-                option.textContent = `Dr. ${medecin}`;
-                medecinFilter.appendChild(option);
-            });
-        }
     </script>
 </body>
 </html>

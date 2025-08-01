@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('addr_cabinet')->nullable();
             $table->string('tel_cabinet')->nullable();
             $table->text('descr_cabinet')->nullable();
+            $table->json('charges')->nullable();
             $table->timestamps();
 
             // Foreign key optionnelle vers users

@@ -13,15 +13,49 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class PatientController extends Controller
 {
+    /**
+     * Récupère l'ID du médecin selon l'utilisateur connecté
+     */
+    private function getMedecinId()
+    {
+        $user = Auth::user();
+        
+        if (!$user) {
+            return null;
+        }
+        
+        // Si l'utilisateur est un médecin, on retourne son ID
+        if ($user->role === 'medecin') {
+            return $user->id;
+        }
+        
+        // Si l'utilisateur est une secrétaire, on retourne l'ID du médecin associé
+        if ($user->role === 'secretaire' && $user->medecin_id) {
+            return $user->medecin_id;
+        }
+        
+        return null;
+    }
+
     public function index(Request $request)
     {
+        $medecinId = $this->getMedecinId();
+        
         // Récupérer les patients avec le montant total payé calculé via les relations Eloquent
-        $patients = Patient::with(['factures.paiements' => function($query) {
+        $query = Patient::with(['factures.paiements' => function($query) {
             $query->where('statut', 'paye');
-        }])->paginate(10);
+        }]);
+        
+        // Filtrer par médecin si on a un medecin_id
+        if ($medecinId) {
+            $query->where('medecin_id', $medecinId);
+        }
+        
+        $patients = $query->paginate(10);
 
         // Calculer le montant total payé pour chaque patient
         foreach ($patients as $patient) {
@@ -98,7 +132,13 @@ class PatientController extends Controller
         try {
             $validated['password_hash'] = Hash::make('default123');
             $validated['is_active'] = $validated['is_active'] ?? true;
-
+            
+            // Récupération automatique du medecin_id selon la session
+            $medecinId = $this->getMedecinId();
+            if ($medecinId) {
+                $validated['medecin_id'] = $medecinId;
+            }
+            
             if ($request->hasFile('profile_image')) {
                 $imagePath = $request->file('profile_image')->store('patient_profiles', 'public');
                 $validated['profile_image'] = $imagePath;
@@ -112,7 +152,7 @@ class PatientController extends Controller
 
             $patient = Patient::create($validated);
 
-            Log::info('Patient créé avec succès', ['patient_id' => $patient->id]);
+            Log::info('Patient créé avec succès', ['patient_id' => $patient->id, 'medecin_id' => $medecinId]);
 
             if ($request->wantsJson()) {
                 return response()->json([
@@ -135,6 +175,15 @@ class PatientController extends Controller
 
     public function show(Request $request, Patient $patient)
     {
+        // Vérifier que le patient appartient au médecin connecté
+        $medecinId = $this->getMedecinId();
+        if ($medecinId && $patient->medecin_id !== $medecinId) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Accès non autorisé'], 403);
+            }
+            return redirect()->route('secretaire.patients')->with('error', 'Accès non autorisé à ce patient.');
+        }
+
         if ($request->wantsJson()) {
             return response()->json($patient);
         }
@@ -144,6 +193,15 @@ class PatientController extends Controller
 
     public function edit(Request $request, Patient $patient)
     {
+        // Vérifier que le patient appartient au médecin connecté
+        $medecinId = $this->getMedecinId();
+        if ($medecinId && $patient->medecin_id !== $medecinId) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Accès non autorisé'], 403);
+            }
+            return redirect()->route('secretaire.patients')->with('error', 'Accès non autorisé à ce patient.');
+        }
+
         if ($request->wantsJson()) {
             return response()->json(['message' => 'Formulaire non disponible via API'], 405);
         }
@@ -153,6 +211,15 @@ class PatientController extends Controller
 
     public function update(Request $request, Patient $patient)
     {
+        // Vérifier que le patient appartient au médecin connecté
+        $medecinId = $this->getMedecinId();
+        if ($medecinId && $patient->medecin_id !== $medecinId) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Accès non autorisé'], 403);
+            }
+            return redirect()->route('secretaire.patients')->with('error', 'Accès non autorisé à ce patient.');
+        }
+
         $rules = [
             'cin' => 'required|string|unique:patients,cin,' . $patient->id,
             'nom' => 'required|string|max:255',
@@ -235,6 +302,15 @@ class PatientController extends Controller
 
     public function destroy(Request $request, Patient $patient)
     {
+        // Vérifier que le patient appartient au médecin connecté
+        $medecinId = $this->getMedecinId();
+        if ($medecinId && $patient->medecin_id !== $medecinId) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Accès non autorisé'], 403);
+            }
+            return redirect()->route('secretaire.patients')->with('error', 'Accès non autorisé à ce patient.');
+        }
+
         try {
             if ($patient->profile_image && \Storage::disk('public')->exists($patient->profile_image)) {
                 \Storage::disk('public')->delete($patient->profile_image);
@@ -259,6 +335,12 @@ class PatientController extends Controller
     // MÉTHODE CORRIGÉE POUR AFFICHER TOUTES LES DONNÉES DU PATIENT
     public function getPatientDetails(Request $request, Patient $patient)
     {
+        // Vérifier que le patient appartient au médecin connecté
+        $medecinId = $this->getMedecinId();
+        if ($medecinId && $patient->medecin_id !== $medecinId) {
+            return response()->json(['error' => 'Accès non autorisé'], 403);
+        }
+
         try {
             // Charger le patient avec les consultations
             $patient->load([

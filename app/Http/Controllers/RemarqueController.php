@@ -14,8 +14,24 @@ class RemarqueController extends Controller
      */
     public function index()
     {
-        // Récupérer les remarques avec les relations
-        $remarques = Remarque::with(['patient', 'medecin'])->get();
+        // Déterminer l'ID du médecin selon le rôle de l'utilisateur connecté
+        $medecinId = null;
+        
+        if (Auth::user()->role === 'medecin') {
+            $medecinId = Auth::id();
+        } elseif (Auth::user()->role === 'secretaire' && Auth::user()->medecin_id) {
+            $medecinId = Auth::user()->medecin_id;
+        }
+        
+        // Récupérer seulement les remarques du médecin connecté ou de son médecin assigné
+        if ($medecinId) {
+            $remarques = Remarque::with(['patient', 'medecin'])
+                ->where('medecin_id', $medecinId)
+                ->get();
+        } else {
+            // Si pas de médecin assigné, collection vide
+            $remarques = collect();
+        }
         
         // Transformer les données pour la vue
         $documents = $remarques->map(function ($remarque) {
@@ -57,8 +73,15 @@ class RemarqueController extends Controller
             'remarque' => 'required|string|max:2000',
         ]);
 
-        // Ajouter automatiquement le médecin connecté
-        $validated['medecin_id'] = Auth::id();
+        // Déterminer l'ID du médecin selon le rôle de l'utilisateur connecté
+        if (Auth::user()->role === 'medecin') {
+            $validated['medecin_id'] = Auth::id();
+        } elseif (Auth::user()->role === 'secretaire' && Auth::user()->medecin_id) {
+            $validated['medecin_id'] = Auth::user()->medecin_id;
+        } else {
+            return redirect()->route('secretaire.remarques')
+                    ->with('error', 'Vous n\'êtes pas autorisé à créer des remarques.');
+        }
         
         try {
             $remarque = Remarque::create($validated);
@@ -76,10 +99,22 @@ class RemarqueController extends Controller
      */
     public function show($id)
     {
-        $remarque = Remarque::with(['patient', 'medecin'])->find($id);
+        // Déterminer l'ID du médecin selon le rôle de l'utilisateur connecté
+        $medecinId = null;
+        
+        if (Auth::user()->role === 'medecin') {
+            $medecinId = Auth::id();
+        } elseif (Auth::user()->role === 'secretaire' && Auth::user()->medecin_id) {
+            $medecinId = Auth::user()->medecin_id;
+        }
+        
+        $remarque = Remarque::with(['patient', 'medecin'])
+            ->where('id', $id)
+            ->where('medecin_id', $medecinId)
+            ->first();
         
         if (!$remarque) {
-            return response()->json(['message' => 'Remarque non trouvée'], 404);
+            return response()->json(['message' => 'Remarque non trouvée ou accès non autorisé'], 404);
         }
         
         return response()->json([
@@ -99,11 +134,23 @@ class RemarqueController extends Controller
      */
     public function edit($id)
     {
-        $remarque = Remarque::with(['patient', 'medecin'])->find($id);
+        // Déterminer l'ID du médecin selon le rôle de l'utilisateur connecté
+        $medecinId = null;
+        
+        if (Auth::user()->role === 'medecin') {
+            $medecinId = Auth::id();
+        } elseif (Auth::user()->role === 'secretaire' && Auth::user()->medecin_id) {
+            $medecinId = Auth::user()->medecin_id;
+        }
+        
+        $remarque = Remarque::with(['patient', 'medecin'])
+            ->where('id', $id)
+            ->where('medecin_id', $medecinId)
+            ->first();
         
         if (!$remarque) {
             return redirect()->route('secretaire.remarques')
-                    ->with('error', 'Remarque non trouvée');
+                    ->with('error', 'Remarque non trouvée ou accès non autorisé');
         }
         
         $patients = Patient::all();
@@ -115,11 +162,22 @@ class RemarqueController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $remarque = Remarque::find($id);
+        // Déterminer l'ID du médecin selon le rôle de l'utilisateur connecté
+        $medecinId = null;
+        
+        if (Auth::user()->role === 'medecin') {
+            $medecinId = Auth::id();
+        } elseif (Auth::user()->role === 'secretaire' && Auth::user()->medecin_id) {
+            $medecinId = Auth::user()->medecin_id;
+        }
+        
+        $remarque = Remarque::where('id', $id)
+            ->where('medecin_id', $medecinId)
+            ->first();
         
         if (!$remarque) {
             return redirect()->route('secretaire.remarques')
-                    ->with('error', 'Remarque non trouvée');
+                    ->with('error', 'Remarque non trouvée ou accès non autorisé');
         }
         
         $validated = $request->validate([
@@ -147,11 +205,22 @@ class RemarqueController extends Controller
      */
     public function destroy($id)
     {
-        $remarque = Remarque::find($id);
+        // Déterminer l'ID du médecin selon le rôle de l'utilisateur connecté
+        $medecinId = null;
+        
+        if (Auth::user()->role === 'medecin') {
+            $medecinId = Auth::id();
+        } elseif (Auth::user()->role === 'secretaire' && Auth::user()->medecin_id) {
+            $medecinId = Auth::user()->medecin_id;
+        }
+        
+        $remarque = Remarque::where('id', $id)
+            ->where('medecin_id', $medecinId)
+            ->first();
         
         if (!$remarque) {
             return redirect()->route('secretaire.remarques')
-                    ->with('error', 'Remarque non trouvée');
+                    ->with('error', 'Remarque non trouvée ou accès non autorisé');
         }
         
         try {
@@ -170,7 +239,24 @@ class RemarqueController extends Controller
      */
     public function apiIndex()
     {
-        $remarques = Remarque::with(['patient', 'medecin'])->get();
+        // Déterminer l'ID du médecin selon le rôle de l'utilisateur connecté
+        $medecinId = null;
+        
+        if (Auth::user()->role === 'medecin') {
+            $medecinId = Auth::id();
+        } elseif (Auth::user()->role === 'secretaire' && Auth::user()->medecin_id) {
+            $medecinId = Auth::user()->medecin_id;
+        }
+        
+        // Récupérer seulement les remarques du médecin connecté ou de son médecin assigné
+        if ($medecinId) {
+            $remarques = Remarque::with(['patient', 'medecin'])
+                ->where('medecin_id', $medecinId)
+                ->get();
+        } else {
+            // Si pas de médecin assigné, collection vide
+            $remarques = collect();
+        }
         
         return response()->json($remarques->map(function ($remarque) {
             return [
