@@ -67,110 +67,111 @@
 
 <body class="bg-gray-100 min-h-screen">
     <!-- SIDEBAR -->
-     <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50 flex flex-col">
-
-  <div class="flex items-center justify-center h-16 bg-cordes-light flex-shrink-0">
-    <div class="flex items-center space-x-3">
-      <img style="width: 180px; height:160px" src="{{ url('storage/uploads/logo_miacex.png') }}" />
-    </div>
-  </div>
-
-  <!-- Nav scrollable -->
-  <nav class="mt-8 px-4 flex-1 overflow-y-auto pb-28"> <!-- pb-28 = padding bottom important -->
-    <div class="space-y-2">
-
-      <a href="{{ route('secretaire.dashboard') }}"
-          class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-          <i class="fas fa-home mr-3 text-cordes-accent group-hover:text-white"></i>
-          Dashboard
-      </a>
-
-      <a href="{{ route('secretaire.rendezvous') }}"
-          class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-          <i class="fas fa-calendar-check mr-3 text-white"></i>
-          Rendez-vous
-      </a>
-
-      <a href="{{ route('secretaire.patients') }}"
-          class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
-          <i class="fas fa-user-injured mr-3 text-gray-400 group-hover:text-white"></i>
-          Patients
-      </a>
-
-      <a href="{{ route('secretaire.factures') }}"
-          class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-          <i class="fas fa-file-invoice-dollar mr-3 text-gray-400 group-hover:text-white"></i>
-          Factures
-      </a>
-
-      <a href="{{ route('secretaire.paiements') }}"
-          class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-          <i class="fas fa-credit-card mr-3 text-gray-400 group-hover:text-white"></i>
-          Paiements
-      </a>
-
-      @if (Auth::check() && Auth::user()->role === 'medecin')
-          <a href="{{ route('secretaire.dossier-medical') }}"
-              class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-              <i class="fas fa-file-medical mr-3 text-white"></i>
-              Consultations
-          </a>
-          <a href="{{ route('secretaire.calendrier') }}"
-              class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-              <i class="fas fa-calendar-alt mr-3 text-gray-400 group-hover:text-white"></i>
-              Calendrier
-          </a>
-          <a href="{{ route('secretaire.certificats') }}"
-              class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-              <i class="fas fa-file-medical mr-3 text-white"></i>
-              Certificats
-          </a>
-          <a href="{{ route('secretaire.ordonnances') }}"
-              class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-              <i class="fas fa-prescription-bottle-medical mr-3 text-gray-400 group-hover:text-white"></i>
-              Ordonnances
-          </a>
-          <a href="{{ route('secretaire.remarques') }}"
-              class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-              <i class="fas fa-sticky-note mr-3 text-gray-400 group-hover:text-white"></i>
-              Remarques
-          </a>
-          <a href="{{ route('secretaire.papier') }}"
-              class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-              <i class="fas fa-cog mr-3 text-gray-400 group-hover:text-white"></i>
-              Paramètres
-          </a>
-      @endif
-
-      <a href="{{ route('secretaire.profile') }}"
-          class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-          <i class="fas fa-user mr-3 text-cordes-accent group-hover:text-white"></i>
-          Mon Profil
-      </a>
-
-    </div>
-  </nav>
-
-  <!-- User Profile / Logout fixed bottom -->
-  <div class="absolute bottom-4 left-4 right-4">
-    <div
-        class="bg-gray-800 rounded-lg p-4 group cursor-pointer hover:bg-red-600 transition-colors duration-200">
-        <form method="POST" action="{{ route('logout') }}" id="logout-form">
-            @csrf
-            <div class="flex items-center space-x-3" onclick="document.getElementById('logout-form').submit();">
-                <img src="https://cdn-icons-png.flaticon.com/512/17003/17003310.png" alt="User"
-                    class="w-10 h-10 rounded-full">
-                <div>
-                    <p class="text-white text-sm font-medium">{{ Auth::user()->nom ?? 'Utilisateur' }}</p>
-                    <p class="text-gray-400 text-xs">{{ ucfirst(Auth::user()->role ?? '') }} — <span
-                            class="text-red-400">Se déconnecter</span></p>
-                </div>
+    <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50">
+        <div class="flex items-center justify-center h-16 bg-cordes-light">
+            <div class="flex items-center space-x-3">
+              
+                   <img  style="width: 180px; height:160px" src="{{ url('storage/uploads/logo_miacex.png') }}"/>
+                
             </div>
-        </form>
-    </div>
-  </div>
+        </div>
+        <nav class="mt-8 px-4">
+            <div class="space-y-2">
+                <a href="{{ route('secretaire.dashboard') }}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-home mr-3 text-cordes-accent group-hover:text-white"></i>
+                    Dashboard
+                </a>
 
-</div>
+                <a href="{{ route('secretaire.rendezvous') }}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-calendar-check mr-3 text-white"></i>
+                    Rendez-vous
+                </a>
+
+                <a href="{{ route('secretaire.patients') }}"
+                    class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
+                    <i class="fas fa-user-injured mr-3 text-gray-400 group-hover:text-white"></i>
+                    Patients
+                </a>
+
+                <a href="{{ route('secretaire.factures') }}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-file-invoice-dollar mr-3 text-gray-400 group-hover:text-white"></i>
+                    Factures
+                </a>
+
+                <a href="{{ route('secretaire.paiements') }}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-credit-card mr-3 text-gray-400 group-hover:text-white"></i>
+                    Paiements
+                </a>
+
+                @if (Auth::check() && Auth::user()->role === 'medecin')
+                    <a href="{{ route('secretaire.dossier-medical') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-file-medical mr-3 text-white"></i>
+                         Consultations
+                    </a>
+                    <a href="{{ route('secretaire.calendrier') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-calendar-alt mr-3 text-gray-400 group-hover:text-white"></i>
+                        Calendrier
+                    </a>
+                    <a href="{{ route('secretaire.certificats') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-file-medical mr-3 text-white"></i>
+                        Certificats
+                    </a>
+                    <a href="{{ route('secretaire.ordonnances') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-prescription-bottle-medical mr-3 text-gray-400 group-hover:text-white"></i>
+                        Ordonnances
+                    </a>
+                    <a href="{{ route('secretaire.remarques') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-sticky-note mr-3 text-gray-400 group-hover:text-white"></i>
+                        Remarques
+                    </a>
+                    <a href="{{ route('secretaire.papier') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-cog mr-3 text-gray-400 group-hover:text-white"></i>
+                        Paramètres
+                    </a>
+                @endif
+                <a href="{{ route('secretaire.profile') }}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-user mr-3 text-cordes-accent"></i>
+                    Mon Profil
+                </a>
+            </div>
+        </nav>
+
+        <!-- Section utilisateur avec bouton de déconnexion -->
+        <div class="absolute bottom-4 left-4 right-4">
+            <div
+                class="bg-gray-800 rounded-lg p-4 group cursor-pointer hover:bg-red-600 transition-colors duration-200">
+                <form method="POST" action="{{ route('logout') }}" id="logout-form">
+                    @csrf
+                    <div class="flex items-center space-x-3" onclick="document.getElementById('logout-form').submit();">
+                        <img src="https://cdn-icons-png.flaticon.com/512/17003/17003310.png" alt="User"
+                            class="w-10 h-10 rounded-full">
+                        <div>
+                            <p class="text-white text-sm font-medium">
+                                {{ Auth::user()->nom ?? 'Utilisateur' }}
+                            </p>
+                            <p class="text-gray-400 text-xs">
+                                {{ ucfirst(Auth::user()->role ?? '') }} — <span class="text-red-400">Se
+                                    déconnecter</span>
+                            </p>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
     <!-- CONTENU PRINCIPAL -->
     <div class="ml-64">
         <header class="bg-white shadow-sm border-b border-gray-200">
@@ -286,8 +287,6 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Âge</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Montant payé</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Contact</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Email</th>
@@ -345,14 +344,6 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {{ \Carbon\Carbon::parse($patient->date_naissance)->age }} ans
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-coins text-green-600 mr-2"></i>
-                                        <span class="font-medium text-green-600">
-                                            {{ number_format($patient->montant_paye ?? 0, 2, ',', ' ') }} DH
-                                        </span>
-                                    </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     @if ($patient->contact)
@@ -414,7 +405,7 @@
                             </tr>
                         @empty
                             <tr id="noPatientRow">
-                                <td colspan="12" class="px-6 py-12 text-center text-gray-500">
+                                <td colspan="11" class="px-6 py-12 text-center text-gray-500">
                                     <i class="fas fa-user-times text-4xl mb-2 text-gray-300"></i>
                                     <p class="text-lg">Aucun patient trouvé</p>
                                     <p class="text-sm mt-1">Commencez par ajouter un nouveau patient.</p>
