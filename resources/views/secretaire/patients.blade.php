@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -29,11 +28,9 @@
             border-left: 4px solid #16a34a !important;
             animation: pulseGreen 2s infinite;
         }
-
         .nouveau-patient:hover {
             background-color: #bbf7d0 !important;
         }
-
         @keyframes pulseGreen {
             0%, 100% {
                 background-color: #dcfce7;
@@ -42,7 +39,6 @@
                 background-color: #bbf7d0;
             }
         }
-
         /* Style pour l'indicateur "Nouveau" */
         .badge-nouveau {
             background-color: #16a34a;
@@ -53,7 +49,6 @@
             margin-left: 8px;
             animation: pulse 1.5s infinite;
         }
-
         @keyframes pulse {
             0%, 100% {
                 opacity: 1;
@@ -64,54 +59,47 @@
         }
     </style>
 </head>
-
 <body class="bg-gray-100 min-h-screen">
     <!-- SIDEBAR -->
-    <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50">
-        <div class="flex items-center justify-center h-16 bg-cordes-light">
+    <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50 flex flex-col">
+        <div class="flex items-center justify-center h-16 bg-cordes-light flex-shrink-0">
             <div class="flex items-center space-x-3">
-              
-                   <img  style="width: 180px; height:160px" src="{{ url('storage/uploads/logo_miacex.png') }}"/>
-                
+                <img style="width: 180px; height:160px" src="{{ url('storage/uploads/logo_miacex.png') }}" />
             </div>
         </div>
-        <nav class="mt-8 px-4">
+        <!-- Nav scrollable -->
+        <nav class="mt-8 px-4 flex-1 overflow-y-auto pb-28"> <!-- pb-28 = padding bottom important -->
             <div class="space-y-2">
                 <a href="{{ route('secretaire.dashboard') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-home mr-3 text-cordes-accent group-hover:text-white"></i>
                     Dashboard
                 </a>
-
                 <a href="{{ route('secretaire.rendezvous') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-calendar-check mr-3 text-white"></i>
                     Rendez-vous
                 </a>
-
                 <a href="{{ route('secretaire.patients') }}"
                     class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
                     <i class="fas fa-user-injured mr-3 text-gray-400 group-hover:text-white"></i>
                     Patients
                 </a>
-
                 <a href="{{ route('secretaire.factures') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-file-invoice-dollar mr-3 text-gray-400 group-hover:text-white"></i>
                     Factures
                 </a>
-
                 <a href="{{ route('secretaire.paiements') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-credit-card mr-3 text-gray-400 group-hover:text-white"></i>
                     Paiements
                 </a>
-
                 @if (Auth::check() && Auth::user()->role === 'medecin')
                     <a href="{{ route('secretaire.dossier-medical') }}"
                         class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                         <i class="fas fa-file-medical mr-3 text-white"></i>
-                         Consultations
+                        Consultations
                     </a>
                     <a href="{{ route('secretaire.calendrier') }}"
                         class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
@@ -141,13 +129,12 @@
                 @endif
                 <a href="{{ route('secretaire.profile') }}"
                     class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-                    <i class="fas fa-user mr-3 text-cordes-accent"></i>
+                    <i class="fas fa-user mr-3 text-cordes-accent group-hover:text-white"></i>
                     Mon Profil
                 </a>
             </div>
         </nav>
-
-        <!-- Section utilisateur avec bouton de déconnexion -->
+        <!-- User Profile / Logout fixed bottom -->
         <div class="absolute bottom-4 left-4 right-4">
             <div
                 class="bg-gray-800 rounded-lg p-4 group cursor-pointer hover:bg-red-600 transition-colors duration-200">
@@ -157,19 +144,14 @@
                         <img src="https://cdn-icons-png.flaticon.com/512/17003/17003310.png" alt="User"
                             class="w-10 h-10 rounded-full">
                         <div>
-                            <p class="text-white text-sm font-medium">
-                                {{ Auth::user()->nom ?? 'Utilisateur' }}
-                            </p>
-                            <p class="text-gray-400 text-xs">
-                                {{ ucfirst(Auth::user()->role ?? '') }} — <span class="text-red-400">Se
-                                    déconnecter</span>
-                            </p>
+                            <p class="text-white text-sm font-medium">{{ Auth::user()->nom ?? 'Utilisateur' }}</p>
+                            <p class="text-gray-400 text-xs">{{ ucfirst(Auth::user()->role ?? '') }} — <span
+                                    class="text-red-400">Se déconnecter</span></p>
                         </div>
                     </div>
                 </form>
             </div>
         </div>
-
     </div>
 
     <!-- CONTENU PRINCIPAL -->
@@ -194,7 +176,6 @@
                     <div class="flex items-center">
                         <i class="fas fa-check-circle mr-3 text-green-600 text-xl"></i>
                         <div>
-
                             <div class="mt-1">{{ session('success') }}</div>
                         </div>
                     </div>
@@ -223,7 +204,6 @@
                                 $cinError = $errors->first('cin');
                                 $hasUniqueError = $cinError && str_contains($cinError, 'existe déjà');
                             @endphp
-
                             @if ($hasUniqueError)
                                 <div class="font-bold text-xl text-red-800">🚫 PATIENT DÉJÀ EXISTANT !</div>
                                 <div class="mt-2 text-red-700 text-lg">{{ $cinError }}</div>
@@ -287,6 +267,8 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Âge</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Montant payé</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Contact</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Email</th>
@@ -344,6 +326,14 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {{ \Carbon\Carbon::parse($patient->date_naissance)->age }} ans
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-coins text-green-600 mr-2"></i>
+                                        <span class="font-medium text-green-600">
+                                            {{ number_format($patient->montant_paye ?? 0, 2, ',', ' ') }} DH
+                                        </span>
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     @if ($patient->contact)
@@ -405,7 +395,7 @@
                             </tr>
                         @empty
                             <tr id="noPatientRow">
-                                <td colspan="11" class="px-6 py-12 text-center text-gray-500">
+                                <td colspan="12" class="px-6 py-12 text-center text-gray-500">
                                     <i class="fas fa-user-times text-4xl mb-2 text-gray-300"></i>
                                     <p class="text-lg">Aucun patient trouvé</p>
                                     <p class="text-sm mt-1">Commencez par ajouter un nouveau patient.</p>
@@ -432,10 +422,8 @@
                     <i class="fas fa-times text-lg"></i>
                 </button>
             </div>
-
-            <form action="{{ route('patients.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+            <form action="{{ route('secretaire.patients.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                 @csrf
-
                 <!-- Photo de profil -->
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <h3 class="text-lg font-medium text-gray-800 mb-4">Photo de profil</h3>
@@ -455,7 +443,6 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Informations de base -->
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <h3 class="text-lg font-medium text-gray-800 mb-4">Informations de base</h3>
@@ -540,7 +527,6 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Informations de contact -->
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <h3 class="text-lg font-medium text-gray-800 mb-4">Informations de contact</h3>
@@ -581,15 +567,14 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Contact d'urgence -->
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <h3 class="text-lg font-medium text-gray-800 mb-4">Contact d'urgence</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label for="emergency_contact_name" class="block text-sm font-medium text-gray-700 mb-1">Nom du contact d'urgence</label>
-                            <input type="text" name="emergency_contact_name" id="emergency_contact_name" 
-                                value="{{ old('emergency_contact_name') }}" maxlength="100"
+                            <input type="text" name="emergency_contact_name" id="emergency_contact_name"
+                                 value="{{ old('emergency_contact_name') }}" maxlength="100"
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent {{ $errors->has('emergency_contact_name') ? 'border-red-500 bg-red-50' : '' }}"
                                 placeholder="Nom complet du contact" autocomplete="name">
                             @if ($errors->has('emergency_contact_name'))
@@ -598,8 +583,8 @@
                         </div>
                         <div>
                             <label for="emergency_contact_phone" class="block text-sm font-medium text-gray-700 mb-1">Téléphone du contact d'urgence</label>
-                            <input type="tel" name="emergency_contact_phone" id="emergency_contact_phone" 
-                                value="{{ old('emergency_contact_phone') }}" maxlength="20"
+                            <input type="tel" name="emergency_contact_phone" id="emergency_contact_phone"
+                                 value="{{ old('emergency_contact_phone') }}" maxlength="20"
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent {{ $errors->has('emergency_contact_phone') ? 'border-red-500 bg-red-50' : '' }}"
                                 placeholder="Ex: 0612345678" autocomplete="tel">
                             @if ($errors->has('emergency_contact_phone'))
@@ -608,7 +593,6 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Informations médicales -->
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <h3 class="text-lg font-medium text-gray-800 mb-4">Informations médicales</h3>
@@ -679,7 +663,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="flex justify-end space-x-3 pt-4">
                     <button type="button" onclick="closeAddModal()"
                         class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
@@ -707,7 +690,6 @@
                 @csrf
                 @method('PUT')
                 <input type="hidden" name="id" id="edit_id">
-
                 <!-- Photo de profil -->
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <h3 class="text-lg font-medium text-gray-800 mb-4">Photo de profil</h3>
@@ -724,7 +706,6 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Informations de base -->
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <h3 class="text-lg font-medium text-gray-800 mb-4">Informations de base</h3>
@@ -790,7 +771,6 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Informations de contact -->
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <h3 class="text-lg font-medium text-gray-800 mb-4">Informations de contact</h3>
@@ -824,28 +804,26 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Contact d'urgence -->
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <h3 class="text-lg font-medium text-gray-800 mb-4">Contact d'urgence</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label for="edit_emergency_contact_name" class="block text-sm font-medium text-gray-700 mb-1">Nom du contact d'urgence</label>
-                            <input type="text" name="emergency_contact_name" id="edit_emergency_contact_name" 
-                                maxlength="100"
+                            <input type="text" name="emergency_contact_name" id="edit_emergency_contact_name"
+                                 maxlength="100"
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
                                 placeholder="Nom complet du contact" autocomplete="name">
                         </div>
                         <div>
                             <label for="edit_emergency_contact_phone" class="block text-sm font-medium text-gray-700 mb-1">Téléphone du contact d'urgence</label>
-                            <input type="tel" name="emergency_contact_phone" id="edit_emergency_contact_phone" 
-                                maxlength="20"
+                            <input type="tel" name="emergency_contact_phone" id="edit_emergency_contact_phone"
+                                 maxlength="20"
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent"
                                 placeholder="Ex: 0612345678" autocomplete="tel">
                         </div>
                     </div>
                 </div>
-
                 <!-- Informations médicales -->
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <h3 class="text-lg font-medium text-gray-800 mb-4">Informations médicales</h3>
@@ -908,7 +886,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="flex justify-end space-x-3 pt-4">
                     <button type="button" onclick="closeEditModal()"
                         class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
@@ -932,7 +909,6 @@
                     <i class="fas fa-times text-lg"></i>
                 </button>
             </div>
-
             <!-- Informations globales du patient -->
             <div class="bg-blue-50 p-6 rounded-lg mb-6">
                 <h3 class="text-xl font-bold text-blue-800 mb-4 flex items-center">
@@ -942,7 +918,6 @@
                     <!-- Les informations seront injectées ici via JavaScript -->
                 </div>
             </div>
-
             <!-- Consultations -->
             <div class="bg-green-50 p-6 rounded-lg mb-6">
                 <h3 class="text-xl font-bold text-green-800 mb-4 flex items-center">
@@ -952,7 +927,6 @@
                     <!-- Les consultations seront injectées ici via JavaScript -->
                 </div>
             </div>
-
             <!-- Ordonnances -->
             <div class="bg-purple-50 p-6 rounded-lg mb-6">
                 <h3 class="text-xl font-bold text-purple-800 mb-4 flex items-center">
@@ -962,7 +936,6 @@
                     <!-- Les ordonnances seront injectées ici via JavaScript -->
                 </div>
             </div>
-
             <!-- Certificats -->
             <div class="bg-orange-50 p-6 rounded-lg mb-6">
                 <h3 class="text-xl font-bold text-orange-800 mb-4 flex items-center">
@@ -972,7 +945,6 @@
                     <!-- Les certificats seront injectés ici via JavaScript -->
                 </div>
             </div>
-
             <!-- Remarques -->
             <div class="bg-yellow-50 p-6 rounded-lg mb-6">
                 <h3 class="text-xl font-bold text-yellow-800 mb-4 flex items-center">
@@ -982,7 +954,6 @@
                     <!-- Les remarques seront injectées ici via JavaScript -->
                 </div>
             </div>
-
             <!-- Habitudes de Vie -->
             <div class="bg-indigo-50 p-6 rounded-lg mb-6">
                 <h3 class="text-xl font-bold text-indigo-800 mb-4 flex items-center">
@@ -992,7 +963,6 @@
                     <!-- Les habitudes de vie seront injectées ici via JavaScript -->
                 </div>
             </div>
-
             <!-- Examens Biologiques -->
             <div class="bg-red-50 p-6 rounded-lg mb-6">
                 <h3 class="text-xl font-bold text-red-800 mb-4 flex items-center">
@@ -1002,7 +972,6 @@
                     <!-- Les examens biologiques seront injectés ici via JavaScript -->
                 </div>
             </div>
-
             <!-- Imagerie Médicale -->
             <div class="bg-teal-50 p-6 rounded-lg mb-6">
                 <h3 class="text-xl font-bold text-teal-800 mb-4 flex items-center">
@@ -1012,7 +981,6 @@
                     <!-- L'imagerie médicale sera injectée ici via JavaScript -->
                 </div>
             </div>
-
             <!-- Vaccinations -->
             <div class="bg-emerald-50 p-6 rounded-lg mb-6">
                 <h3 class="text-xl font-bold text-emerald-800 mb-4 flex items-center">
@@ -1022,7 +990,6 @@
                     <!-- Les vaccinations seront injectées ici via JavaScript -->
                 </div>
             </div>
-
             <!-- Fichiers Médicaux -->
             <div class="bg-gray-50 p-6 rounded-lg mb-6">
                 <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
@@ -1064,11 +1031,11 @@
                 patientsVus.push(patientId);
                 savePatientsVus(patientsVus);
             }
-            
+                        
             // Retirer la classe "nouveau-patient" et masquer le badge
             const row = document.querySelector(`tr[data-patient-id="${patientId}"]`);
             const badge = document.getElementById(`badge-${patientId}`);
-            
+                        
             if (row) {
                 row.classList.remove('nouveau-patient');
             }
@@ -1081,7 +1048,7 @@
         function marquerNouveauxPatients() {
             const patientsVus = getPatientsVus();
             const rows = document.querySelectorAll('.patient-row');
-            
+                        
             rows.forEach(row => {
                 const patientId = parseInt(row.getAttribute('data-patient-id'));
                 if (!patientsVus.includes(patientId)) {
@@ -1098,14 +1065,14 @@
         // Fonction pour prévisualiser l'image
         function previewImage(input, previewId) {
             const preview = document.getElementById(previewId);
-            
+                        
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
-                
+                                
                 reader.onload = function(e) {
                     preview.innerHTML = `<img src="${e.target.result}" alt="Aperçu" class="w-full h-full object-cover">`;
                 }
-                
+                                
                 reader.readAsDataURL(input.files[0]);
             } else {
                 preview.innerHTML = '<i class="fas fa-user text-gray-400 text-2xl"></i>';
@@ -1116,7 +1083,7 @@
         function viewPatientDetails(patientId) {
             // Marquer le patient comme vu quand on voit ses détails
             marquerPatientCommeVu(patientId);
-            
+                        
             // Correction: utiliser l'URL correcte avec le préfixe 'secretaire'
             fetch(`/secretaire/patients/${patientId}/details`, {
                 method: 'GET',
@@ -1194,10 +1161,10 @@
                     const traitement = consultation.traitement || 'Pas encore de traitement';
                     const status = consultation.status || 'En cours';
                     const symptomes = consultation.symptomes || 'Non renseignés';
-                    const rendezvousInfo = consultation.rendezvous ? 
-                        `<p><strong>Rendez-vous initial:</strong> ${new Date(consultation.rendezvous.appointment_date).toLocaleDateString('fr-FR')} à ${consultation.rendezvous.appointment_time}</p>` : 
-                        '';
-                    
+                    const rendezvousInfo = consultation.rendezvous ?
+                         `<p><strong>Rendez-vous initial:</strong> ${new Date(consultation.rendezvous.appointment_date).toLocaleDateString('fr-FR')} à ${consultation.rendezvous.appointment_time}</p>` :
+                         '';
+                                        
                     consultationsHtml += `
                         <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-green-500">
                             <h4 class="font-semibold text-gray-800 mb-2">Consultation du ${new Date(dateConsultation).toLocaleDateString('fr-FR')}</h4>
@@ -1222,7 +1189,7 @@
                 ordonnances.forEach(ordonnance => {
                     const date = ordonnance.date_ordonance || ordonnance.created_at;
                     const medecinNom = ordonnance.medecin ? ordonnance.medecin.nom : 'Non renseigné';
-                    
+                                        
                     ordonnancesHtml += `
                         <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-purple-500">
                             <h4 class="font-semibold text-gray-800 mb-2">Ordonnance du ${new Date(date).toLocaleDateString('fr-FR')}</h4>
@@ -1244,7 +1211,7 @@
                 certificats.forEach(certificat => {
                     const date = certificat.date_certificat || certificat.created_at;
                     const medecinNom = certificat.medecin ? certificat.medecin.nom : 'Non renseigné';
-                    
+                                        
                     certificatsHtml += `
                         <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-orange-500">
                             <h4 class="font-semibold text-gray-800 mb-2">Certificat du ${new Date(date).toLocaleDateString('fr-FR')}</h4>
@@ -1265,7 +1232,7 @@
                 remarques.forEach(remarque => {
                     const date = remarque.date_remarque || remarque.created_at;
                     const medecinNom = remarque.medecin ? remarque.medecin.nom : 'Non renseigné';
-                    
+                                        
                     remarquesHtml += `
                         <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-yellow-500">
                             <h4 class="font-semibold text-gray-800 mb-2">Remarque du ${new Date(date).toLocaleDateString('fr-FR')}</h4>
@@ -1286,7 +1253,7 @@
                     const dateDebut = habitude.date_debut ? new Date(habitude.date_debut).toLocaleDateString('fr-FR') : 'Non renseignée';
                     const dateFin = habitude.date_fin ? new Date(habitude.date_fin).toLocaleDateString('fr-FR') : 'En cours';
                     const medecinNom = habitude.medecin ? habitude.medecin.nom : 'Non renseigné';
-                    
+                                        
                     habitudesVieHtml += `
                         <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-indigo-500">
                             <h4 class="font-semibold text-gray-800 mb-2">${habitude.type || 'Habitude de vie'}</h4>
@@ -1310,7 +1277,7 @@
                 examensBiologiques.forEach(examen => {
                     const dateExamen = examen.date_examen ? new Date(examen.date_examen).toLocaleDateString('fr-FR') : 'Non renseignée';
                     const medecinNom = examen.medecin ? examen.medecin.nom : 'Non renseigné';
-                    
+                                        
                     examensBiologiquesHtml += `
                         <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-red-500">
                             <h4 class="font-semibold text-gray-800 mb-2">Examen du ${dateExamen}</h4>
@@ -1334,7 +1301,7 @@
                 imagerieMedicale.forEach(imagerie => {
                     const dateExamen = imagerie.date_examen ? new Date(imagerie.date_examen).toLocaleDateString('fr-FR') : 'Non renseignée';
                     const medecinNom = imagerie.medecin ? imagerie.medecin.nom : 'Non renseigné';
-                    
+                                        
                     imagerieMedicaleHtml += `
                         <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-teal-500">
                             <h4 class="font-semibold text-gray-800 mb-2">Imagerie du ${dateExamen}</h4>
@@ -1358,7 +1325,7 @@
                     const dateVaccination = vaccination.date_vaccination ? new Date(vaccination.date_vaccination).toLocaleDateString('fr-FR') : 'Non renseignée';
                     const dateRappel = vaccination.date_rappel ? new Date(vaccination.date_rappel).toLocaleDateString('fr-FR') : 'Non prévue';
                     const medecinNom = vaccination.medecin ? vaccination.medecin.nom : 'Non renseigné';
-                    
+                                        
                     vaccinationsHtml += `
                         <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-emerald-500">
                             <h4 class="font-semibold text-gray-800 mb-2">${vaccination.nom || 'Vaccination'}</h4>
@@ -1380,7 +1347,7 @@
                 fichiersMedicaux.forEach(fichier => {
                     const medecinNom = fichier.medecin ? fichier.medecin.nom : 'Non renseigné';
                     const tailleFichier = fichier.taille ? (fichier.taille / 1024).toFixed(2) + ' KB' : 'Inconnue';
-                    
+                                        
                     fichiersMedicauxHtml += `
                         <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-gray-500">
                             <h4 class="font-semibold text-gray-800 mb-2">${fichier.nom || 'Fichier médical'}</h4>
@@ -1453,7 +1420,6 @@
                 successDiv.id = 'successMessage';
                 successDiv.className =
                     'mb-4 p-4 bg-green-100 text-green-800 rounded-lg border border-green-200 transition-opacity duration-500 shadow-lg';
-
                 // Insérer le message au début du main
                 const mainElement = document.querySelector('main');
                 mainElement.insertBefore(successDiv, mainElement.firstChild);
@@ -1467,7 +1433,6 @@
                 </div>
             </div>
         `;
-
             successDiv.style.display = 'block';
             successDiv.style.opacity = '1';
 
@@ -1494,7 +1459,6 @@
                 errorDiv.id = 'errorMessage';
                 errorDiv.className =
                     'mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-200 transition-opacity duration-500 shadow-lg';
-
                 // Insérer le message au début du main
                 const mainElement = document.querySelector('main');
                 mainElement.insertBefore(errorDiv, mainElement.firstChild);
@@ -1508,7 +1472,6 @@
                 </div>
             </div>
         `;
-
             errorDiv.style.display = 'block';
             errorDiv.style.opacity = '1';
 
@@ -1525,6 +1488,7 @@
                 hideMessage(errorDiv);
             }, 5000);
         }
+
         // Initialiser au chargement de la page
         document.addEventListener('DOMContentLoaded', function() {
             // Masquer automatiquement les messages
@@ -1572,7 +1536,7 @@
             }
 
             document.getElementById('editModal').classList.remove('hidden');
-            document.getElementById('editForm').action = '/patients/' + patient.id;
+            document.getElementById('editForm').action = '/secretaire/patients/' + patient.id;
 
             // Remplir tous les champs
             document.getElementById('edit_id').value = patient.id;
@@ -1611,7 +1575,7 @@
 
         function deletePatient(id) {
             if (confirm('Êtes-vous sûr de vouloir supprimer ce patient ?')) {
-                fetch('/patients/' + id, {
+                fetch('/secretaire/patients/' + id, {
                         method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': csrfToken,
@@ -1695,5 +1659,4 @@
         }
     </script>
 </body>
-
 </html>

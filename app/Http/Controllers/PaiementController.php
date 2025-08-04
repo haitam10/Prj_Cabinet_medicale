@@ -14,173 +14,181 @@ use App\Models\Cabinet;
 
 class PaiementController extends Controller
 {
-public function index(Request $request)
-{
-    try {
-        $user = Auth::user();
+    public function index(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            // --- 1. Paiements avec relations
+            $query = Paiement::with(['facture.patient']);
 
-        // --- 1. Paiements avec relations
-        $query = Paiement::with(['facture.patient']);
-
-        // --- 2. Filtrage par rôle
-        if ($user->role === 'medecin') {
-            $query->whereHas('facture', function($q) use ($user) {
-                $q->where('medecin_id', $user->id);
-            });
-        } elseif ($user->role === 'secretaire') {
-            if ($user->medecin_id) {
+            // --- 2. Filtrage par rôle
+            if ($user->role === 'medecin') {
                 $query->whereHas('facture', function($q) use ($user) {
-                    $q->where('medecin_id', $user->medecin_id);
+                    $q->where('medecin_id', $user->id);
                 });
+            } elseif ($user->role === 'secretaire') {
+                if ($user->medecin_id) {
+                    $query->whereHas('facture', function($q) use ($user) {
+                        $q->where('medecin_id', $user->medecin_id);
+                    });
+                } else {
+                    $query->whereRaw('1 = 0');
+                }
+            }
+
+            // --- 3. Filtres de recherche
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function($q) use ($search) {
+                    $q->whereHas('facture.patient', function($q) use ($search) {
+                        $q->where('nom', 'like', "%{$search}%")
+                          ->orWhere('prenom', 'like', "%{$search}%")
+                          ->orWhere('cin', 'like', "%{$search}%");
+                    })->orWhereHas('facture', function($q) use ($search) {
+                        $q->where('id', 'like', "%{$search}%");
+                    });
+                });
+            }
+
+            if ($request->filled('statut')) {
+                $query->where('statut', $request->statut);
+            }
+
+            if ($request->filled('date_from')) {
+                $query->where('date_paiement', '>=', $request->date_from);
+            }
+
+            if ($request->filled('date_to')) {
+                $query->where('date_paiement', '<=', $request->date_to);
+            }
+
+            // --- 4. Paginate or get all
+            $paiements = $query->orderBy('created_at', 'desc')->paginate(10);
+
+            // --- 5. Groupement par patient
+            $patientsGroupes = [];
+            foreach ($paiements as $paiement) {
+                if (!$paiement->facture || !$paiement->facture->patient) {
+                    continue;
+                }
+
+                $patient = $paiement->facture->patient;
+                $patientId = $patient->id;
+
+                if (!isset($patientsGroupes[$patientId])) {
+                    $patientsGroupes[$patientId] = [
+                        'patient' => $patient,
+                        'paiements' => [],
+                        'nombre_paiements' => 0,
+                        'total_paye' => 0,
+                        'dernier_paiement' => null,
+                        'statut_global' => 'en_attente',
+                        'has_new_payments' => false,
+                    ];
+                }
+
+                $patientsGroupes[$patientId]['paiements'][] = $paiement;
+                $patientsGroupes[$patientId]['nombre_paiements']++;
+
+                if ($paiement->statut === 'paye') {
+                    $patientsGroupes[$patientId]['total_paye'] += $paiement->montant;
+                }
+
+                if (!$patientsGroupes[$patientId]['dernier_paiement'] ||
+                     $paiement->date_paiement > $patientsGroupes[$patientId]['dernier_paiement']->date_paiement) {
+                    $patientsGroupes[$patientId]['dernier_paiement'] = $paiement;
+                }
+
+                if (Carbon::parse($paiement->created_at)->diffInHours(Carbon::now()) < 24) {
+                    $patientsGroupes[$patientId]['has_new_payments'] = true;
+                }
+            }
+
+            foreach ($patientsGroupes as &$patientData) {
+                $statutsUniques = array_unique(array_column($patientData['paiements'], 'statut'));
+                if (count($statutsUniques) === 1 && $statutsUniques[0] === 'paye') {
+                    $patientData['statut_global'] = 'paye';
+                } elseif (in_array('paye', $statutsUniques)) {
+                    $patientData['statut_global'] = 'mixte';
+                }
+            }
+
+            $patientsGroupes = array_values($patientsGroupes);
+
+            // --- 6. Factures non payées avec filtrage par rôle
+            $facturesQuery = Facture::with('patient')
+                ->where('statut', '!=', 'payée')
+                ->whereNotIn('id', function($query) {
+                    $query->select('facture_id')->from('paiements')->where('statut', 'paye');
+                });
+
+            if ($user->role === 'medecin') {
+                $facturesQuery->where('medecin_id', $user->id);
+            } elseif ($user->role === 'secretaire' && $user->medecin_id) {
+                $facturesQuery->where('medecin_id', $user->medecin_id);
+            }
+
+            $factures = $facturesQuery->get();
+
+            // --- 7. Charges du cabinet
+            $charges = [];
+            if ($user->role === 'medecin') {
+                $cabinet = Cabinet::where('id_docteur', $user->id)->select('charges')->first();
+                if ($cabinet && !is_null($cabinet->charges)) {
+                    $decodedCharges = json_decode($cabinet->charges, true);
+                    $charges = is_array($decodedCharges) ? $decodedCharges : [];
+                }
+            }
+
+            // --- 8. Récupération des utilisateurs avec filtrage
+            // Filtrer les patients selon le rôle de l'utilisateur
+            if ($user->role === 'medecin') {
+                $patients = Patient::where('medecin_id', $user->id)->get();
+            } elseif ($user->role === 'secretaire') {
+                if ($user->medecin_id) {
+                    $patients = Patient::where('medecin_id', $user->medecin_id)->get();
+                } else {
+                    $patients = collect();
+                }
             } else {
-                $query->whereRaw('1 = 0');
-            }
-        }
-
-        // --- 3. Filtres de recherche
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->whereHas('facture.patient', function($q) use ($search) {
-                    $q->where('nom', 'like', "%{$search}%")
-                      ->orWhere('prenom', 'like', "%{$search}%")
-                      ->orWhere('cin', 'like', "%{$search}%");
-                })->orWhereHas('facture', function($q) use ($search) {
-                    $q->where('id', 'like', "%{$search}%");
-                });
-            });
-        }
-
-        if ($request->filled('statut')) {
-            $query->where('statut', $request->statut);
-        }
-        if ($request->filled('date_from')) {
-            $query->where('date_paiement', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->where('date_paiement', '<=', $request->date_to);
-        }
-
-        // --- 4. Paginate or get all
-        $paiements = $query->orderBy('created_at', 'desc')->paginate(10);
-
-        // --- 5. Groupement par patient
-        $patientsGroupes = [];
-
-        foreach ($paiements as $paiement) {
-            if (!$paiement->facture || !$paiement->facture->patient) {
-                continue;
+                $patients = collect();
             }
 
-            $patient = $paiement->facture->patient;
-            $patientId = $patient->id;
-
-            if (!isset($patientsGroupes[$patientId])) {
-                $patientsGroupes[$patientId] = [
-                    'patient' => $patient,
-                    'paiements' => [],
-                    'nombre_paiements' => 0,
-                    'total_paye' => 0,
-                    'dernier_paiement' => null,
-                    'statut_global' => 'en_attente',
-                    'has_new_payments' => false,
-                ];
+            if ($user->role === 'medecin') {
+                $medecins = User::where('role', 'medecin')->where('statut', 'actif')->where('id', $user->id)->get();
+                $secretaires = User::where('role', 'secretaire')->where('statut', 'actif')->where('medecin_id', $user->id)->get();
+            } elseif ($user->role === 'secretaire') {
+                $medecins = User::where('role', 'medecin')->where('statut', 'actif')->where('id', $user->medecin_id)->get();
+                $secretaires = User::where('role', 'secretaire')->where('statut', 'actif')->where('id', $user->id)->get();
+            } else {
+                $medecins = User::where('role', 'medecin')->where('statut', 'actif')->get();
+                $secretaires = User::where('role', 'secretaire')->where('statut', 'actif')->get();
             }
 
-            $patientsGroupes[$patientId]['paiements'][] = $paiement;
-            $patientsGroupes[$patientId]['nombre_paiements']++;
-
-            if ($paiement->statut === 'paye') {
-                $patientsGroupes[$patientId]['total_paye'] += $paiement->montant;
-            }
-
-            if (!$patientsGroupes[$patientId]['dernier_paiement'] || 
-                $paiement->date_paiement > $patientsGroupes[$patientId]['dernier_paiement']->date_paiement) {
-                $patientsGroupes[$patientId]['dernier_paiement'] = $paiement;
-            }
-
-            if (Carbon::parse($paiement->created_at)->diffInHours(Carbon::now()) < 24) {
-                $patientsGroupes[$patientId]['has_new_payments'] = true;
-            }
+        } catch (\Exception $e) {
+            \Log::error('Erreur dans PaiementController@index: ' . $e->getMessage());
+            $paiements = new \Illuminate\Pagination\LengthAwarePaginator(collect([]), 0, 10, 1, ['path' => request()->url()]);
+            $patientsGroupes = [];
+            $factures = collect([]);
+            $patients = collect([]);
+            $medecins = collect([]);
+            $secretaires = collect([]);
+            $charges = [];
         }
 
-        foreach ($patientsGroupes as &$patientData) {
-            $statutsUniques = array_unique(array_column($patientData['paiements'], 'statut'));
-
-            if (count($statutsUniques) === 1 && $statutsUniques[0] === 'paye') {
-                $patientData['statut_global'] = 'paye';
-            } elseif (in_array('paye', $statutsUniques)) {
-                $patientData['statut_global'] = 'mixte';
-            }
+        if ($request->wantsJson()) {
+            return response()->json([
+                'paiements' => $paiements,
+                'patientsGroupes' => $patientsGroupes,
+                'factures' => $factures,
+                'charges' => $charges,
+                'medecins' => $medecins,
+                'secretaires' => $secretaires,
+            ]);
         }
 
-        $patientsGroupes = array_values($patientsGroupes);
-
-        // --- 6. Factures non payées
-        $facturesQuery = Facture::with('patient')
-            ->where('statut', '!=', 'payée')
-            ->whereNotIn('id', function($query) {
-                $query->select('facture_id')->from('paiements')->where('statut', 'paye');
-            });
-
-        if ($user->role === 'medecin') {
-            $facturesQuery->where('medecin_id', $user->id);
-        } elseif ($user->role === 'secretaire' && $user->medecin_id) {
-            $facturesQuery->where('medecin_id', $user->medecin_id);
-        }
-
-        $factures = $facturesQuery->get();
-
-        // --- 7. Charges du cabinet
-        $charges = [];
-        if ($user->role === 'medecin') {
-            $cabinet = Cabinet::where('id_docteur', $user->id)->select('charges')->first();
-            if ($cabinet && !is_null($cabinet->charges)) {
-                $decodedCharges = json_decode($cabinet->charges, true);
-                $charges = is_array($decodedCharges) ? $decodedCharges : [];
-            }
-        }
-
-        // --- 8. Récupération des utilisateurs
-        $patients = Patient::all();
-
-        if ($user->role === 'medecin') {
-            $medecins = User::where('role', 'medecin')->where('statut', 'actif')->where('id', $user->id)->get();
-            $secretaires = User::where('role', 'secretaire')->where('statut', 'actif')->where('medecin_id', $user->id)->get();
-        } elseif ($user->role === 'secretaire') {
-            $medecins = User::where('role', 'medecin')->where('statut', 'actif')->where('id', $user->medecin_id)->get();
-            $secretaires = User::where('role', 'secretaire')->where('statut', 'actif')->where('id', $user->id)->get();
-        } else {
-            $medecins = User::where('role', 'medecin')->where('statut', 'actif')->get();
-            $secretaires = User::where('role', 'secretaire')->where('statut', 'actif')->get();
-        }
-
-    } catch (\Exception $e) {
-        \Log::error('Erreur dans PaiementController@index: ' . $e->getMessage());
-
-        $paiements = new \Illuminate\Pagination\LengthAwarePaginator(collect([]), 0, 10, 1, ['path' => request()->url()]);
-        $patientsGroupes = [];
-        $factures = collect([]);
-        $patients = collect([]);
-        $medecins = collect([]);
-        $secretaires = collect([]);
-        $charges = [];
+        return view('secretaire.paiements', compact('paiements', 'patientsGroupes', 'factures', 'patients', 'medecins', 'secretaires', 'charges'));
     }
-
-    if ($request->wantsJson()) {
-        return response()->json([
-            'paiements' => $paiements,
-            'patientsGroupes' => $patientsGroupes,
-            'factures' => $factures,
-            'charges' => $charges,
-            'medecins' => $medecins,
-            'secretaires' => $secretaires,
-        ]);
-    }
-
-    return view('secretaire.paiements', compact('paiements', 'patientsGroupes', 'factures', 'patients', 'medecins', 'secretaires', 'charges'));
-}
-
 
     public function create()
     {
@@ -341,7 +349,6 @@ public function index(Request $request)
         } catch (\Exception $e) {
             DB::rollback();
             \Log::error('Erreur dans PaiementController@storeManualAssignment: ' . $e->getMessage());
-
             if ($request->wantsJson()) {
                 return response()->json(['error' => 'Erreur lors de la création de la facture et du paiement: ' . $e->getMessage()], 500);
             }
@@ -367,6 +374,7 @@ public function index(Request $request)
             }
 
             return view('paiements.show', compact('paiement'));
+
         } catch (\Exception $e) {
             \Log::error('Erreur dans PaiementController@show: ' . $e->getMessage());
             
@@ -593,7 +601,8 @@ public function index(Request $request)
             return redirect()->back()->with('error', 'Erreur lors du chargement de l\'historique.');
         }
     }
-       public function storeCharges(Request $request)
+       
+    public function storeCharges(Request $request)
     {
         try {
             // Validate the incoming request data for charges, including the new 'type' field
@@ -605,7 +614,6 @@ public function index(Request $request)
             ]);
 
             $idDocteur = Auth::id();
-
             if (!$idDocteur) {
                 if ($request->wantsJson()) {
                     return response()->json(['error' => 'User not authenticated.'], 401);
@@ -685,7 +693,6 @@ public function index(Request $request)
             ]);
 
             $idDocteur = Auth::id();
-
             if (!$idDocteur) {
                 if ($request->wantsJson()) {
                     return response()->json(['error' => 'User not authenticated.'], 401);
@@ -703,8 +710,8 @@ public function index(Request $request)
             }
 
             $existingCharges = $cabinet->charges ? json_decode($cabinet->charges, true) : [];
-            $chargeFound = false;
 
+            $chargeFound = false;
             foreach ($existingCharges as $index => $charge) {
                 if ($charge['id'] === $chargeId) {
                     $existingCharges[$index]['type'] = $request->input('type'); // Update the type
@@ -749,7 +756,6 @@ public function index(Request $request)
     {
         try {
             $idDocteur = Auth::id();
-
             if (!$idDocteur) {
                 if ($request->wantsJson()) {
                     return response()->json(['error' => 'User not authenticated.'], 401);
@@ -811,7 +817,6 @@ public function index(Request $request)
         try {
             // Get the authenticated user's ID (id_docteur)
             $idDocteur = Auth::id();
-
             if (!$idDocteur) {
                 return response()->json(['error' => 'User not authenticated.'], 401);
             }
@@ -825,8 +830,8 @@ public function index(Request $request)
 
             // Decode the JSON string from the 'charges' column into a PHP array
             $charges = json_decode($cabinet->charges, true);
-            $foundCharge = null;
 
+            $foundCharge = null;
             // Iterate through charges to find the specific one by its unique 'id'
             foreach ($charges as $charge) {
                 if ($charge['id'] === $chargeId) {

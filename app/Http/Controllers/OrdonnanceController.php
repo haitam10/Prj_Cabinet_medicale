@@ -10,6 +10,7 @@ use App\Models\OrdonDoc;
 use App\Models\Patient;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class OrdonnanceController extends Controller
 {
@@ -44,9 +45,18 @@ class OrdonnanceController extends Controller
         ]);
 
         try {
+            // Vérifier que le patient appartient au médecin connecté
+            $user = Auth::user();
             $patient = Patient::findOrFail($request->patient_id);
+            
+            if ($user->role === 'medecin' && $patient->medecin_id !== $user->id) {
+                return redirect()->back()
+                    ->with('error', 'Vous ne pouvez créer des ordonnances que pour vos propres patients.')
+                    ->withInput();
+            }
+            
             $medecin = User::findOrFail($request->medecin_id);
-                                
+                                            
             // Save to DB
             $ordonnance = new Ordonnance();
             $ordonnance->patient_id = $request->patient_id;
@@ -90,6 +100,7 @@ class OrdonnanceController extends Controller
             return redirect()->route('secretaire.ordonnances')
                 ->with('success', 'Ordonnance générée avec succès!')
                 ->with('print_document', true);
+
         } catch (\Exception $e) {
             return redirect()->back()
                 ->with('error', 'Erreur lors de la génération de l\'ordonnance: ' . $e->getMessage())
@@ -101,7 +112,14 @@ class OrdonnanceController extends Controller
     {
         try {
             $ordonnance = Ordonnance::with(['patient', 'medecin'])->findOrFail($id);
-
+            
+            // Vérifier que l'ordonnance appartient au médecin connecté
+            $user = Auth::user();
+            if ($user->role === 'medecin' && $ordonnance->medecin_id !== $user->id) {
+                return redirect()->back()
+                    ->with('error', 'Vous n\'êtes pas autorisé à voir cette ordonnance.');
+            }
+            
             // Get selected template for the doctor
             $template = DocModel::where('id_docteur', $ordonnance->medecin_id)
                 ->where('isSelected', true)
@@ -136,83 +154,88 @@ class OrdonnanceController extends Controller
             ];
 
             return view('print.ordonnance', $data);
+
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Erreur lors de l\'impression: ' . $e->getMessage());
         }
     }
 
-    
+    public function getOrdonnanceData($ordonnanceId)
+    {
+        try {
+            $ordonnance = Ordonnance::with(['patient', 'medecin'])->findOrFail($ordonnanceId);
+            
+            // Vérifier que l'ordonnance appartient au médecin connecté
+            $user = Auth::user();
+            if ($user->role === 'medecin' && $ordonnance->medecin_id !== $user->id) {
+                return response()->json([
+                    'error' => 'Vous n\'êtes pas autorisé à voir cette ordonnance.'
+                ], 403);
+            }
+            
+            $patient = $ordonnance->patient;
+            $medecin = $ordonnance->medecin;
 
-   public function getOrdonnanceData($ordonnanceId)
-{
-    try {
-        $ordonnance = Ordonnance::with(['patient', 'medecin'])->findOrFail($ordonnanceId);
-        $patient = $ordonnance->patient;
-        $medecin = $ordonnance->medecin;
+            // Fetch Cabinet from `cabinets` table where id_docteur contains medecin->id
+            $cabinet = Cabinet::whereRaw("FIND_IN_SET(?, id_docteur)", [$medecin->id])->first();
 
-        // Fetch Cabinet from `cabinets` table where id_docteur contains medecin->id
-        $cabinet = Cabinet::whereRaw("FIND_IN_SET(?, id_docteur)", [$medecin->id])->first();
+            // Fetch Template from `doc_models` table for this doctor and 'ordonnance'
+            $template = DocModel::where('id_docteur', $medecin->id)
+                                ->where('document', 'ordonnance')
+                                ->first();
 
-        // Fetch Template from `doc_models` table for this doctor and 'ordonnance'
-        $template = DocModel::where('id_docteur', $medecin->id)
-                            ->where('document', 'ordonnance')
-                            ->first();
+            return response()->json([
+                'ordonnance' => [
+                    'id' => $ordonnance->id,
+                    'medicaments' => $ordonnance->medicaments,
+                    'instructions' => $ordonnance->instructions,
+                    'duree_traitement' => $ordonnance->duree_traitement,
+                    'date_ordonnance' => $ordonnance->date_ordonnance,
+                ],
+                'patient' => [
+                    'id' => $patient->id,
+                    'cin' => $patient->cin,
+                    'nom' => $patient->nom,
+                    'prenom' => $patient->prenom,
+                    'email' => $patient->email,
+                    'telephone' => $patient->telephone,
+                    'adresse' => $patient->adresse,
+                    'date_naissance' => $patient->date_naissance,
+                    'sexe' => $patient->sexe,
+                ],
+                'medecin' => [
+                    'id' => $medecin->id,
+                    'nom' => $medecin->nom,
+                    'prenom' => $medecin->prenom,
+                    'email' => $medecin->email,
+                    'telephone' => $medecin->telephone,
+                    'specialite' => $medecin->specialite,
+                ],
+                'cabinet' => [
+                    'id' => $cabinet->id ?? null,
+                    'nom_cabinet' => $cabinet->nom_cabinet ?? null,
+                    'addr_cabinet' => $cabinet->addr_cabinet ?? null,
+                    'tel_cabinet' => $cabinet->tel_cabinet ?? null,
+                    'descr_cabinet' => $cabinet->descr_cabinet ?? null,
+                ],
+                'template' => [
+                    'id' => $template->id ?? null,
+                    'model_nom' => $template->model_nom ?? null,
+                    'logo_file_path' => $template->logo_file_path ?? null,
+                    'descr_head' => $template->descr_head ?? null,
+                    'descr_body' => $template->descr_body ?? null,
+                    'descr_footer' => $template->descr_footer ?? null,
+                    'document' => $template->document ?? null,
+                    'is_selected' => $template->is_selected ?? null,
+                ],
+            ]);
 
-        return response()->json([
-            'ordonnance' => [
-                'id' => $ordonnance->id,
-                'medicaments' => $ordonnance->medicaments,
-                'instructions' => $ordonnance->instructions,
-                'duree_traitement' => $ordonnance->duree_traitement,
-                'date_ordonnance' => $ordonnance->date_ordonnance,
-            ],
-
-            'patient' => [
-                'id' => $patient->id,
-                'cin' => $patient->cin,
-                'nom' => $patient->nom,
-                'prenom' => $patient->prenom,
-                'email' => $patient->email,
-                'telephone' => $patient->telephone,
-                'adresse' => $patient->adresse,
-                'date_naissance' => $patient->date_naissance,
-                'sexe' => $patient->sexe,
-            ],
-
-            'medecin' => [
-                'id' => $medecin->id,
-                'nom' => $medecin->nom,
-                'prenom' => $medecin->prenom,
-                'email' => $medecin->email,
-                'telephone' => $medecin->telephone,
-                'specialite' => $medecin->specialite,
-            ],
-
-            'cabinet' => [
-                'id' => $cabinet->id ?? null,
-                'nom_cabinet' => $cabinet->nom_cabinet ?? null,
-                'addr_cabinet' => $cabinet->addr_cabinet ?? null,
-                'tel_cabinet' => $cabinet->tel_cabinet ?? null,
-                'descr_cabinet' => $cabinet->descr_cabinet ?? null,
-            ],
-
-            'template' => [
-                'id' => $template->id ?? null,
-                'model_nom' => $template->model_nom ?? null,
-                'logo_file_path' => $template->logo_file_path ?? null,
-                'descr_head' => $template->descr_head ?? null,
-                'descr_body' => $template->descr_body ?? null,
-                'descr_footer' => $template->descr_footer ?? null,
-                'document' => $template->document ?? null,
-                'is_selected' => $template->is_selected ?? null,
-            ],
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'error' => 'Erreur lors de la récupération des données de l\'ordonnance: ' . $e->getMessage()
-        ], 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Erreur lors de la récupération des données de l\'ordonnance: ' . $e->getMessage()
+            ], 500);
+        }
     }
-}
 
     /**
      * Display the specified resource.

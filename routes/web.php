@@ -28,7 +28,6 @@ Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('regi
 
 // Toutes les routes protégées par auth
 Route::middleware(['auth'])->group(function () {
-
     Route::get('/dashboard/medecin', function () {
         return 'Bienvenue Médecin !';
     });
@@ -37,43 +36,51 @@ Route::middleware(['auth'])->group(function () {
         return 'Bienvenue Admin !';
     });
 
-
     // Espace secrétaire accessible aux secrétaires ET médecins
     Route::prefix('secretaire')->name('secretaire.')->middleware('role:secretaire|medecin')->group(function () {
         Route::get('/dashboard', [AuthController::class, 'secretDash'])->name('dashboard');
         Route::get('/patients', [PatientController::class, 'index'])->name('patients');
         Route::get('/patients/{patient}/details', [PatientController::class, 'getPatientDetails'])->name('patients.details');
+        
+        // AJOUT DES ROUTES PATIENTS MANQUANTES
+        Route::post('/patients', [PatientController::class, 'store'])->name('patients.store');
+        Route::get('/patients/create', [PatientController::class, 'create'])->name('patients.create');
+        Route::get('/patients/{patient}', [PatientController::class, 'show'])->name('patients.show');
+        Route::get('/patients/{patient}/edit', [PatientController::class, 'edit'])->name('patients.edit');
+        Route::put('/patients/{patient}', [PatientController::class, 'update'])->name('patients.update');
+        Route::delete('/patients/{patient}', [PatientController::class, 'destroy'])->name('patients.destroy');
+        
         Route::get('/factures', [FactureController::class, 'index'])->name('factures');
         Route::get('/factures/print/{facture}', [FactureController::class, 'print'])->name('factures.print');
         Route::get('/rendezvous', [RendezvousController::class, 'index'])->name('rendezvous');
         Route::get('/paiements', [PaiementController::class, 'index'])->name('paiements');
         Route::post('/paiements/manual-assignment', [PaiementController::class, 'storeManualAssignment'])->name('paiements.store-manual-assignment');
-        
-                // Route pour récupérer l'historique des paiements d'un patient
+                        
+        // Route pour récupérer l'historique des paiements d'un patient
         Route::get('/patients/{patientId}/payment-history', [PaiementController::class, 'getPatientPaymentHistory'])
              ->name('patients.payment-history');
-        
+                
         // Route pour récupérer les données d'un paiement (pour l'édition)
         Route::get('/paiements/{id}', [PaiementController::class, 'show'])
              ->name('paiements.show');
-        
+                
         // Route pour mettre à jour un paiement
         Route::put('/paiements/{id}', [PaiementController::class, 'update'])
              ->name('paiements.update');
-        
+                
         // Route pour supprimer un paiement
         Route::delete('/paiements/{id}', [PaiementController::class, 'destroy'])
              ->name('paiements.destroy');
-        
+                
         // Route pour créer un paiement
         Route::post('/paiements', [PaiementController::class, 'store'])
              ->name('paiements.store');
-        
-             Route::post('/charges', [PaiementController::class, 'storeCharges'])->name('charges.create');
+                     
+        Route::post('/charges', [PaiementController::class, 'storeCharges'])->name('charges.create');
         Route::put('/charges/{charge}', [PaiementController::class, 'editCharges'])->name('charges.update');
         Route::delete('/charges/{charge}', [PaiementController::class, 'deleteCharges'])->name('charges.delete');
         Route::get('/charges/{charge}', [PaiementController::class, 'showCharge'])->name('charges.show');
-        
+                
         Route::get('/docs', [DocumentController::class, 'index'])->name('docs');
 
         // Gestion profil
@@ -107,14 +114,12 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/dossier-medical/vaccination', [DossierMedicalController::class, 'storeVaccination'])->name('dossier-medical.vaccination.store');
         Route::post('/dossier-medical/fichier', [DossierMedicalController::class, 'storeFichierMedical'])->name('dossier-medical.fichier.store');
         Route::post('/dossier-medical/habitude', [DossierMedicalController::class, 'storeHabitudeVie'])->name('dossier-medical.habitude.store');
-
         Route::delete('/dossier-medical/consultation', [DossierMedicalController::class, 'destroyConsultation'])->name('dossier-medical.consultation.destroy');
         Route::delete('/dossier-medical/examen', [DossierMedicalController::class, 'destroyExamenBiologique'])->name('dossier-medical.examen.destroy');
         Route::delete('/dossier-medical/imagerie', [DossierMedicalController::class, 'destroyImagerieMedicale'])->name('dossier-medical.imagerie.destroy');
         Route::delete('/dossier-medical/vaccination', [DossierMedicalController::class, 'destroyVaccination'])->name('dossier-medical.vaccination.destroy');
         Route::delete('/dossier-medical/fichier', [DossierMedicalController::class, 'destroyFichierMedical'])->name('dossier-medical.fichier.destroy');
         Route::delete('/dossier-medical/habitude', [DossierMedicalController::class, 'destroyHabitudeVie'])->name('dossier-medical.habitude.destroy');
-
         Route::put('/dossier-medical/consultation', [DossierMedicalController::class, 'updateConsultation'])->name('dossier-medical.consultation.update');
         Route::put('/dossier-medical/examen', [DossierMedicalController::class, 'updateExamenBiologique'])->name('dossier-medical.examen.update');
         Route::put('/dossier-medical/imagerie', [DossierMedicalController::class, 'updateImagerieMedicale'])->name('dossier-medical.imagerie.update');
@@ -171,10 +176,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/api/ordonnance/{id}/data', [OrdonnanceController::class, 'getOrdonnanceData']);
     });
 
-    // pour maintenir les noms de routes et URLs originaux
-    Route::resource('patients', PatientController::class)->except(['index']);
+    // SUPPRIMÉ: Route::resource('patients', PatientController::class)->except(['index']);
+    // Ces routes sont maintenant dans le groupe secretaire ci-dessus
+    
     Route::resource('factures', FactureController::class)->except(['index']);
     Route::resource('paiements', PaiementController::class)->except(['index']);
+
     // Gestion des utilisateurs, admin uniquement
     Route::resource('users', UserController::class)->middleware('role:admin');
 });

@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\DocModel;
 use App\Models\Cabinet;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CertificatController extends Controller
 {
@@ -46,9 +47,18 @@ class CertificatController extends Controller
         ]);
 
         try {
+            // Vérifier que le patient appartient au médecin connecté
+            $user = Auth::user();
             $patient = Patient::findOrFail($request->patient_id);
+            
+            if ($user->role === 'medecin' && $patient->medecin_id !== $user->id) {
+                return redirect()->back()
+                    ->with('error', 'Vous ne pouvez créer des certificats que pour vos propres patients.')
+                    ->withInput();
+            }
+            
             $medecin = User::findOrFail($request->medecin_id);
-                    
+                                
             // Save to DB
             $certificat = new Certificat();
             $certificat->patient_id = $request->patient_id;
@@ -61,7 +71,6 @@ class CertificatController extends Controller
             // Get selected template based on template_id from request
             $selectedTemplateId = $request->template_id;
             $template = null;
-
             if ($selectedTemplateId && $selectedTemplateId !== 'default') {
                 // Try to get the specific template
                 $template = DocModel::where('id_docteur', $medecin->id)
@@ -92,7 +101,7 @@ class CertificatController extends Controller
             if ($request->filled('template_descr_footer')) {
                 $template->descr_footer = $request->template_descr_footer;
             }
-            
+                        
             // Get cabinet information
             $cabinet = Cabinet::whereRaw("FIND_IN_SET(?, id_docteur)", [$medecin->id])->first();
 
@@ -149,6 +158,7 @@ class CertificatController extends Controller
             return redirect()->route('secretaire.certificats')
                 ->with('success', 'Certificat généré avec succès!')
                 ->with('print_document', true);
+
         } catch (\Exception $e) {
             return redirect()->back()
                 ->with('error', 'Erreur lors de la génération du certificat: ' . $e->getMessage())
@@ -161,13 +171,21 @@ class CertificatController extends Controller
         try {
             // Retrieve the certificat from the database
             $certificat = Certificat::findOrFail($certificatId);
+            
+            // Vérifier que le certificat appartient au médecin connecté
+            $user = Auth::user();
+            if ($user->role === 'medecin' && $certificat->medecin_id !== $user->id) {
+                return redirect()->back()
+                    ->with('error', 'Vous n\'êtes pas autorisé à voir ce certificat.');
+            }
+            
             // Fetch the related patient and doctor data
             $patient = $certificat->patient;
             $medecin = $certificat->medecin;
 
             // Try to get saved template information from session first
             $templateData = session('certificat_template_' . $certificatId);
-            
+                        
             if (!$templateData) {
                 // Fallback: Get selected template for the doctor - try to get doctor's template or use default
                 $template = DocModel::where('id_docteur', $medecin->id)
@@ -241,19 +259,28 @@ class CertificatController extends Controller
 
             return view('secretaire.certificat.show', compact('documentData'))
                 ->with('print_document', true);
+
         } catch (\Exception $e) {
             return redirect()->back()
                 ->with('error', 'Erreur lors de la récupération du certificat: ' . $e->getMessage())
                 ->withInput();
         }
     }
-
-    
+        
     public function getCertificatData($certificatId)
     {
         try 
         {
             $certificat = Certificat::with(['patient', 'medecin'])->findOrFail($certificatId);
+            
+            // Vérifier que le certificat appartient au médecin connecté
+            $user = Auth::user();
+            if ($user->role === 'medecin' && $certificat->medecin_id !== $user->id) {
+                return response()->json([
+                    'error' => 'Vous n\'êtes pas autorisé à voir ce certificat.'
+                ], 403);
+            }
+            
             $patient = $certificat->patient;
             $medecin = $certificat->medecin;
 
@@ -262,7 +289,7 @@ class CertificatController extends Controller
 
             // Try to get saved template information from session first
             $savedTemplateData = session('certificat_template_' . $certificatId);
-            
+                        
             if ($savedTemplateData) {
                 // Use saved template data
                 $templateData = $savedTemplateData;
@@ -304,7 +331,6 @@ class CertificatController extends Controller
                     'type' => $certificat->type,
                     'date_certificat' => $certificat->date_certificat,
                 ],
-
                 'patient' => [
                     'id' => $patient->id,
                     'cin' => $patient->cin,
@@ -314,7 +340,6 @@ class CertificatController extends Controller
                     'date_naissance' => $patient->date_naissance,
                     'sexe' => $patient->sexe,
                 ],
-
                 'medecin' => [
                     'id' => $medecin->id,
                     'nom' => $medecin->nom,
@@ -323,7 +348,6 @@ class CertificatController extends Controller
                     'telephone' => $medecin->telephone,
                     'specialite' => $medecin->specialite,
                 ],
-
                 'cabinet' => [
                     'id' => $cabinet->id ?? null,
                     'nom_cabinet' => $cabinet->nom_cabinet ?? 'Cabinet Médical',
@@ -331,17 +355,16 @@ class CertificatController extends Controller
                     'tel_cabinet' => $cabinet->tel_cabinet ?? '0522-123456',
                     'descr_cabinet' => $cabinet->descr_cabinet ?? '',
                 ],
-
                 'template' => $templateData,
             ]);
+
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Erreur lors de la récupération des données du certificat: ' . $e->getMessage()
             ], 500);
         }
     }
-
-    
+        
     public function edit(Certificat $certificat)
     {
         //

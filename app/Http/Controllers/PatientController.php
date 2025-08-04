@@ -13,15 +13,44 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class PatientController extends Controller
 {
     public function index(Request $request)
     {
-        // Récupérer les patients avec le montant total payé calculé via les relations Eloquent
-        $patients = Patient::with(['factures.paiements' => function($query) {
-            $query->where('statut', 'paye');
-        }])->paginate(10);
+        $user = Auth::user();
+        
+        // Vérifier que l'utilisateur est authentifié
+        if (!$user) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Utilisateur non authentifié.'], 401);
+            }
+            return redirect()->route('login');
+        }
+        
+        // Créer la requête de base avec les relations
+        $query = Patient::with(['factures.paiements' => function($q) {
+            $q->where('statut', 'paye');
+        }]);
+        
+        // Filtrer selon le rôle de l'utilisateur connecté
+        if ($user->role === 'medecin') {
+            $query->where('medecin_id', $user->id);
+        } elseif ($user->role === 'secretaire') {
+            if ($user->medecin_id) {
+                $query->where('medecin_id', $user->medecin_id);
+            } else {
+                // Si pas de médecin associé, retourner une requête vide
+                $query->where('id', null);
+            }
+        } else {
+            // Pour tout autre rôle, retourner une requête vide
+            $query->where('id', null);
+        }
+
+        // Paginer les résultats
+        $patients = $query->paginate(10);
 
         // Calculer le montant total payé pour chaque patient
         foreach ($patients as $patient) {
@@ -49,6 +78,29 @@ class PatientController extends Controller
     public function store(Request $request)
     {
         Log::info('Tentative de création de patient', $request->all());
+
+        $user = Auth::user();
+
+        // Vérifier que l'utilisateur est authentifié
+        if (!$user) {
+            Log::error('Utilisateur non authentifié lors de la création de patient');
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Utilisateur non authentifié.'], 401);
+            }
+            return redirect()->route('login')->with('error', 'Vous devez être connecté pour créer un patient.');
+        }
+
+        // Déterminer le medecin_id selon le rôle de l'utilisateur connecté
+        if ($user->role === 'medecin') {
+            $medecinId = $user->id;
+        } elseif ($user->role === 'secretaire' && $user->medecin_id) {
+            $medecinId = $user->medecin_id;
+        } else {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Utilisateur non autorisé à créer des patients.'], 403);
+            }
+            return redirect()->route('secretaire.patients')->with('error', 'Utilisateur non autorisé à créer des patients.');
+        }
 
         $rules = [
             'cin' => 'required|string|unique:patients,cin',
@@ -98,7 +150,9 @@ class PatientController extends Controller
         try {
             $validated['password_hash'] = Hash::make('default123');
             $validated['is_active'] = $validated['is_active'] ?? true;
-            
+            // Assigner automatiquement le medecin_id selon la session
+            $validated['medecin_id'] = $medecinId;
+                        
             if ($request->hasFile('profile_image')) {
                 $imagePath = $request->file('profile_image')->store('patient_profiles', 'public');
                 $validated['profile_image'] = $imagePath;
@@ -112,7 +166,7 @@ class PatientController extends Controller
 
             $patient = Patient::create($validated);
 
-            Log::info('Patient créé avec succès', ['patient_id' => $patient->id]);
+            Log::info('Patient créé avec succès', ['patient_id' => $patient->id, 'medecin_id' => $medecinId]);
 
             if ($request->wantsJson()) {
                 return response()->json([
@@ -122,6 +176,7 @@ class PatientController extends Controller
             }
 
             return redirect()->route('secretaire.patients')->with('success', 'Patient ajouté avec succès.');
+
         } catch (\Exception $e) {
             Log::error('Erreur lors de la création du patient', ['error' => $e->getMessage()]);
 
@@ -135,6 +190,29 @@ class PatientController extends Controller
 
     public function show(Request $request, Patient $patient)
     {
+        $user = Auth::user();
+
+        // Vérifier que l'utilisateur est authentifié
+        if (!$user) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Utilisateur non authentifié.'], 401);
+            }
+            return redirect()->route('login');
+        }
+        
+        // Vérifier que l'utilisateur peut accéder à ce patient
+        if ($user->role === 'medecin' && $patient->medecin_id !== $user->id) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Non autorisé à voir ce patient.'], 403);
+            }
+            abort(403, 'Non autorisé à voir ce patient.');
+        } elseif ($user->role === 'secretaire' && $patient->medecin_id !== $user->medecin_id) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Non autorisé à voir ce patient.'], 403);
+            }
+            abort(403, 'Non autorisé à voir ce patient.');
+        }
+
         if ($request->wantsJson()) {
             return response()->json($patient);
         }
@@ -144,6 +222,29 @@ class PatientController extends Controller
 
     public function edit(Request $request, Patient $patient)
     {
+        $user = Auth::user();
+
+        // Vérifier que l'utilisateur est authentifié
+        if (!$user) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Utilisateur non authentifié.'], 401);
+            }
+            return redirect()->route('login');
+        }
+        
+        // Vérifier que l'utilisateur peut modifier ce patient
+        if ($user->role === 'medecin' && $patient->medecin_id !== $user->id) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Non autorisé à modifier ce patient.'], 403);
+            }
+            abort(403, 'Non autorisé à modifier ce patient.');
+        } elseif ($user->role === 'secretaire' && $patient->medecin_id !== $user->medecin_id) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Non autorisé à modifier ce patient.'], 403);
+            }
+            abort(403, 'Non autorisé à modifier ce patient.');
+        }
+
         if ($request->wantsJson()) {
             return response()->json(['message' => 'Formulaire non disponible via API'], 405);
         }
@@ -153,6 +254,29 @@ class PatientController extends Controller
 
     public function update(Request $request, Patient $patient)
     {
+        $user = Auth::user();
+
+        // Vérifier que l'utilisateur est authentifié
+        if (!$user) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Utilisateur non authentifié.'], 401);
+            }
+            return redirect()->route('login');
+        }
+        
+        // Vérifier que l'utilisateur peut modifier ce patient
+        if ($user->role === 'medecin' && $patient->medecin_id !== $user->id) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Non autorisé à modifier ce patient.'], 403);
+            }
+            return redirect()->route('secretaire.patients')->with('error', 'Non autorisé à modifier ce patient.');
+        } elseif ($user->role === 'secretaire' && $patient->medecin_id !== $user->medecin_id) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Non autorisé à modifier ce patient.'], 403);
+            }
+            return redirect()->route('secretaire.patients')->with('error', 'Non autorisé à modifier ce patient.');
+        }
+
         $rules = [
             'cin' => 'required|string|unique:patients,cin,' . $patient->id,
             'nom' => 'required|string|max:255',
@@ -224,6 +348,7 @@ class PatientController extends Controller
             }
 
             return redirect()->route('secretaire.patients')->with('success', 'Patient mis à jour avec succès.');
+
         } catch (\Exception $e) {
             if ($request->wantsJson()) {
                 return response()->json(['error' => 'Erreur lors de la mise à jour du patient.'], 500);
@@ -235,6 +360,29 @@ class PatientController extends Controller
 
     public function destroy(Request $request, Patient $patient)
     {
+        $user = Auth::user();
+
+        // Vérifier que l'utilisateur est authentifié
+        if (!$user) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Utilisateur non authentifié.'], 401);
+            }
+            return redirect()->route('login');
+        }
+        
+        // Vérifier que l'utilisateur peut supprimer ce patient
+        if ($user->role === 'medecin' && $patient->medecin_id !== $user->id) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Non autorisé à supprimer ce patient.'], 403);
+            }
+            return redirect()->route('secretaire.patients')->with('error', 'Non autorisé à supprimer ce patient.');
+        } elseif ($user->role === 'secretaire' && $patient->medecin_id !== $user->medecin_id) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Non autorisé à supprimer ce patient.'], 403);
+            }
+            return redirect()->route('secretaire.patients')->with('error', 'Non autorisé à supprimer ce patient.');
+        }
+
         try {
             if ($patient->profile_image && \Storage::disk('public')->exists($patient->profile_image)) {
                 \Storage::disk('public')->delete($patient->profile_image);
@@ -247,6 +395,7 @@ class PatientController extends Controller
             }
 
             return redirect()->route('secretaire.patients')->with('success', 'Patient supprimé avec succès.');
+
         } catch (\Exception $e) {
             if ($request->wantsJson()) {
                 return response()->json(['error' => 'Erreur lors de la suppression du patient.'], 500);
@@ -259,7 +408,26 @@ class PatientController extends Controller
     // MÉTHODE CORRIGÉE POUR AFFICHER TOUTES LES DONNÉES DU PATIENT
     public function getPatientDetails(Request $request, Patient $patient)
     {
+        $user = Auth::user();
+
+        // Vérifier que l'utilisateur est authentifié
+        if (!$user) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Utilisateur non authentifié.'], 401);
+            }
+            return redirect()->route('login');
+        }
+        
         try {
+            $user = Auth::user();
+            
+            // Vérifier que l'utilisateur peut accéder à ce patient
+            if ($user->role === 'medecin' && $patient->medecin_id !== $user->id) {
+                return response()->json(['error' => 'Non autorisé à voir ce patient.'], 403);
+            } elseif ($user->role === 'secretaire' && $patient->medecin_id !== $user->medecin_id) {
+                return response()->json(['error' => 'Non autorisé à voir ce patient.'], 403);
+            }
+
             // Charger le patient avec les consultations
             $patient->load([
                 'consultations' => function($query) {
@@ -505,6 +673,7 @@ class PatientController extends Controller
             }
 
             return response()->json(['error' => 'Requête non valide'], 400);
+
         } catch (\Exception $e) {
             Log::error('Erreur lors de la récupération des détails du patient', [
                 'patient_id' => $patient->id,

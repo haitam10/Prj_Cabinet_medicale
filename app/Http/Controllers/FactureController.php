@@ -14,50 +14,70 @@ class FactureController extends Controller
     /**
      * Display a listing of the resource.
      */
-public function index(Request $request)
-{
-    try {
-        $user = Auth::user();
-        $query = Facture::with(['patient', 'medecin', 'secretaire', 'utilisateur']);
-
-        if ($user->role === 'medecin') {
-            $query->where('medecin_id', $user->id);
-        } elseif ($user->role === 'secretaire') {
-            if ($user->medecin_id) {
-                $query->where('medecin_id', $user->medecin_id);
-            } else {
-                // Sécretaire sans medecin associé ne voit rien
-                $query->whereNull('id'); 
+    public function index(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            $query = Facture::with(['patient', 'medecin', 'secretaire', 'utilisateur']);
+            
+            if ($user->role === 'medecin') {
+                $query->where('medecin_id', $user->id);
+            } elseif ($user->role === 'secretaire') {
+                if ($user->medecin_id) {
+                    $query->where('medecin_id', $user->medecin_id);
+                } else {
+                    // Sécretaire sans medecin associé ne voit rien
+                    $query->whereNull('id');
+                }
             }
+            
+            $factures = $query->paginate(10);
+        } catch (\Exception $e) {
+            $factures = new \Illuminate\Pagination\LengthAwarePaginator(
+                collect([]), 0, 10, 1, ['path' => request()->url()]
+            );
         }
 
-        $factures = $query->paginate(10);
-    } catch (\Exception $e) {
-        $factures = new \Illuminate\Pagination\LengthAwarePaginator(
-            collect([]), 0, 10, 1, ['path' => request()->url()]
-        );
+        // Filtrer les patients selon le rôle de l'utilisateur
+        $user = Auth::user();
+        if ($user->role === 'medecin') {
+            $patients = Patient::where('medecin_id', $user->id)->get();
+        } elseif ($user->role === 'secretaire') {
+            if ($user->medecin_id) {
+                $patients = Patient::where('medecin_id', $user->medecin_id)->get();
+            } else {
+                $patients = collect();
+            }
+        } else {
+            $patients = collect();
+        }
+
+        // Filtrer les médecins selon le rôle de l'utilisateur
+        if ($user->role === 'medecin') {
+            $medecins = User::where('id', $user->id)->where('role', 'medecin')->where('statut', 'actif')->get();
+        } elseif ($user->role === 'secretaire' && $user->medecin_id) {
+            $medecins = User::where('id', $user->medecin_id)->where('role', 'medecin')->where('statut', 'actif')->get();
+        } else {
+            $medecins = collect();
+        }
+
+        $secretaires = User::where('role', 'secretaire')->where('statut', 'actif')->get();
+        $users = User::all();
+
+        // Récupérer les informations du cabinet pour l'utilisateur connecté
+        $cabinet = Cabinet::where('id_docteur', Auth::id())->first();
+
+        // Si pas de cabinet pour l'utilisateur connecté, prendre le premier cabinet disponible
+        if (!$cabinet) {
+            $cabinet = Cabinet::first();
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json($factures);
+        }
+
+        return view('secretaire.factures', compact('factures', 'patients', 'medecins', 'secretaires', 'users', 'cabinet'));
     }
-
-    $patients = Patient::all();
-    $medecins = User::where('role', 'medecin')->where('statut', 'actif')->get();
-    $secretaires = User::where('role', 'secretaire')->where('statut', 'actif')->get();
-    $users = User::all();
-
-    // Récupérer les informations du cabinet pour l'utilisateur connecté
-    $cabinet = Cabinet::where('id_docteur', Auth::id())->first();
-
-    // Si pas de cabinet pour l'utilisateur connecté, prendre le premier cabinet disponible
-    if (!$cabinet) {
-        $cabinet = Cabinet::first();
-    }
-
-    if ($request->wantsJson()) {
-        return response()->json($factures);
-    }
-
-    return view('secretaire.factures', compact('factures', 'patients', 'medecins', 'secretaires', 'users', 'cabinet'));
-}
-
 
     /**
      * Show the form for creating a new resource.
@@ -214,14 +234,17 @@ public function index(Request $request)
     {
         try {
             $facture->delete();
+
             if ($request->wantsJson()) {
                 return response()->json(['message' => 'Facture supprimée avec succès.']);
             }
+
             return redirect()->route('secretaire.factures')->with('success', 'Facture supprimée avec succès.');
         } catch (\Exception $e) {
             if ($request->wantsJson()) {
                 return response()->json(['error' => 'Erreur lors de la suppression de la facture.'], 500);
             }
+
             return redirect()->route('secretaire.factures')->with('error', 'Erreur lors de la suppression de la facture.');
         }
     }

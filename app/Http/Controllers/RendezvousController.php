@@ -22,18 +22,14 @@ class RendezvousController extends Controller
         $query = Rendezvous::with(['patient', 'medecin', 'secretaire']);
 
         if ($user->role === 'medecin') {
-
             $query->where('medecin_id', $user->id);
         } elseif ($user->role === 'secretaire') {
-
             if ($user->medecin_id) {
                 $query->where('medecin_id', $user->medecin_id);
             } else {
-
                 $query->where('id', null);
             }
         }
-
 
         if ($request->has('search') && !empty($request->search)) {
             $search = $request->search;
@@ -43,16 +39,13 @@ class RendezvousController extends Controller
             });
         }
 
-
         if ($request->has('status') && !empty($request->status)) {
             $query->where('status', $request->status);
         }
 
-
         if ($request->has('appointment_type') && !empty($request->appointment_type)) {
             $query->where('appointment_type', $request->appointment_type);
         }
-
 
         if ($request->has('date') && !empty($request->date)) {
             $query->whereDate('appointment_date', $request->date);
@@ -61,8 +54,7 @@ class RendezvousController extends Controller
         $rendezvous = $query->orderBy('appointment_date', 'desc')
                            ->orderBy('appointment_time', 'desc')
                            ->paginate(10);
-
-        
+                
         $rendezvous->getCollection()->transform(function ($rdv) {
             $rdv->appointment_date_formatted = $rdv->appointment_date->format('Y-m-d');
             $rdv->appointment_time_formatted = substr($rdv->appointment_time, 0, 5);
@@ -73,8 +65,19 @@ class RendezvousController extends Controller
             return response()->json($rendezvous);
         }
 
-        $patients = Patient::all();
-        
+        // CORRECTION: Filtrer les patients selon le rôle de l'utilisateur au lieu de Patient::all()
+        if ($user->role === 'medecin') {
+            $patients = Patient::where('medecin_id', $user->id)->get();
+        } elseif ($user->role === 'secretaire') {
+            if ($user->medecin_id) {
+                $patients = Patient::where('medecin_id', $user->medecin_id)->get();
+            } else {
+                $patients = collect();
+            }
+        } else {
+            $patients = collect();
+        }
+                
         if ($user->role === 'medecin') {
             $medecins = User::where('id', $user->id)->get();
         } elseif ($user->role === 'secretaire' && $user->medecin_id) {
@@ -82,7 +85,6 @@ class RendezvousController extends Controller
         } else {
             $medecins = collect();
         }
-
 
         $disponibilites = collect();
         if ($user->role === 'medecin') {
@@ -135,7 +137,7 @@ class RendezvousController extends Controller
     {
         try {
             $user = Auth::user();
-            
+                        
             Log::info('Début création rendez-vous', [
                 'user_id' => $user->id,
                 'user_role' => $user->role,
@@ -166,7 +168,6 @@ class RendezvousController extends Controller
                 'appointment_type.in' => 'Type de rendez-vous invalide.',
             ]);
 
-
             if ($user->role === 'medecin') {
                 $medecinId = $user->id;
             } elseif ($user->role === 'secretaire' && $user->medecin_id) {
@@ -177,15 +178,11 @@ class RendezvousController extends Controller
                     ->withInput();
             }
 
-
             $duration = 30;
-
-
             $appointmentTime = $validated['appointment_time'];
             if (strlen($appointmentTime) === 5) {
                 $appointmentTime .= ':00'; 
             }
-
 
             if ($validated['status'] !== 'cancelled') {
                 $disponibilite = Disponibilite::where('medecin_id', $medecinId)
@@ -198,7 +195,6 @@ class RendezvousController extends Controller
                         ->withInput();
                 }
 
-
                 $timeSlotValid = $this->validateTimeSlot(
                     $validated['appointment_time'],
                     $disponibilite->heure_entree,
@@ -210,7 +206,6 @@ class RendezvousController extends Controller
                         ->withErrors(['appointment_time' => 'L\'heure sélectionnée n\'est pas dans les créneaux de disponibilité.'])
                         ->withInput();
                 }
-
 
                 $conflictCheck = $this->checkTimeSlotConflict(
                     $medecinId,
@@ -225,7 +220,6 @@ class RendezvousController extends Controller
                 }
             }
 
-
             $createData = [
                 'patient_id' => (int) $validated['patient_id'],
                 'medecin_id' => (int) $medecinId,
@@ -235,13 +229,12 @@ class RendezvousController extends Controller
                 'duration' => $duration,
                 'status' => $validated['status'],
                 'appointment_type' => $validated['appointment_type'],
-                'reason' => $validated['reason'],
-                'patient_notes' => $validated['patient_notes'],
-                'doctor_notes' => $validated['doctor_notes'],
-                'cancellation_reason' => $validated['cancellation_reason'],
-                'feedback' => $validated['feedback'],
+                'reason' => $validated['reason'] ?? null,
+                'patient_notes' => $validated['patient_notes'] ?? null,
+                'doctor_notes' => $validated['doctor_notes'] ?? null,
+                'cancellation_reason' => $validated['cancellation_reason'] ?? null,
+                'feedback' => $validated['feedback'] ?? null,
             ];
-
 
             if ($validated['status'] === 'cancelled') {
                 $createData['cancelled_at'] = now();
@@ -249,11 +242,9 @@ class RendezvousController extends Controller
 
             Log::info('Données pour création de rendez-vous', $createData);
 
-
             $rendezvous = Rendezvous::create($createData);
 
             Log::info('Rendez-vous créé avec succès', ['id' => $rendezvous->id]);
-
 
             $newRendezvous = session('new_rendezvous', []);
             $newRendezvous[] = $rendezvous->id;
@@ -261,22 +252,22 @@ class RendezvousController extends Controller
 
             return redirect()->route('secretaire.rendezvous')
                 ->with('success', 'Rendez-vous créé avec succès.');
-            
+                    
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Erreur de validation lors de la création du rendez-vous', [
                 'errors' => $e->errors(),
                 'input' => $request->all()
             ]);
-            
+                        
             return back()->withErrors($e->errors())->withInput();
-            
+                    
         } catch (\Exception $e) {
             Log::error('Erreur lors de la création du rendez-vous', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'input' => $request->all()
             ]);
-            
+                        
             return back()
                 ->with('error', 'Erreur lors de la création du rendez-vous: ' . $e->getMessage())
                 ->withInput();
@@ -293,7 +284,7 @@ class RendezvousController extends Controller
             return $rdvId != $id;
         });
         session(['new_rendezvous' => array_values($newRendezvous)]);
-        
+                
         return response()->json(['success' => true]);
     }
 
@@ -305,7 +296,6 @@ class RendezvousController extends Controller
         try {
             $user = Auth::user();
             $rendezvous = Rendezvous::findOrFail($id);
-
 
             if ($user->role === 'medecin' && $rendezvous->medecin_id !== $user->id) {
                 throw new \Exception('Non autorisé à modifier ce rendez-vous.');
@@ -327,9 +317,7 @@ class RendezvousController extends Controller
                 'feedback' => 'nullable|string|max:1000',
             ]);
 
-
             $duration = 30;
-
             $appointmentTime = $validated['appointment_time'];
             if (strlen($appointmentTime) === 5) {
                 $appointmentTime .= ':00'; 
@@ -388,11 +376,11 @@ class RendezvousController extends Controller
                 'duration' => $duration,
                 'status' => $validated['status'],
                 'appointment_type' => $validated['appointment_type'],
-                'reason' => $validated['reason'],
-                'patient_notes' => $validated['patient_notes'],
-                'doctor_notes' => $validated['doctor_notes'],
-                'cancellation_reason' => $validated['cancellation_reason'],
-                'feedback' => $validated['feedback'],
+                'reason' => $validated['reason'] ?? null,
+                'patient_notes' => $validated['patient_notes'] ?? null,
+                'doctor_notes' => $validated['doctor_notes'] ?? null,
+                'cancellation_reason' => $validated['cancellation_reason'] ?? null,
+                'feedback' => $validated['feedback'] ?? null,
             ];
 
             if ($validated['status'] === 'cancelled' && $rendezvous->status !== 'cancelled') {
@@ -411,7 +399,7 @@ class RendezvousController extends Controller
             }
 
             return back()->with('success', 'Rendez-vous mis à jour avec succès.');
-                
+                        
         } catch (\Exception $e) {
             Log::error('Erreur lors de la mise à jour du rendez-vous: ' . $e->getMessage());
             if ($request->wantsJson()) {
@@ -437,10 +425,11 @@ class RendezvousController extends Controller
             }
 
             $rendezvous->delete();
-            
+                        
             if ($request->wantsJson()) {
                 return response()->json(['message' => 'Rendez-vous supprimé avec succès.']);
             }
+
             return back()->with('success', 'Rendez-vous supprimé avec succès.');
         } catch (\Exception $e) {
             if ($request->wantsJson()) {
@@ -457,7 +446,7 @@ class RendezvousController extends Controller
     {
         try {
             $user = Auth::user();
-            
+                        
             $validated = $request->validate([
                 'date' => 'required|date|after_or_equal:today',
                 'heure_entree' => 'required|date_format:H:i',
@@ -497,7 +486,7 @@ class RendezvousController extends Controller
             ]);
 
             return back()->with('success', 'Disponibilité ajoutée avec succès.');
-            
+                    
         } catch (\Exception $e) {
             Log::error('Erreur lors de la création de la disponibilité: ' . $e->getMessage());
             return back()->with('error', 'Erreur lors de la création de la disponibilité.');
@@ -541,7 +530,7 @@ class RendezvousController extends Controller
             ]);
 
             return back()->with('success', 'Disponibilité mise à jour avec succès.');
-            
+                    
         } catch (\Exception $e) {
             Log::error('Erreur lors de la mise à jour de la disponibilité: ' . $e->getMessage());
             return back()->with('error', 'Erreur lors de la mise à jour de la disponibilité.');
@@ -576,10 +565,11 @@ class RendezvousController extends Controller
             }
 
             $disponibilite->delete();
-            
+                        
             if ($request->wantsJson()) {
                 return response()->json(['message' => 'Disponibilité supprimée avec succès.']);
             }
+
             return back()->with('success', 'Disponibilité supprimée avec succès.');
         } catch (\Exception $e) {
             if ($request->wantsJson()) {
@@ -597,11 +587,10 @@ class RendezvousController extends Controller
         $appointmentTimeObj = Carbon::createFromFormat('H:i', $appointmentTime);
         $entreeTimeObj = Carbon::createFromFormat('H:i', substr($heureEntree, 0, 5));
         $sortieTimeObj = Carbon::createFromFormat('H:i', substr($heureSortie, 0, 5));
-        
-
+                
         $appointmentEndTime = $appointmentTimeObj->copy()->addMinutes(30);
-        
-        return $appointmentTimeObj->greaterThanOrEqualTo($entreeTimeObj) && 
+                
+        return $appointmentTimeObj->greaterThanOrEqualTo($entreeTimeObj) &&
                $appointmentEndTime->lessThanOrEqualTo($sortieTimeObj);
     }
 
@@ -643,9 +632,22 @@ class RendezvousController extends Controller
         if ($request->wantsJson()) {
             return response()->json(['message' => 'Formulaire non disponible via API'], 405);
         }
-        $patients = Patient::all();
+
         $user = Auth::user();
         
+        // CORRECTION: Filtrer les patients selon le rôle de l'utilisateur au lieu de Patient::all()
+        if ($user->role === 'medecin') {
+            $patients = Patient::where('medecin_id', $user->id)->get();
+        } elseif ($user->role === 'secretaire') {
+            if ($user->medecin_id) {
+                $patients = Patient::where('medecin_id', $user->medecin_id)->get();
+            } else {
+                $patients = collect();
+            }
+        } else {
+            $patients = collect();
+        }
+                
         if ($user->role === 'medecin') {
             $medecins = User::where('id', $user->id)->get();
         } elseif ($user->role === 'secretaire' && $user->medecin_id) {
@@ -653,7 +655,7 @@ class RendezvousController extends Controller
         } else {
             $medecins = collect();
         }
-        
+                
         return view('rendezvous.create', compact('patients', 'medecins'));
     }
 
@@ -663,7 +665,7 @@ class RendezvousController extends Controller
     public function show(Request $request, Rendezvous $rendezvous)
     {
         $user = Auth::user();
-        
+                
         if ($user->role === 'medecin' && $rendezvous->medecin_id !== $user->id) {
             abort(403, 'Non autorisé à voir ce rendez-vous.');
         } elseif ($user->role === 'secretaire' && $rendezvous->medecin_id !== $user->medecin_id) {
@@ -671,10 +673,11 @@ class RendezvousController extends Controller
         }
 
         $rendezvous->load(['patient', 'medecin', 'secretaire']);
-        
+                
         if ($request->wantsJson()) {
             return response()->json($rendezvous);
         }
+
         return view('rendezvous.show', compact('rendezvous'));
     }
 
@@ -686,17 +689,28 @@ class RendezvousController extends Controller
         if ($request->wantsJson()) {
             return response()->json(['message' => 'Formulaire non disponible via API'], 405);
         }
-        
+                
         $user = Auth::user();
-        
+                
         if ($user->role === 'medecin' && $rendezvous->medecin_id !== $user->id) {
             abort(403, 'Non autorisé à modifier ce rendez-vous.');
         } elseif ($user->role === 'secretaire' && $rendezvous->medecin_id !== $user->medecin_id) {
             abort(403, 'Non autorisé à modifier ce rendez-vous.');
         }
 
-        $patients = Patient::all();
-        
+        // CORRECTION: Filtrer les patients selon le rôle de l'utilisateur au lieu de Patient::all()
+        if ($user->role === 'medecin') {
+            $patients = Patient::where('medecin_id', $user->id)->get();
+        } elseif ($user->role === 'secretaire') {
+            if ($user->medecin_id) {
+                $patients = Patient::where('medecin_id', $user->medecin_id)->get();
+            } else {
+                $patients = collect();
+            }
+        } else {
+            $patients = collect();
+        }
+                
         if ($user->role === 'medecin') {
             $medecins = User::where('id', $user->id)->get();
         } elseif ($user->role === 'secretaire' && $user->medecin_id) {
@@ -704,7 +718,7 @@ class RendezvousController extends Controller
         } else {
             $medecins = collect();
         }
-        
+                
         return view('rendezvous.edit', compact('rendezvous', 'patients', 'medecins'));
     }
 }

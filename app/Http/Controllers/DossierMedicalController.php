@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 
 class DossierMedicalController extends Controller
 {
@@ -343,30 +344,36 @@ class DossierMedicalController extends Controller
 
     public function storeVaccination(Request $request)
     {
-        $validated = $request->validate([
+        // Récupérer l'utilisateur actuel
+        $currentUser = Auth::user();
+        
+        // Définir les règles de validation de base
+        $rules = [
             'patient_id' => 'required|exists:patients,id',
             'nom' => 'required|string|max:255',
             'date_vaccination' => 'required|date',
-            'date_rappel' => 'nullable|date|after:date_vaccination',
+            'date_rappel' => 'nullable|date|after_or_equal:date_vaccination',
             'commentaire' => 'nullable|string|max:1000'
-        ]);
+        ];
 
-        // Utiliser l'ID du médecin connecté ou celui fourni dans la requête
-        $currentUser = Auth::user();
+        // Ajouter la règle pour medecin_id si l'utilisateur n'est pas médecin
+        if (!$currentUser || $currentUser->role !== 'medecin') {
+            $rules['medecin_id'] = 'required|exists:users,id';
+        }
+
+        // Valider toutes les données en une seule fois
+        $validated = $request->validate($rules);
+
+        // Assigner le medecin_id approprié
         if ($currentUser && $currentUser->role === 'medecin') {
             $validated['medecin_id'] = $currentUser->id;
-        } else {
-            $validated['medecin_id'] = $request->input('medecin_id');
-            $request->validate([
-                'medecin_id' => 'required|exists:users,id'
-            ]);
         }
 
         try {
             Vaccination::create($validated);
             return redirect()->back()->with('success', 'Vaccination ajoutée avec succès.');
         } catch (\Exception $e) {
-            Log::error('Erreur lors de la création de la vaccination', ['error' => $e->getMessage()]);
+            Log::error('Erreur lors de la création de la vaccination', ['error' => $e->getMessage(), 'data' => $validated]);
             return redirect()->back()->with('error', 'Erreur lors de la création de la vaccination.');
         }
     }
@@ -438,6 +445,12 @@ class DossierMedicalController extends Controller
             $extension = $fichier->getClientOriginalExtension();
             $fileName = $originalName . '_' . time() . '.' . $extension;
             $chemin = $fichier->storeAs($patientFolder, $fileName, 'public');
+
+            // === Ajout pour copie automatique dans public ===
+            $sourcePath = storage_path('app/public/' . $chemin);
+            $destinationPath = public_path('storage/' . $chemin);
+            File::ensureDirectoryExists(dirname($destinationPath));
+            File::copy($sourcePath, $destinationPath);
 
             FichierMedical::create([
                 'patient_id' => $validated['patient_id'],
@@ -748,6 +761,11 @@ class DossierMedicalController extends Controller
                 // Supprimer l'ancien fichier si un nouveau est téléchargé
                 if ($fichierMedical->chemin && Storage::disk('public')->exists($fichierMedical->chemin)) {
                     Storage::disk('public')->delete($fichierMedical->chemin);
+                    // Supprimer aussi la copie dans public
+                    $oldPublicPath = public_path('storage/' . $fichierMedical->chemin);
+                    if (file_exists($oldPublicPath)) {
+                        unlink($oldPublicPath);
+                    }
                 }
 
                 $fichier = $request->file('fichier');
@@ -759,6 +777,12 @@ class DossierMedicalController extends Controller
                 $extension = $fichier->getClientOriginalExtension();
                 $fileName = $originalName . '_' . time() . '.' . $extension;
                 $chemin = $fichier->storeAs($patientFolder, $fileName, 'public');
+
+                // === Ajout pour copie automatique dans public ===
+                $sourcePath = storage_path('app/public/' . $chemin);
+                $destinationPath = public_path('storage/' . $chemin);
+                File::ensureDirectoryExists(dirname($destinationPath));
+                File::copy($sourcePath, $destinationPath);
 
                 $dataToUpdate['chemin'] = $chemin;
                 $dataToUpdate['taille'] = $fichier->getSize();
