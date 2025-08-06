@@ -34,8 +34,23 @@
         /* Styles personnalisés pour la grille du calendrier */
         .calendar-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 1rem;
+        }
+
+        /* Vue jour */
+        .calendar-grid.day-view {
+            grid-template-columns: 1fr;
+        }
+
+        /* Vue semaine */
+        .calendar-grid.week-view {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+
+        /* Vue mois */
+        .calendar-grid.month-view {
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
         }
 
         .day-card {
@@ -45,12 +60,29 @@
             padding: 1.5rem;
         }
 
+        .day-card.month-card {
+            padding: 0.75rem;
+            min-height: 120px;
+        }
+
+        .day-card.day-card-large {
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
         .day-header {
             font-weight: 600;
             color: #1e293b;
             margin-bottom: 1rem;
             border-bottom: 1px solid #e2e8f0;
             padding-bottom: 0.5rem;
+        }
+
+        .day-header.month-header {
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.25rem;
         }
 
         .appointment-item {
@@ -62,6 +94,12 @@
             display: flex;
             flex-direction: column;
             gap: 0.25rem;
+        }
+
+        .appointment-item.month-appointment {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            margin-bottom: 0.25rem;
         }
 
         .appointment-item:last-child {
@@ -106,115 +144,144 @@
             background-color: #fee2e2;
             color: #b91c1c;
         }
+
+        /* Styles pour les jours du mois précédent/suivant */
+        .other-month {
+            opacity: 0.4;
+        }
+
+        /* Jour actuel */
+        .today {
+            background-color: #eff6ff;
+            border: 2px solid #3b82f6;
+        }
+
+        /* Boutons de vue */
+        .view-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+            border: 1px solid #d1d5db;
+        }
+
+        .view-btn.active {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .view-btn:not(.active):hover {
+            background-color: #f3f4f6;
+        }
     </style>
 </head>
 
 <body class="bg-gray-100 min-h-screen">
     <!-- SIDEBAR -->
-  <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50 flex flex-col">
+    <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50 flex flex-col">
 
-  <div class="flex items-center justify-center h-16 bg-cordes-light flex-shrink-0">
-    <div class="flex items-center space-x-3">
-      <img style="width: 180px; height:160px" src="{{ url('storage/uploads/logo_miacex.png') }}" />
-    </div>
-  </div>
-
-  <!-- Nav scrollable -->
-  <nav class="mt-8 px-4 flex-1 overflow-y-auto pb-28"> <!-- pb-28 = padding bottom important -->
-    <div class="space-y-2">
-
-      <a href="{{ route('secretaire.dashboard') }}"
-          class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-          <i class="fas fa-home mr-3 text-cordes-accent group-hover:text-white"></i>
-          Dashboard
-      </a>
-
-      <a href="{{ route('secretaire.rendezvous') }}"
-          class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-          <i class="fas fa-calendar-check mr-3 text-white"></i>
-          Rendez-vous
-      </a>
-
-      <a href="{{ route('secretaire.patients') }}"
-          class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-          <i class="fas fa-user-injured mr-3 text-gray-400 group-hover:text-white"></i>
-          Patients
-      </a>
-
-      <a href="{{ route('secretaire.factures') }}"
-          class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-          <i class="fas fa-file-invoice-dollar mr-3 text-gray-400 group-hover:text-white"></i>
-          Factures
-      </a>
-
-      <a href="{{ route('secretaire.paiements') }}"
-          class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-          <i class="fas fa-credit-card mr-3 text-gray-400 group-hover:text-white"></i>
-          Paiements
-      </a>
-
-      @if (Auth::check() && Auth::user()->role === 'medecin')
-          <a href="{{ route('secretaire.dossier-medical') }}"
-              class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-              <i class="fas fa-file-medical mr-3 text-white"></i>
-              Consultations
-          </a>
-          <a href="{{ route('secretaire.calendrier') }}"
-          class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
-              <i class="fas fa-calendar-alt mr-3 text-gray-400 group-hover:text-white"></i>
-              Calendrier
-          </a>
-          <a href="{{ route('secretaire.certificats') }}"
-              class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-              <i class="fas fa-file-medical mr-3 text-white"></i>
-              Certificats
-          </a>
-          <a href="{{ route('secretaire.ordonnances') }}"
-              class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-              <i class="fas fa-prescription-bottle-medical mr-3 text-gray-400 group-hover:text-white"></i>
-              Ordonnances
-          </a>
-          <a href="{{ route('secretaire.remarques') }}"
-              class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-              <i class="fas fa-sticky-note mr-3 text-gray-400 group-hover:text-white"></i>
-              Remarques
-          </a>
-          <a href="{{ route('secretaire.papier') }}"
-              class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-              <i class="fas fa-cog mr-3 text-gray-400 group-hover:text-white"></i>
-              Paramètres
-          </a>
-      @endif
-
-      <a href="{{ route('secretaire.profile') }}"
-          class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
-          <i class="fas fa-user mr-3 text-cordes-accent group-hover:text-white"></i>
-          Mon Profil
-      </a>
-
-    </div>
-  </nav>
-
-  <!-- User Profile / Logout fixed bottom -->
-  <div class="absolute bottom-4 left-4 right-4">
-    <div
-        class="bg-gray-800 rounded-lg p-4 group cursor-pointer hover:bg-red-600 transition-colors duration-200">
-        <form method="POST" action="{{ route('logout') }}" id="logout-form">
-            @csrf
-            <div class="flex items-center space-x-3" onclick="document.getElementById('logout-form').submit();">
-                <img src="https://cdn-icons-png.flaticon.com/512/17003/17003310.png" alt="User"
-                    class="w-10 h-10 rounded-full">
-                <div>
-                    <p class="text-white text-sm font-medium">{{ Auth::user()->nom ?? 'Utilisateur' }}</p>
-                    <p class="text-gray-400 text-xs">{{ ucfirst(Auth::user()->role ?? '') }} — <span
-                            class="text-red-400">Se déconnecter</span></p>
-                </div>
+        <div class="flex items-center justify-center h-16 bg-cordes-light flex-shrink-0">
+            <div class="flex items-center space-x-3">
+                <img style="width: 180px; height:160px" src="{{ url('storage/uploads/logo_miacex.png') }}" />
             </div>
-        </form>
-    </div>
-  </div>
+        </div>
 
-</div>
+        <!-- Nav scrollable -->
+        <nav class="mt-8 px-4 flex-1 overflow-y-auto pb-28">
+            <div class="space-y-2">
+
+                <a href="{{ route('secretaire.dashboard') }}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-home mr-3 text-cordes-accent group-hover:text-white"></i>
+                    Dashboard
+                </a>
+
+                <a href="{{ route('secretaire.rendezvous') }}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-calendar-check mr-3 text-white"></i>
+                    Rendez-vous
+                </a>
+
+                <a href="{{ route('secretaire.patients') }}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-user-injured mr-3 text-gray-400 group-hover:text-white"></i>
+                    Patients
+                </a>
+
+                <a href="{{ route('secretaire.factures') }}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-file-invoice-dollar mr-3 text-gray-400 group-hover:text-white"></i>
+                    Factures
+                </a>
+
+                <a href="{{ route('secretaire.paiements') }}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-credit-card mr-3 text-gray-400 group-hover:text-white"></i>
+                    Paiements
+                </a>
+
+                @if (Auth::check() && Auth::user()->role === 'medecin')
+                    <a href="{{ route('secretaire.dossier-medical') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-file-medical mr-3 text-white"></i>
+                        Consultations
+                    </a>
+                    <a href="{{ route('secretaire.calendrier') }}"
+                        class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
+                        <i class="fas fa-calendar-alt mr-3 text-gray-400 group-hover:text-white"></i>
+                        Calendrier
+                    </a>
+                    <a href="{{ route('secretaire.certificats') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-file-medical mr-3 text-white"></i>
+                        Certificats
+                    </a>
+                    <a href="{{ route('secretaire.ordonnances') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-prescription-bottle-medical mr-3 text-gray-400 group-hover:text-white"></i>
+                        Ordonnances
+                    </a>
+                    <a href="{{ route('secretaire.remarques') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-sticky-note mr-3 text-gray-400 group-hover:text-white"></i>
+                        Remarques
+                    </a>
+                    <a href="{{ route('secretaire.papier') }}"
+                        class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                        <i class="fas fa-cog mr-3 text-gray-400 group-hover:text-white"></i>
+                        Paramètres
+                    </a>
+                @endif
+
+                <a href="{{ route('secretaire.profile') }}"
+                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                    <i class="fas fa-user mr-3 text-cordes-accent group-hover:text-white"></i>
+                    Mon Profil
+                </a>
+
+            </div>
+        </nav>
+
+        <!-- User Profile / Logout fixed bottom -->
+        <div class="absolute bottom-4 left-4 right-4">
+            <div
+                class="bg-gray-800 rounded-lg p-4 group cursor-pointer hover:bg-red-600 transition-colors duration-200">
+                <form method="POST" action="{{ route('logout') }}" id="logout-form">
+                    @csrf
+                    <div class="flex items-center space-x-3" onclick="document.getElementById('logout-form').submit();">
+                        <img src="https://cdn-icons-png.flaticon.com/512/17003/17003310.png" alt="User"
+                            class="w-10 h-10 rounded-full">
+                        <div>
+                            <p class="text-white text-sm font-medium">{{ Auth::user()->nom ?? 'Utilisateur' }}</p>
+                            <p class="text-gray-400 text-xs">{{ ucfirst(Auth::user()->role ?? '') }} — <span
+                                    class="text-red-400">Se déconnecter</span></p>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
 
     <!-- CONTENU PRINCIPAL -->
     <div class="ml-64">
@@ -222,7 +289,34 @@
             <div class="px-6 py-4 flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-semibold text-gray-900">Calendrier des Rendez-vous</h1>
-                    <p class="text-gray-600 text-sm mt-1">Vos rendez-vous de la semaine</p>
+                    <p class="text-gray-600 text-sm mt-1">
+                        @switch($view)
+                            @case('day')
+                                Vos rendez-vous du jour
+                                @break
+                            @case('month')
+                                Vos rendez-vous du mois
+                                @break
+                            @default
+                                Vos rendez-vous de la semaine
+                        @endswitch
+                    </p>
+                </div>
+                
+                <!-- Boutons de vue -->
+                <div class="flex space-x-2">
+                    <a href="{{ route('secretaire.calendrier', ['view' => 'day', 'date' => $currentDate->format('Y-m-d')]) }}"
+                        class="view-btn {{ $view === 'day' ? 'active' : '' }}">
+                        <i class="fas fa-calendar-day mr-1"></i>Jour
+                    </a>
+                    <a href="{{ route('secretaire.calendrier', ['view' => 'week', 'date' => $currentDate->format('Y-m-d')]) }}"
+                        class="view-btn {{ $view === 'week' ? 'active' : '' }}">
+                        <i class="fas fa-calendar-week mr-1"></i>Semaine
+                    </a>
+                    <a href="{{ route('secretaire.calendrier', ['view' => 'month', 'date' => $currentDate->format('Y-m-d')]) }}"
+                        class="view-btn {{ $view === 'month' ? 'active' : '' }}">
+                        <i class="fas fa-calendar mr-1"></i>Mois
+                    </a>
                 </div>
             </div>
         </header>
@@ -236,91 +330,148 @@
             @endif
 
             <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <!-- Navigation -->
                 <div class="flex justify-between items-center mb-4">
-                    <a href="{{ route('secretaire.calendrier', ['date' => $currentDate->copy()->subWeek()->format('Y-m-d')]) }}"
+                    <a href="{{ route('secretaire.calendrier', ['view' => $view, 'date' => $prevDate->format('Y-m-d')]) }}"
                         class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
-                        <i class="fas fa-chevron-left mr-2"></i>Semaine précédente
+                        <i class="fas fa-chevron-left mr-2"></i>
+                        @switch($view)
+                            @case('day')
+                                Jour précédent
+                                @break
+                            @case('month')
+                                Mois précédent
+                                @break
+                            @default
+                                Semaine précédente
+                        @endswitch
                     </a>
+                    
                     <h3 class="text-xl font-semibold text-gray-800">
-                        Semaine du {{ $startOfWeek->isoFormat('D MMMM YYYY') }} au
-                        {{ $endOfWeek->isoFormat('D MMMM YYYY') }}
+                        {{ $title }}
                     </h3>
-                    <a href="{{ route('secretaire.calendrier', ['date' => $currentDate->copy()->addWeek()->format('Y-m-d')]) }}"
+                    
+                    <a href="{{ route('secretaire.calendrier', ['view' => $view, 'date' => $nextDate->format('Y-m-d')]) }}"
                         class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
-                        Semaine suivante<i class="fas fa-chevron-right ml-2"></i>
+                        @switch($view)
+                            @case('day')
+                                Jour suivant
+                                @break
+                            @case('month')
+                                Mois suivant
+                                @break
+                            @default
+                                Semaine suivante
+                        @endswitch
+                        <i class="fas fa-chevron-right ml-2"></i>
                     </a>
                 </div>
 
-                <div class="calendar-grid">
-                    @foreach ($daysOfWeek as $dayData)
-                        <div class="day-card">
-                            <div class="day-header">
-                                {{ $dayData['date']->isoFormat('dddd D MMMM') }}
+                <!-- En-têtes des jours pour la vue mois -->
+                @if($view === 'month')
+                    <div class="grid grid-cols-7 gap-0.5 mb-2">
+                        @foreach(['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'] as $dayName)
+                            <div class="text-center font-semibold text-gray-600 py-2 bg-gray-50 rounded">
+                                {{ $dayName }}
                             </div>
+                        @endforeach
+                    </div>
+                @endif
+
+                <!-- Grille du calendrier -->
+                <div class="calendar-grid {{ $view }}-view">
+                    @foreach ($calendarData as $dayData)
+                        @php
+                            $isToday = $dayData['date']->isToday();
+                            $isCurrentMonth = $view !== 'month' || $dayData['date']->month === $currentDate->month;
+                        @endphp
+                        
+                        <div class="day-card 
+                            @if($view === 'month') month-card @endif
+                            @if($view === 'day') day-card-large @endif
+                            @if($isToday) today @endif
+                            @if(!$isCurrentMonth) other-month @endif">
+                            
+                            <div class="day-header @if($view === 'month') month-header @endif">
+                                @if($view === 'month')
+                                    {{ $dayData['date']->format('j') }}
+                                @elseif($view === 'day')
+                                    {{ $dayData['date']->isoFormat('dddd D MMMM YYYY') }}
+                                @else
+                                    {{ $dayData['date']->isoFormat('dddd D MMMM') }}
+                                @endif
+                            </div>
+                            
                             <div class="space-y-3">
                                 @forelse ($dayData['appointments'] as $appointment)
-                                    <div class="appointment-item">
+                                    <div class="appointment-item @if($view === 'month') month-appointment @endif">
                                         <span class="appointment-time">
-                                            <i
-                                                class="fas fa-clock mr-1"></i>{{ \Carbon\Carbon::parse($appointment->appointment_time)->format('H:i') }}
+                                            <i class="fas fa-clock mr-1"></i>{{ \Carbon\Carbon::parse($appointment->appointment_time)->format('H:i') }}
                                         </span>
-                                        <span class="appointment-patient">
-                                            <i class="fas fa-user mr-1"></i>{{ $appointment->patient->nom ?? 'N/A' }}
-                                            {{ $appointment->patient->prenom ?? '' }}
-                                        </span>
-                                        <span class="appointment-motif">
-                                            <i
-                                                class="fas fa-info-circle mr-1"></i>{{ $appointment->reason ?? 'Aucun motif spécifié' }}
-                                        </span>
-                                        <span
-                                            class="appointment-status
+                                        
+                                        @if($view !== 'month')
+                                            <span class="appointment-patient">
+                                                <i class="fas fa-user mr-1"></i>{{ $appointment->patient->nom ?? 'N/A' }}
+                                                {{ $appointment->patient->prenom ?? '' }}
+                                            </span>
+                                            <span class="appointment-motif">
+                                                <i class="fas fa-info-circle mr-1"></i>{{ $appointment->reason ?? 'Aucun motif spécifié' }}
+                                            </span>
+                                        @else
+                                            <span class="appointment-patient text-xs">
+                                                {{ $appointment->patient->nom ?? 'N/A' }}
+                                            </span>
+                                        @endif
+                                        
+                                        <span class="appointment-status
                                             @if ($appointment->status === 'confirmed') status-confirmed
                                             @elseif($appointment->status === 'pending') status-pending
                                             @elseif($appointment->status === 'cancelled') status-cancelled @endif">
                                             @switch($appointment->status)
                                                 @case('confirmed')
                                                     <i class="fas fa-check-circle"></i>Confirmé
-                                                @break
-
+                                                    @break
                                                 @case('pending')
                                                     <i class="fas fa-hourglass-half"></i>En attente
-                                                @break
-
+                                                    @break
                                                 @case('cancelled')
                                                     <i class="fas fa-times-circle"></i>Annulé
-                                                @break
-
+                                                    @break
                                                 @default
-                                                    <i
-                                                        class="fas fa-question-circle"></i>{{ ucfirst($appointment->status ?? 'Non défini') }}
+                                                    <i class="fas fa-question-circle"></i>{{ ucfirst($appointment->status ?? 'Non défini') }}
                                             @endswitch
                                         </span>
                                     </div>
-                                    @empty
-                                        <p class="text-gray-500 text-sm text-center py-4">Aucun rendez-vous pour ce jour.
-                                        </p>
-                                    @endforelse
-                                </div>
+                                @empty
+                                    <p class="text-gray-500 text-sm text-center py-4">
+                                        @if($view === 'month')
+                                            Aucun RDV
+                                        @else
+                                            Aucun rendez-vous pour ce jour.
+                                        @endif
+                                    </p>
+                                @endforelse
                             </div>
-                        @endforeach
-                    </div>
+                        </div>
+                    @endforeach
                 </div>
-            </main>
-        </div>
+            </div>
+        </main>
+    </div>
 
-        <script>
-            // Auto-dismiss messages after 5 seconds
-            document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(function() {
-                    const messages = document.querySelectorAll('#successMessage, #errorMessage');
-                    messages.forEach(function(message) {
-                        if (message) {
-                            message.style.display = 'none';
-                        }
-                    });
-                }, 5000);
-            });
-        </script>
-    </body>
+    <script>
+        // Auto-dismiss messages after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const messages = document.querySelectorAll('#successMessage, #errorMessage');
+                messages.forEach(function(message) {
+                    if (message) {
+                        message.style.display = 'none';
+                    }
+                });
+            }, 5000);
+        });
+    </script>
+</body>
 
-    </html>
+</html>

@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -23,50 +22,41 @@
         };
     </script>
 </head>
-
 <body class="bg-gray-100 min-h-screen">
     <div class="fixed inset-y-0 left-0 w-64 bg-cordes-dark shadow-xl z-50 flex flex-col">
-
   <div class="flex items-center justify-center h-16 bg-cordes-light flex-shrink-0">
     <div class="flex items-center space-x-3">
       <img style="width: 180px; height:160px" src="{{ url('storage/uploads/logo_miacex.png') }}" />
     </div>
   </div>
-
   <!-- Nav scrollable -->
   <nav class="mt-8 px-4 flex-1 overflow-y-auto pb-28"> <!-- pb-28 = padding bottom important -->
     <div class="space-y-2">
-
       <a href="{{ route('secretaire.dashboard') }}"
               class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
           <i class="fas fa-home mr-3 text-cordes-accent group-hover:text-white"></i>
           Dashboard
       </a>
-
       <a href="{{ route('secretaire.rendezvous') }}"
           class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
           <i class="fas fa-calendar-check mr-3 text-white"></i>
           Rendez-vous
       </a>
-
       <a href="{{ route('secretaire.patients') }}"
           class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
           <i class="fas fa-user-injured mr-3 text-gray-400 group-hover:text-white"></i>
           Patients
       </a>
-
       <a href="{{ route('secretaire.factures') }}"
           class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
           <i class="fas fa-file-invoice-dollar mr-3 text-gray-400 group-hover:text-white"></i>
           Factures
       </a>
-
       <a href="{{ route('secretaire.paiements') }}"
           class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
           <i class="fas fa-credit-card mr-3 text-gray-400 group-hover:text-white"></i>
           Paiements
       </a>
-
       @if (Auth::check() && Auth::user()->role === 'medecin')
           <a href="{{ route('secretaire.dossier-medical') }}"
           class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
@@ -99,16 +89,13 @@
               Paramètres
           </a>
       @endif
-
       <a href="{{ route('secretaire.profile') }}"
           class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
           <i class="fas fa-user mr-3 text-cordes-accent group-hover:text-white"></i>
           Mon Profil
       </a>
-
     </div>
   </nav>
-
   <!-- User Profile / Logout fixed bottom -->
   <div class="absolute bottom-4 left-4 right-4">
     <div
@@ -127,7 +114,6 @@
         </form>
     </div>
   </div>
-
 </div>
 
     <!-- CONTENU PRINCIPAL -->
@@ -160,7 +146,6 @@
                     <i class="fas fa-user-circle mr-2 text-cordes-blue"></i>
                     Patients avec Rendez-vous
                 </h2>
-
                 <!-- Barre de recherche -->
                 <div class="mb-4">
                     <div class="relative">
@@ -169,7 +154,6 @@
                         <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
                     </div>
                 </div>
-
                 <!-- Tableau des patients -->
                 @if ($patientsAvecRendezVous->count() > 0)
                     <div class="overflow-x-auto">
@@ -263,6 +247,37 @@
             </div>
 
             @if ($selectedPatient)
+                <!-- BOUTON ENREGISTRER TOUT -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-xl font-semibold text-gray-900">
+                                <i class="fas fa-save mr-2 text-green-600"></i>
+                                Enregistrement Global
+                            </h2>
+                            <p class="text-gray-600 text-sm mt-1">Enregistrer toutes les sections remplies en une seule fois</p>
+                        </div>
+                        <button onclick="saveAllSections()" id="saveAllBtn"
+                            class="px-6 py-3 bg-green-600 text-white text-lg font-semibold rounded-lg hover:bg-green-700 transition-colors shadow-lg">
+                            <i class="fas fa-save mr-2"></i>Enregistrer Tout
+                        </button>
+                    </div>
+                    <div id="saveAllProgress" class="hidden mt-4">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-spinner fa-spin text-blue-600 mr-3"></i>
+                                <span class="text-blue-800">Enregistrement en cours...</span>
+                            </div>
+                            <div class="mt-2">
+                                <div class="bg-blue-200 rounded-full h-2">
+                                    <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                </div>
+                                <p id="progressText" class="text-sm text-blue-700 mt-1">Préparation...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- CONSULTATIONS -->
                 <div class="bg-white rounded-lg shadow-md mb-8">
                     <div class="p-6 border-b border-gray-200 cursor-pointer" onclick="toggleSection('consultations')">
@@ -278,7 +293,7 @@
                     <div id="consultations-content" class="p-6 hidden">
                         <!-- Formulaire d'ajout -->
                         <form action="{{ route('secretaire.dossier-medical.consultation.store') }}" method="POST"
-                            class="mb-6 bg-gray-50 p-4 rounded-lg">
+                            class="mb-6 bg-gray-50 p-4 rounded-lg" id="consultationForm">
                             @csrf
                             <input type="hidden" name="patient_id" value="{{ $selectedPatient->id }}">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -406,8 +421,8 @@
                                                         {{ $consultation->medecin->nom }}</span>
                                                     @if ($consultation->status)
                                                         <span
-                                                            class="px-2 py-1 text-xs rounded-full 
-                                                            {{ $consultation->status === 'Terminée'
+                                                            class="px-2 py-1 text-xs rounded-full
+                                                             {{ $consultation->status === 'Terminée'
                                                                 ? 'bg-green-100 text-green-800'
                                                                 : ($consultation->status === 'En cours'
                                                                     ? 'bg-blue-100 text-blue-800'
@@ -490,7 +505,7 @@
                     <div id="certificats-content" class="p-6 hidden">
                         <!-- Formulaire d'ajout -->
                         <form action="{{ route('secretaire.dossier-medical.certificat.store') }}" method="POST"
-                            class="mb-6 bg-gray-50 p-4 rounded-lg">
+                            class="mb-6 bg-gray-50 p-4 rounded-lg" id="certificatForm">
                             @csrf
                             <input type="hidden" name="patient_id" value="{{ $selectedPatient->id }}">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -610,7 +625,7 @@
                     <div id="remarques-content" class="p-6 hidden">
                         <!-- Formulaire d'ajout -->
                         <form action="{{ route('secretaire.dossier-medical.remarque.store') }}" method="POST"
-                            class="mb-6 bg-gray-50 p-4 rounded-lg">
+                            class="mb-6 bg-gray-50 p-4 rounded-lg" id="remarqueForm">
                             @csrf
                             <input type="hidden" name="patient_id" value="{{ $selectedPatient->id }}">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -710,7 +725,7 @@
                     <div id="habitudes-content" class="p-6 hidden">
                         <!-- Formulaire d'ajout -->
                         <form action="{{ route('secretaire.dossier-medical.habitude.store') }}" method="POST"
-                            class="mb-6 bg-gray-50 p-4 rounded-lg">
+                            class="mb-6 bg-gray-50 p-4 rounded-lg" id="habitudeForm">
                             @csrf
                             <input type="hidden" name="patient_id" value="{{ $selectedPatient->id }}">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -879,7 +894,7 @@
                     <div id="examens-content" class="p-6 hidden">
                         <!-- Formulaire d'ajout -->
                         <form action="{{ route('secretaire.dossier-medical.examen.store') }}" method="POST"
-                            class="mb-6 bg-gray-50 p-4 rounded-lg">
+                            class="mb-6 bg-gray-50 p-4 rounded-lg" id="examenForm">
                             @csrf
                             <input type="hidden" name="patient_id" value="{{ $selectedPatient->id }}">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1009,7 +1024,7 @@
                     <div id="imageries-content" class="p-6 hidden">
                         <!-- Formulaire d'ajout -->
                         <form action="{{ route('secretaire.dossier-medical.imagerie.store') }}" method="POST"
-                            class="mb-6 bg-gray-50 p-4 rounded-lg">
+                            class="mb-6 bg-gray-50 p-4 rounded-lg" id="imagerieForm">
                             @csrf
                             <input type="hidden" name="patient_id" value="{{ $selectedPatient->id }}">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1156,7 +1171,7 @@
                     <div id="vaccinations-content" class="p-6 hidden">
                         <!-- Formulaire d'ajout -->
                         <form action="{{ route('secretaire.dossier-medical.vaccination.store') }}" method="POST"
-                            class="mb-6 bg-gray-50 p-4 rounded-lg">
+                            class="mb-6 bg-gray-50 p-4 rounded-lg" id="vaccinationForm">
                             @csrf
                             <input type="hidden" name="patient_id" value="{{ $selectedPatient->id }}">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1273,7 +1288,7 @@
                     <div id="fichiers-content" class="p-6 hidden">
                         <!-- Formulaire d'ajout -->
                         <form action="{{ route('secretaire.dossier-medical.fichier.store') }}" method="POST"
-                            enctype="multipart/form-data" class="mb-6 bg-gray-50 p-4 rounded-lg">
+                            enctype="multipart/form-data" class="mb-6 bg-gray-50 p-4 rounded-lg" id="fichierForm">
                             @csrf
                             <input type="hidden" name="patient_id" value="{{ $selectedPatient->id }}">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1415,7 +1430,6 @@
                                     @method('PUT')
                                     <input type="hidden" name="id" id="edit_consultation_id">
                                     <input type="hidden" name="patient_id" value="{{ $selectedPatient->id }}">
-
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Médecin</label>
@@ -1518,7 +1532,6 @@
                                             </select>
                                         </div>
                                     </div>
-
                                     <div class="flex justify-end space-x-3 mt-6">
                                         <button type="button" onclick="closeEditConsultationModal()"
                                             class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
@@ -1547,7 +1560,6 @@
                                     @method('PUT')
                                     <input type="hidden" name="id" id="edit_certificat_id">
                                     <input type="hidden" name="patient_id" value="{{ $selectedPatient->id }}">
-
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Médecin</label>
@@ -1602,7 +1614,6 @@
                                                 placeholder="Rédigez le contenu du certificat..."></textarea>
                                         </div>
                                     </div>
-
                                     <div class="flex justify-end space-x-3 mt-6">
                                         <button type="button" onclick="closeEditCertificatModal()"
                                             class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
@@ -1631,7 +1642,6 @@
                                     @method('PUT')
                                     <input type="hidden" name="id" id="edit_remarque_id">
                                     <input type="hidden" name="patient_id" value="{{ $selectedPatient->id }}">
-
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label
@@ -1667,7 +1677,6 @@
                                                 placeholder="Saisissez votre remarque..."></textarea>
                                         </div>
                                     </div>
-
                                     <div class="flex justify-end space-x-3 mt-6">
                                         <button type="button" onclick="closeEditRemarqueModal()"
                                             class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
@@ -1696,7 +1705,6 @@
                                     @method('PUT')
                                     <input type="hidden" name="id" id="edit_habitude_id">
                                     <input type="hidden" name="patient_id" value="{{ $selectedPatient->id }}">
-
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label
@@ -1785,7 +1793,6 @@
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"></textarea>
                                         </div>
                                     </div>
-
                                     <div class="flex justify-end space-x-3 mt-6">
                                         <button type="button" onclick="closeEditHabitudeModal()"
                                             class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
@@ -1814,7 +1821,6 @@
                                     @method('PUT')
                                     <input type="hidden" name="id" id="edit_examen_id">
                                     <input type="hidden" name="patient_id" value="{{ $selectedPatient->id }}">
-
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label
@@ -1876,7 +1882,6 @@
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"></textarea>
                                         </div>
                                     </div>
-
                                     <div class="flex justify-end space-x-3 mt-6">
                                         <button type="button" onclick="closeEditExamenModal()"
                                             class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
@@ -1905,7 +1910,6 @@
                                     @method('PUT')
                                     <input type="hidden" name="id" id="edit_imagerie_id">
                                     <input type="hidden" name="patient_id" value="{{ $selectedPatient->id }}">
-
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label
@@ -1988,7 +1992,6 @@
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"></textarea>
                                         </div>
                                     </div>
-
                                     <div class="flex justify-end space-x-3 mt-6">
                                         <button type="button" onclick="closeEditImagerieModal()"
                                             class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
@@ -2017,7 +2020,6 @@
                                     @method('PUT')
                                     <input type="hidden" name="id" id="edit_vaccination_id">
                                     <input type="hidden" name="patient_id" value="{{ $selectedPatient->id }}">
-
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label
@@ -2067,7 +2069,6 @@
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"></textarea>
                                         </div>
                                     </div>
-
                                     <div class="flex justify-end space-x-3 mt-6">
                                         <button type="button" onclick="closeEditVaccinationModal()"
                                             class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
@@ -2096,7 +2097,6 @@
                                     @method('PUT')
                                     <input type="hidden" name="id" id="edit_fichier_id">
                                     <input type="hidden" name="patient_id" value="{{ $selectedPatient->id }}">
-
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label
@@ -2168,7 +2168,6 @@
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cordes-blue"></textarea>
                                         </div>
                                     </div>
-
                                     <div class="flex justify-end space-x-3 mt-6">
                                         <button type="button" onclick="closeEditFichierModal()"
                                             class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
@@ -2212,6 +2211,150 @@
                 }, 5000);
             }
         });
+
+        // Fonction principale pour enregistrer toutes les sections
+        async function saveAllSections() {
+            const saveAllBtn = document.getElementById('saveAllBtn');
+            const progressDiv = document.getElementById('saveAllProgress');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+
+            // Désactiver le bouton et afficher la progression
+            saveAllBtn.disabled = true;
+            saveAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enregistrement...';
+            progressDiv.classList.remove('hidden');
+
+            // Définir les formulaires à vérifier
+            const forms = [
+                { id: 'consultationForm', name: 'Consultation', route: '{{ route("secretaire.dossier-medical.consultation.store") }}' },
+                { id: 'certificatForm', name: 'Certificat', route: '{{ route("secretaire.dossier-medical.certificat.store") }}' },
+                { id: 'remarqueForm', name: 'Remarque', route: '{{ route("secretaire.dossier-medical.remarque.store") }}' },
+                { id: 'habitudeForm', name: 'Habitude de Vie', route: '{{ route("secretaire.dossier-medical.habitude.store") }}' },
+                { id: 'examenForm', name: 'Examen Biologique', route: '{{ route("secretaire.dossier-medical.examen.store") }}' },
+                { id: 'imagerieForm', name: 'Imagerie Médicale', route: '{{ route("secretaire.dossier-medical.imagerie.store") }}' },
+                { id: 'vaccinationForm', name: 'Vaccination', route: '{{ route("secretaire.dossier-medical.vaccination.store") }}' },
+                { id: 'fichierForm', name: 'Fichier Médical', route: '{{ route("secretaire.dossier-medical.fichier.store") }}' }
+            ];
+
+            // Vérifier quels formulaires ont des données
+            const formsToSubmit = [];
+            for (const formInfo of forms) {
+                const form = document.getElementById(formInfo.id);
+                if (form && isFormFilled(form)) {
+                    formsToSubmit.push(formInfo);
+                }
+            }
+
+            if (formsToSubmit.length === 0) {
+                alert('Aucune section n\'est remplie. Veuillez remplir au moins une section avant d\'enregistrer.');
+                resetSaveAllButton();
+                return;
+            }
+
+            let successCount = 0;
+            let errorCount = 0;
+            const results = [];
+
+            // Soumettre chaque formulaire
+            for (let i = 0; i < formsToSubmit.length; i++) {
+                const formInfo = formsToSubmit[i];
+                const progress = ((i + 1) / formsToSubmit.length) * 100;
+                
+                progressBar.style.width = progress + '%';
+                progressText.textContent = `Enregistrement de ${formInfo.name}... (${i + 1}/${formsToSubmit.length})`;
+
+                try {
+                    const form = document.getElementById(formInfo.id);
+                    const formData = new FormData(form);
+                    
+                    const response = await fetch(formInfo.route, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        }
+                    });
+
+                    if (response.ok) {
+                        successCount++;
+                        results.push(`✓ ${formInfo.name} enregistré avec succès`);
+                        // Réinitialiser le formulaire après succès
+                        form.reset();
+                    } else {
+                        errorCount++;
+                        results.push(`✗ Erreur lors de l'enregistrement de ${formInfo.name}`);
+                    }
+                } catch (error) {
+                    errorCount++;
+                    results.push(`✗ Erreur lors de l'enregistrement de ${formInfo.name}: ${error.message}`);
+                }
+
+                // Petite pause entre les soumissions
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+
+            // Afficher les résultats
+            progressText.textContent = 'Enregistrement terminé';
+            
+            setTimeout(() => {
+                let message = `Enregistrement terminé:\n\n`;
+                message += `✓ Succès: ${successCount}\n`;
+                message += `✗ Erreurs: ${errorCount}\n\n`;
+                message += results.join('\n');
+                
+                
+                if (successCount > 0) {
+                    // Recharger la page pour afficher les nouvelles données
+                    window.location.reload();
+                } else {
+                    resetSaveAllButton();
+                }
+            }, 1000);
+        }
+
+        // Fonction pour vérifier si un formulaire est rempli
+        function isFormFilled(form) {
+            const requiredFields = form.querySelectorAll('[required]');
+            const textFields = form.querySelectorAll('input[type="text"], input[type="number"], input[type="time"], textarea, select');
+            const fileFields = form.querySelectorAll('input[type="file"]');
+
+            // Vérifier les champs obligatoires
+            for (const field of requiredFields) {
+                if (field.type === 'file') {
+                    if (field.files && field.files.length > 0) {
+                        return true;
+                    }
+                } else if (field.value && field.value.trim() !== '') {
+                    return true;
+                }
+            }
+
+            // Vérifier les champs optionnels
+            for (const field of textFields) {
+                if (!field.hasAttribute('required') && field.value && field.value.trim() !== '') {
+                    return true;
+                }
+            }
+
+            // Vérifier les fichiers optionnels
+            for (const field of fileFields) {
+                if (!field.hasAttribute('required') && field.files && field.files.length > 0) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // Fonction pour réinitialiser le bouton "Enregistrer Tout"
+        function resetSaveAllButton() {
+            const saveAllBtn = document.getElementById('saveAllBtn');
+            const progressDiv = document.getElementById('saveAllProgress');
+            
+            saveAllBtn.disabled = false;
+            saveAllBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Enregistrer Tout';
+            progressDiv.classList.add('hidden');
+        }
 
         // Fonctions pour les modals de modification
         function editConsultation(id, date_consultation, heure, rendezvous_id, motif, symptomes, diagnostic, traitement,
@@ -2283,7 +2426,6 @@
             @if (!$isCurrentUserMedecin)
                 document.getElementById('edit_habitude_medecin_id').value = medecin_id;
             @endif
-
             // Mettre à jour la date minimum pour la date de fin
             const dateDebut = document.getElementById('edit_habitude_date_debut');
             if (dateDebut) {
@@ -2370,7 +2512,6 @@
         function toggleSection(sectionName) {
             const content = document.getElementById(sectionName + '-content');
             const icon = document.getElementById(sectionName + '-icon');
-
             if (content.classList.contains('hidden')) {
                 content.classList.remove('hidden');
                 icon.classList.remove('fa-chevron-right');
@@ -2386,11 +2527,9 @@
         document.getElementById('searchPatient').addEventListener('input', function() {
             const searchTerm = this.value.toLowerCase();
             const rows = document.querySelectorAll('.patient-row');
-
             rows.forEach(row => {
                 const patientName = row.getAttribute('data-patient-name');
                 const patientCin = row.getAttribute('data-patient-cin');
-
                 if (patientName.includes(searchTerm) || patientCin.includes(searchTerm)) {
                     row.style.display = '';
                 } else {
@@ -2403,7 +2542,6 @@
         function updateDateFinMin(dateDebutId, dateFinId) {
             const dateDebut = document.getElementById(dateDebutId);
             const dateFin = document.getElementById(dateFinId);
-
             if (dateDebut.value) {
                 dateFin.min = dateDebut.value;
                 // Si la date de fin est antérieure à la nouvelle date de début, la réinitialiser
@@ -2448,7 +2586,6 @@
                     closeFunc: closeEditFichierModal
                 }
             ];
-
             modals.forEach(modalInfo => {
                 const modal = document.getElementById(modalInfo.id);
                 if (modal && event.target === modal) {
@@ -2458,5 +2595,4 @@
         });
     </script>
 </body>
-
 </html>

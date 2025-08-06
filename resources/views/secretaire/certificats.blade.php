@@ -646,11 +646,11 @@
             });
         }
 
-        // Default template as requested
+        // Default template with MIACEX logo
         const defaultTemplate = {
             id: 'default',
             name: 'Modèle par défaut',
-            logo_file_path: 'uploads/okz6IeWL6Tc8ws7w6DzvCGeECccdMxOIYfeVUy0p.png',
+            logo_file_path: 'logo_miacex.png',
             descr_head: 'Je soussigné(e), atteste que le patient suivant :',
             descr_body: 'présente un état nécessitant un arrêt temporaire de ses activités.',
             descr_footer: 'Document remis à la personne concernée pour usage administratif.'
@@ -748,9 +748,13 @@
                     
                     const logoImg = document.getElementById('templateLogoGenerate');
                     if (selectedTemplate.logo_file_path && selectedTemplate.logo_file_path !== 'default') {
-                        logoImg.src = `{{ url('/storage') }}/${selectedTemplate.logo_file_path}`;
+                        if (selectedTemplateId === 'default') {
+                            logoImg.src = `{{ url('storage/uploads/logo_miacex.png') }}`;
+                        } else {
+                            logoImg.src = `{{ url('/storage') }}/${selectedTemplate.logo_file_path}`;
+                        }
                     } else {
-                        logoImg.src = `{{ url('/uploads/cm_logo_default.png') }}`;
+                        logoImg.src = `{{ url('storage/uploads/logo_miacex.png') }}`;
                     }
 
                     function decodeHtmlAndUnicode(str) {
@@ -1052,8 +1056,10 @@
                             </div>
                             <div class="logo-container">
                                 ${data.template.logo_file_path ? 
-                                    `<img src="{{ url('/storage') }}/${data.template.logo_file_path}" alt="Logo" class="caduceus-icon">` : 
-                                    `<img src="{{ url('/uploads/cm_logo_default.png') }}" alt="Logo" class="caduceus-icon">`
+                                    (data.template.id === 'default' ? 
+                                        `<img src="{{ url('storage/uploads/logo_miacex.png') }}" alt="Logo" class="caduceus-icon">` :
+                                        `<img src="{{ url('/storage') }}/${data.template.logo_file_path}" alt="Logo" class="caduceus-icon">`) : 
+                                    `<img src="{{ url('storage/uploads/logo_miacex.png') }}" alt="Logo" class="caduceus-icon">`
                                 }
                             </div>
                             <div class="cabinet-info">
@@ -1082,8 +1088,10 @@
                         </div>
                         <div class="content-area">
                             ${data.template.logo_file_path ? 
-                                `<img src="{{ url('/storage') }}/${data.template.logo_file_path}" alt="Logo Large" class="caduceus-large">` : 
-                                `<img src="{{ url('/uploads/cm_logo_default.png') }}" alt="Logo Large" class="caduceus-large">`
+                                (data.template.id === 'default' ? 
+                                    `<img src="{{ url('storage/uploads/logo_miacex.png') }}" alt="Logo Large" class="caduceus-large">` :
+                                    `<img src="{{ url('/storage') }}/${data.template.logo_file_path}" alt="Logo Large" class="caduceus-large">`) : 
+                                `<img src="{{ url('storage/uploads/logo_miacex.png') }}" alt="Logo Large" class="caduceus-large">`
                             }
                         </div>
                         <div class="footer">

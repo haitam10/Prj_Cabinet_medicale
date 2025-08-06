@@ -861,7 +861,8 @@
                     </div>
                     <div class="logo-container"> ${data.template.logo_file_path ?
                             `<img src="${window.location.origin}/storage/${data.template.logo_file_path}" alt="Caduceus" class="caduceus-icon">` :
-                            `<img src="${window.location.origin}/public/uploads/cm_logo_default.png" alt="Caduceus" class="caduceus-icon">`
+                            `<img src="${window.location.origin}/storage/uploads/logo_miacex.png" alt="Caduceus" class="caduceus-icon">`
+
                         }
                     </div>
                     
@@ -893,7 +894,8 @@
                 <div class="content-area">
                     ${template.logo_file_path ?
                         `<img src="${window.location.origin}/storage/${template.logo_file_path}"  alt="Caduceus Large" class="caduceus-large">` :
-                        `<img src="${window.location.origin}/public/uploads/cm_logo_default.png" alt="Caduceus Large" class="caduceus-large">`
+                        `<img src="${window.location.origin}/storage/uploads/logo_miacex.png" alt="Caduceus Large" class="caduceus-large">`
+
                     }
                     <div class="prescription-text">
                         ${data.ordonnance.medicaments || ''}<br>

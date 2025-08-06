@@ -171,14 +171,6 @@
                         class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors">
                         <i class="fas fa-download mr-2"></i>Export PDF
                     </button>
-                    <div class="relative">
-                        <button
-                            class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-                            <i class="fas fa-bell text-xl"></i>
-                            <span
-                                class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
-                        </button>
-                    </div>
                 </div>
             </div>
         </header>
@@ -667,7 +659,7 @@
                 </div>
             </div>
 
-            <!-- MODAL AJOUTER PATIENT -->
+            <!-- MODAL AJOUTER PATIENT - IMPORTÉ DU BLADE PATIENTS -->
             <div id="patientModal"
                 class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
                 <div class="bg-white w-full max-w-4xl rounded-2xl shadow-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
@@ -678,8 +670,27 @@
                             <i class="fas fa-times text-lg"></i>
                         </button>
                     </div>
-                    <form action="{{ route('patients.store') }}" method="POST" class="space-y-6">
+                    <form action="{{ route('secretaire.patients.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                         @csrf
+                        <!-- Photo de profil -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">Photo de profil</h3>
+                            <div class="flex items-center space-x-4">
+                                <div class="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden" id="profilePreview">
+                                    <i class="fas fa-user text-gray-400 text-2xl"></i>
+                                </div>
+                                <div>
+                                    <label for="profile_image" class="block text-sm font-medium text-gray-700 mb-1">Image de profil</label>
+                                    <input type="file" name="profile_image" id="profile_image" accept="image/*"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent {{ $errors->has('profile_image') ? 'border-red-500 bg-red-50' : '' }}"
+                                        onchange="previewImage(this, 'profilePreview')">
+                                    @if ($errors->has('profile_image'))
+                                        <p class="mt-1 text-sm text-red-600">{{ $errors->first('profile_image') }}</p>
+                                    @endif
+                                    <p class="text-xs text-gray-500 mt-1">Formats acceptés: JPEG, PNG, JPG, GIF (max 2MB)</p>
+                                </div>
+                            </div>
+                        </div>
                         <!-- Informations de base -->
                         <div class="bg-gray-50 p-4 rounded-lg">
                             <h3 class="text-lg font-medium text-gray-800 mb-4">Informations de base</h3>
@@ -814,6 +825,33 @@
                             </div>
                         </div>
 
+                        <!-- Contact d'urgence -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="text-lg font-medium text-gray-800 mb-4">Contact d'urgence</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="emergency_contact_name" class="block text-sm font-medium text-gray-700 mb-1">Nom du contact d'urgence</label>
+                                    <input type="text" name="emergency_contact_name" id="emergency_contact_name"
+                                         value="{{ old('emergency_contact_name') }}" maxlength="100"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent {{ $errors->has('emergency_contact_name') ? 'border-red-500 bg-red-50' : '' }}"
+                                        placeholder="Nom complet du contact" autocomplete="name">
+                                    @if ($errors->has('emergency_contact_name'))
+                                        <p class="mt-1 text-sm text-red-600">{{ $errors->first('emergency_contact_name') }}</p>
+                                    @endif
+                                </div>
+                                <div>
+                                    <label for="emergency_contact_phone" class="block text-sm font-medium text-gray-700 mb-1">Téléphone du contact d'urgence</label>
+                                    <input type="tel" name="emergency_contact_phone" id="emergency_contact_phone"
+                                         value="{{ old('emergency_contact_phone') }}" maxlength="20"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent {{ $errors->has('emergency_contact_phone') ? 'border-red-500 bg-red-50' : '' }}"
+                                        placeholder="Ex: 0612345678" autocomplete="tel">
+                                    @if ($errors->has('emergency_contact_phone'))
+                                        <p class="mt-1 text-sm text-red-600">{{ $errors->first('emergency_contact_phone') }}</p>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Informations médicales -->
                         <div class="bg-gray-50 p-4 rounded-lg">
                             <h3 class="text-lg font-medium text-gray-800 mb-4">Informations médicales</h3>
@@ -825,22 +863,22 @@
                                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                                         autocomplete="off">
                                         <option value="">Sélectionner</option>
-                                        <option value="A+" {{ old('groupe_sanguin') == 'A+' ? 'selected' : '' }}>
-                                            A+</option>
-                                        <option value="A-" {{ old('groupe_sanguin') == 'A-' ? 'selected' : '' }}>
-                                            A-</option>
-                                        <option value="B+" {{ old('groupe_sanguin') == 'B+' ? 'selected' : '' }}>
-                                            B+</option>
-                                        <option value="B-" {{ old('groupe_sanguin') == 'B-' ? 'selected' : '' }}>
-                                            B-</option>
+                                        <option value="A+"
+                                            {{ old('groupe_sanguin') == 'A+' ? 'selected' : '' }}>A+</option>
+                                        <option value="A-"
+                                            {{ old('groupe_sanguin') == 'A-' ? 'selected' : '' }}>A-</option>
+                                        <option value="B+"
+                                            {{ old('groupe_sanguin') == 'B+' ? 'selected' : '' }}>B+</option>
+                                        <option value="B-"
+                                            {{ old('groupe_sanguin') == 'B-' ? 'selected' : '' }}>B-</option>
                                         <option value="AB+"
                                             {{ old('groupe_sanguin') == 'AB+' ? 'selected' : '' }}>AB+</option>
                                         <option value="AB-"
                                             {{ old('groupe_sanguin') == 'AB-' ? 'selected' : '' }}>AB-</option>
-                                        <option value="O+" {{ old('groupe_sanguin') == 'O+' ? 'selected' : '' }}>
-                                            O+</option>
-                                        <option value="O-" {{ old('groupe_sanguin') == 'O-' ? 'selected' : '' }}>
-                                            O-</option>
+                                        <option value="O+"
+                                            {{ old('groupe_sanguin') == 'O+' ? 'selected' : '' }}>O+</option>
+                                        <option value="O-"
+                                            {{ old('groupe_sanguin') == 'O-' ? 'selected' : '' }}>O-</option>
                                     </select>
                                 </div>
                                 <div>
@@ -1000,9 +1038,9 @@
                 </div>
             </div>
 
-            <!-- Modal Créer Paiement -->
+            <!-- MODAL CRÉER PAIEMENT - IMPORTÉ DU BLADE PAIEMENTS -->
             <div id="createPaiementModal"
-                class="modal fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+                class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
                 <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl p-6 m-4 max-h-[90vh] overflow-y-auto">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-xl font-semibold text-gray-800">Ajouter un nouveau paiement</h2>
@@ -1011,7 +1049,7 @@
                             <i class="fas fa-times text-lg"></i>
                         </button>
                     </div>
-                    <form method="POST" action="{{ route('paiements.store') }}" class="space-y-4">
+                    <form method="POST" action="{{ route('secretaire.paiements.store') }}" class="space-y-4">
                         @csrf
                         <div>
                             <label for="facture_id" class="block text-sm font-medium text-gray-700 mb-1">
@@ -1103,6 +1141,23 @@
         // Données des disponibilités et rendez-vous existants (similaire à la page rendez-vous)
         const disponibilites = @json($disponibilitesJS ?? []);
         const existingAppointments = @json($existingAppointmentsJS ?? []);
+
+        // Fonction pour prévisualiser l'image
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+                        
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                                
+                reader.onload = function(e) {
+                    preview.innerHTML = `<img src="${e.target.result}" alt="Aperçu" class="w-full h-full object-cover">`;
+                }
+                                
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                preview.innerHTML = '<i class="fas fa-user text-gray-400 text-2xl"></i>';
+            }
+        }
 
         // PDF Export Function
         async function exportToPDF() {
@@ -1364,6 +1419,8 @@
         function openPatientModal() {
             document.getElementById('patientModal').classList.remove('hidden');
             document.querySelector('#patientModal form').reset();
+            // Réinitialiser l'aperçu de l'image
+            document.getElementById('profilePreview').innerHTML = '<i class="fas fa-user text-gray-400 text-2xl"></i>';
         }
 
         function closePatientModal() {
@@ -1408,12 +1465,19 @@
             }
         });
 
+        document.getElementById('createPaiementModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePaiementModal();
+            }
+        });
+
         // Escape key to close modals
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeAddModal();
                 closePatientModal();
                 closeFactureModal();
+                closePaiementModal();
             }
         });
 
@@ -1768,6 +1832,14 @@
                     showTemporaryMessage('Failed to update dashboard data. Check console for details.', 'error');
                 });
         }
+
+        // Auto-remplir le montant basé sur la facture sélectionnée dans le modal paiement
+        document.getElementById('facture_id').addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption.value && selectedOption.dataset.montant) {
+                document.getElementById('montant_paiement').value = selectedOption.dataset.montant;
+            }
+        });
 
         // Initialize the new charts on page load
         document.addEventListener('DOMContentLoaded', function() {

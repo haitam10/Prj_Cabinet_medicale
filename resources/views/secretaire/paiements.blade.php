@@ -383,7 +383,8 @@
                 </div>
                 <br>
                 <br>
-                                    <!-- Charges Section -->
+                @if (Auth::check() && Auth::user()->role === 'medecin')
+                    <!-- Charges Section -->
                     <div class="space-y-6">
                         <div class="flex items-center justify-between">
                             <h3 style="margin-left:15px" class="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-2">
@@ -457,6 +458,7 @@
                             </div>
                         </div>
                     </div>
+                @endif
             </main>
         </div>
 
@@ -843,6 +845,7 @@
                 </div>
             </div>
         </div>
+        @if (Auth::check() && Auth::user()->role === 'medecin')
         <div id="createChargeModal" class="modal hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
             <div class="modal-content bg-white p-6 rounded-lg shadow-xl w-1/2">
                 <div class="flex justify-between items-center pb-3">
@@ -918,6 +921,7 @@
                 </form>
             </div>
         </div>
+        @endif
         <script>
             // Configuration CSRF pour les requêtes AJAX
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
