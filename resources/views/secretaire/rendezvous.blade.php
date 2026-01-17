@@ -46,18 +46,18 @@
 
                 <a href="{{ route('secretaire.rendezvous') }}"
                     class="flex items-center px-4 py-3 text-white bg-gray-700 rounded-lg transition-colors group">
-                    <i class="fas fa-calendar-check mr-3 text-white"></i>
+                    <i class="fas fa-calendar-check mr-3 text-gray-400 group-hover:text-white"></i>
                     Rendez-vous
                 </a>
 
                 <a href="{{ route('secretaire.patients') }}"
-                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-user-injured mr-3 text-gray-400 group-hover:text-white"></i>
                     Patients
                 </a>
 
                 <a href="{{ route('secretaire.factures') }}"
-                    class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
+                   class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-lg transition-colors group">
                     <i class="fas fa-file-invoice-dollar mr-3 text-gray-400 group-hover:text-white"></i>
                     Factures
                 </a>
@@ -111,7 +111,6 @@
             </div>
         </div>
     </div>
-
     <!-- CONTENU PRINCIPAL -->
     <div class="ml-64">
         <header class="bg-white shadow-sm border-b border-gray-200">
@@ -126,7 +125,6 @@
                 </button>
             </div>
         </header>
-
         <main class="p-6">
             <!-- ZONE DES MESSAGES - Système amélioré et corrigé -->
             <div id="messages-container" class="space-y-4 mb-6">
@@ -256,11 +254,9 @@
                                 data-statut="{{ $rdv->statut }}"
                                 data-date="{{ \Carbon\Carbon::parse($rdv->date)->format('Y-m-d') }}">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    {{ \Carbon\Carbon::parse($rdv->date)->format('d/m/Y') }}
-                                </td>
+                                    {{ \Carbon\Carbon::parse($rdv->date)->format('d/m/Y') }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ \Carbon\Carbon::parse($rdv->date)->format('H:i') }}
-                                </td>
+                                    {{ \Carbon\Carbon::parse($rdv->date)->format('H:i') }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {{ $rdv->medecin->nom ?? 'Inconnu' }} {{ $rdv->medecin->prenom ?? '' }}
                                     @if ($rdv->medecin && isset($rdv->medecin->specialite))
@@ -268,8 +264,7 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ $rdv->patient->nom ?? 'Inconnu' }} {{ $rdv->patient->prenom ?? '' }}
-                                </td>
+                                    {{ $rdv->patient->nom ?? 'Inconnu' }} {{ $rdv->patient->prenom ?? '' }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @if ($rdv->statut == 'confirmé')
                                         <span
@@ -289,8 +284,7 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
-                                    {{ $rdv->motif ?? 'Aucun motif' }}
-                                </td>
+                                    {{ $rdv->motif ?? 'Aucun motif' }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex space-x-2">
                                         <button onclick='openEditModal(@json($rdv))'
@@ -422,7 +416,7 @@
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent">
                         <option value="">Sélectionnez un patient</option>
                         @foreach ($patients as $patient)
-                            <option value="{{ $patient->id }}">{{ $patient->nom }} {{ $patient->prenom }}</option>
+                            <option value="{{ $patient->id }}">{{ $patient->nom }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -714,11 +708,10 @@ type === 'success'
 
         function openEditModal(rdv) {
             document.getElementById('editModal').classList.remove('hidden');
-            document.getElementById('editForm').action = `{{ url('/rendezvous') }}/${rdv.id}`;
+            document.getElementById('editForm').action = '/rendezvous/' + rdv.id;
             document.getElementById('edit_id').value = rdv.id;
             document.getElementById('edit_patient_id').value = rdv.patient_id;
             document.getElementById('edit_medecin_id').value = rdv.medecin_id;
-
             const dateTime = new Date(rdv.date);
             const datePart = dateTime.toISOString().substring(0, 10);
             const timePart = dateTime.toTimeString().substring(0, 5);
@@ -885,7 +878,6 @@ type === 'success'
                 closeAddModal();
             }
         });
-
         document.getElementById('editModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeEditModal();

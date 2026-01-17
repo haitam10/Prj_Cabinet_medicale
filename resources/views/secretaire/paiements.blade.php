@@ -347,7 +347,6 @@
                             @endforelse
                         </tbody>
                     </table>
-
                     @if ($paiements->hasPages())
                         <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
                             {{ $paiements->links() }}
@@ -368,7 +367,6 @@
                         <i class="fas fa-times text-lg"></i>
                     </button>
                 </div>
-
                 <form method="POST" action="{{ route('paiements.store') }}" class="space-y-4">
                     @csrf
                     <div>
@@ -386,7 +384,6 @@
                             @endforeach
                         </select>
                     </div>
-
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label for="montant" class="block text-sm font-medium text-gray-700 mb-1">
@@ -404,7 +401,6 @@
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent bg-gray-50">
                         </div>
                     </div>
-
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label for="mode_paiement" class="block text-sm font-medium text-gray-700 mb-1">
@@ -433,7 +429,6 @@
                             </select>
                         </div>
                     </div>
-
                     <div class="flex justify-end space-x-3 pt-4">
                         <button type="button" onclick="closeModal('createPaiementModal')"
                             class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
@@ -459,7 +454,6 @@
                         <i class="fas fa-times text-lg"></i>
                     </button>
                 </div>
-
                 <form id="editPaiementForm" method="POST" class="space-y-4">
                     @csrf
                     @method('PUT')
@@ -479,7 +473,6 @@
                         </select>
                         <input type="hidden" name="facture_id" id="hidden_edit_facture_id">
                     </div>
-
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label for="edit_montant" class="block text-sm font-medium text-gray-700 mb-1">
@@ -497,7 +490,6 @@
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cordes-blue focus:border-transparent bg-gray-50">
                         </div>
                     </div>
-
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label for="edit_mode_paiement" class="block text-sm font-medium text-gray-700 mb-1">
@@ -526,7 +518,6 @@
                             </select>
                         </div>
                     </div>
-
                     <div class="flex justify-end space-x-3 pt-4">
                         <button type="button" onclick="closeModal('editPaiementModal')"
                             class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
@@ -552,7 +543,6 @@
                         <i class="fas fa-times text-lg"></i>
                     </button>
                 </div>
-
                 <div class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
@@ -564,7 +554,6 @@
                             <p class="text-sm text-gray-900" id="show_cin"></p>
                         </div>
                     </div>
-
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Montant:</label>
@@ -575,7 +564,6 @@
                             <p class="text-sm text-gray-900" id="show_date"></p>
                         </div>
                     </div>
-
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Mode de Paiement:</label>
@@ -586,7 +574,6 @@
                             <p class="text-sm text-gray-900" id="show_statut"></p>
                         </div>
                     </div>
-
                     <div class="flex justify-end pt-4">
                         <button onclick="closeModal('showPaiementModal')"
                             class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
